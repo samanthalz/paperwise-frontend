@@ -1,7 +1,15 @@
-import type { NextConfig } from "next";
+import type {NextConfig} from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+    images: {
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "trqxqdxzunnbqaznmxmd.supabase.co", // your Supabase project host
+                pathname: "/storage/v1/object/**", // allow both /public and /sign paths
+            },
+        ],
+    },
 };
 
 export default nextConfig;
