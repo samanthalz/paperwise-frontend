@@ -1,0 +1,288 @@
+"use client";
+
+import React, {useCallback, useEffect, useMemo, useState} from "react";
+import {
+    BaseEditor,
+    createEditor,
+    Descendant,
+    Editor,
+    Element as SlateElement,
+    Transforms,
+} from "slate";
+import {
+    Editable,
+    ReactEditor,
+    RenderElementProps,
+    RenderLeafProps,
+    Slate,
+    useSlate,
+    withReact,
+} from "slate-react";
+import {Button} from "@/components/ui/button";
+import {
+    Bold,
+    Code,
+    Italic,
+    List,
+    ListOrdered,
+    Quote,
+    Strikethrough,
+    Underline,
+    X,
+} from "lucide-react";
+import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
+
+type NotesPopupProps = {
+    open: boolean;
+    onCloseAction: () => void;
+    pdfId: string | null;
+};
+
+type CustomText = {
+    text: string;
+    bold?: boolean;
+    italic?: boolean;
+    underline?: boolean;
+    strikethrough?: boolean;
+    code?: boolean;
+};
+
+type CustomElement = {
+    type: string;
+    children: CustomText[];
+};
+
+declare module "slate" {
+    interface CustomTypes {
+        Editor: BaseEditor & ReactEditor;
+        Element: CustomElement;
+        Text: CustomText;
+    }
+}
+
+const LIST_TYPES = ["numbered-list", "bulleted-list"];
+
+export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps) {
+    const editor = useMemo(() => withReact(createEditor()), []);
+    const supabase = createClientComponentClient();
+    const [editorKey, setEditorKey] = useState(0);
+
+    const [value, setValue] = useState<Descendant[]>([
+        {type: "paragraph", children: [{text: ""}]},
+    ]);
+    const [userId, setUserId] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
+
+    // Get user session
+    useEffect(() => {
+        const getUser = async () => {
+            const {data: {session}, error} = await supabase.auth.getSession();
+            if (error) return console.error("Session fetch error:", error);
+            if (session) setUserId(session.user.id);
+            else setUserId(null);
+        };
+        getUser();
+    }, [supabase]);
+
+    // Load notes
+    useEffect(() => {
+        if (!userId || !pdfId) return;
+
+        const loadNotes = async () => {
+            const {data, error} = await supabase
+                .from("notes")
+                .select("content")
+                .eq("user_id", userId)
+                .eq("pdf_id", pdfId)
+                .maybeSingle();
+
+            if (error) return console.error(error);
+
+            if (data?.content) {
+                try {
+                    const content = typeof data.content === "string" ? JSON.parse(data.content) : data.content;
+
+                    if (!Array.isArray(content) || content.length === 0) {
+                        setValue([{type: "paragraph", children: [{text: ""}]}]);
+                    } else {
+                        setValue(content);
+                        setEditorKey(prev => prev + 1); // Force re-mount
+                    }
+                } catch {
+                    console.warn("Invalid content in DB, using default paragraph");
+                }
+            } else {
+                setValue([{type: "paragraph", children: [{text: ""}]}]);
+            }
+        };
+
+        loadNotes();
+    }, [userId, pdfId]);
+
+    // Auto-save every 3 seconds
+    useEffect(() => {
+        if (!userId || !pdfId) return;
+        const interval = setInterval(() => saveNotes(value), 3000);
+        return () => clearInterval(interval);
+    }, [value, userId, pdfId]);
+
+    const saveNotes = async (newValue: Descendant[]) => {
+        if (!userId || !pdfId) return;
+        setSaving(true);
+        const {error} = await supabase
+            .from("notes")
+            .upsert(
+                {
+                    user_id: userId,
+                    pdf_id: pdfId,
+                    content: newValue,
+                    updated_at: new Date().toISOString(),
+                },
+                {onConflict: "user_id,pdf_id"}
+            );
+        if (error) console.error("Save error:", error);
+        setSaving(false);
+    };
+
+    // Toolbar helpers
+    const isMarkActive = (editor: Editor, format: keyof Omit<CustomText, "text">) => {
+        const marks = Editor.marks(editor);
+        return marks ? !!marks[format] : false;
+    };
+
+    const toggleMark = (editor: Editor, format: keyof Omit<CustomText, "text">) => {
+        const isActive = isMarkActive(editor, format);
+        if (isActive) Editor.removeMark(editor, format);
+        else Editor.addMark(editor, format, true);
+    };
+
+    const isBlockActive = (editor: Editor, format: string) => {
+        const [match] = Editor.nodes(editor, {
+            match: n => !Editor.isEditor(n) && SlateElement.isElement(n) && n.type === format,
+        });
+        return !!match;
+    };
+
+    const toggleBlock = (editor: Editor, format: string) => {
+        const isActive = isBlockActive(editor, format);
+        const isList = LIST_TYPES.includes(format);
+
+        Transforms.unwrapNodes(editor, {
+            match: n => SlateElement.isElement(n) && LIST_TYPES.includes(n.type),
+            split: true,
+        });
+
+        const newType = isActive ? "paragraph" : isList ? "list-item" : format;
+        Transforms.setNodes(editor, {type: newType});
+
+        if (!isActive && isList) {
+            const block: CustomElement = {type: format, children: []};
+            Transforms.wrapNodes(editor, block);
+        }
+        Editor.normalize(editor, {force: true});
+    };
+
+    // Render helpers
+    const renderElement = useCallback((props: RenderElementProps) => {
+        const {element, attributes, children} = props;
+        switch (element.type) {
+            case "blockquote":
+                return <blockquote {...attributes}
+                                   className="border-l-4 pl-4 italic text-gray-600">{children}</blockquote>;
+            case "numbered-list":
+                return <ol {...attributes} className="list-decimal ml-4 space-y-1">{children}</ol>;
+            case "bulleted-list":
+                return <ul {...attributes} className="list-disc ml-4 space-y-1">{children}</ul>;
+            case "list-item":
+                return <li {...attributes}>{children}</li>;
+            default:
+                return <p {...attributes}>{children}</p>;
+        }
+    }, []);
+
+    const renderLeaf = useCallback((props: RenderLeafProps) => {
+        const {leaf, attributes, children} = props;
+        let el = children;
+        if (leaf.bold) el = <strong>{el}</strong>;
+        if (leaf.italic) el = <em>{el}</em>;
+        if (leaf.underline) el = <u>{el}</u>;
+        if (leaf.strikethrough) el = <s>{el}</s>;
+        if (leaf.code) el = <code className="bg-gray-100 px-1 rounded">{el}</code>;
+        return <span {...attributes}>{el}</span>;
+    }, []);
+
+    if (!open) return null;
+
+    // Toolbar button component
+    const ToolbarButton = ({format, Icon}: { format: string; Icon: any }) => {
+        const editor = useSlate();
+        const active = ["blockquote", "numbered-list", "bulleted-list"].includes(format)
+            ? isBlockActive(editor, format)
+            : isMarkActive(editor, format as keyof Omit<CustomText, "text">);
+
+        return (
+            <Button
+                variant={active ? "default" : "ghost"}
+                size="icon"
+                onMouseDown={e => {
+                    e.preventDefault();
+                    ReactEditor.focus(editor);
+                    if (!editor.selection) Transforms.select(editor, Editor.start(editor, []));
+                    if (["blockquote", "numbered-list", "bulleted-list"].includes(format)) toggleBlock(editor, format);
+                    else toggleMark(editor, format as keyof Omit<CustomText, "text">);
+                }}
+            >
+                <Icon className="w-4 h-4"/>
+            </Button>
+        );
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white w-full max-w-5xl h-[80vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
+                {/* Header */}
+                <div className="flex justify-between items-center border-b p-4">
+                    <h2 className="text-xl font-semibold">My Notes</h2>
+                    <Button variant="ghost" size="icon" onClick={onCloseAction}>
+                        <X className="w-5 h-5"/>
+                    </Button>
+                </div>
+
+                <Slate editor={editor} key={editorKey} initialValue={value} onChange={setValue}>
+                    {/* Toolbar */}
+                    <div className="flex gap-2 border-b p-2 bg-gray-50 flex-wrap">
+                        {[
+                            {icon: Bold, format: "bold"},
+                            {icon: Italic, format: "italic"},
+                            {icon: Underline, format: "underline"},
+                            {icon: Strikethrough, format: "strikethrough"},
+                            {icon: Code, format: "code"},
+                            {icon: Quote, format: "blockquote"},
+                            {icon: ListOrdered, format: "numbered-list"},
+                            {icon: List, format: "bulleted-list"},
+                        ].map(({icon, format}) => (
+                            <ToolbarButton key={format} format={format} Icon={icon}/>
+                        ))}
+                    </div>
+
+                    {/* Editor */}
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 bg-gray-50">
+                        <Editable
+                            renderElement={renderElement}
+                            renderLeaf={renderLeaf}
+                            placeholder="Write your notes..."
+                            spellCheck
+                            autoFocus
+                            className="focus:outline-none min-h-[300px] prose prose-sm max-w-none"
+                        />
+                    </div>
+                </Slate>
+
+                {/* Footer */}
+                <div className="border-t p-3 text-sm text-gray-500 flex justify-between items-center">
+                    <span>{saving ? "Saving..." : "Auto-saved every 3 seconds"}</span>
+                </div>
+            </div>
+        </div>
+    );
+}

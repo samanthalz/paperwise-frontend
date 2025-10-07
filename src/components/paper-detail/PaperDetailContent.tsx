@@ -339,6 +339,7 @@ import {CitationPopup} from "@/components/citation-popup";
 import {AddPaperButton} from "@/components/add-paper-btn";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
 import {useRouter} from "next/navigation";
+import NotesPopup from "@/components/topbars/notes-popup";
 
 type ArxivPaper = {
     id: string;
@@ -368,6 +369,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
     const [loadingRecommendations, setLoadingRecommendations] = useState(true);
     const [processing, setProcessing] = useState(true);
     const [checkpoint, setCheckpoint] = useState("Starting...");
+    const [showNotes, setShowNotes] = useState(false);
     const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
     const canonicalArxivId = paperId?.replace(/v\d+$/i, "");
@@ -522,7 +524,8 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                             className="flex items-center gap-1 rounded-lg px-3 py-1">
                         <BookOpen className="w-4 h-4"/> Cite
                     </Button>
-                    <Button className="flex items-center gap-1 rounded-lg px-3 py-1">
+                    <Button onClick={() => setShowNotes(true)}
+                            className="flex items-center gap-1 rounded-lg px-3 py-1">
                         <Edit className="w-4 h-4"/> Note
                     </Button>
                     {paper && pdfId && (
@@ -566,7 +569,8 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                                     value={key}
                                     className="relative rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none focus-visible:ring-0
                       data-[state=active]:border-b-blue-600
-                      data-[state=active]:text-blue-600"
+                      data-[state=active]:text-blue-600
+                        data-[state=active]:shadow-none"
                                 >
                                     {label}
                                 </TabsTrigger>
@@ -574,9 +578,11 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                         </TabsList>
 
                         <div className="flex-1 min-h-0 overflow-y-auto p-4">
-                            <TabsContent value="summary">{paper && <SummaryTab paper={paper}/>}</TabsContent>
-                            <TabsContent value="keypoints">{paper && <KeypointsTab arxivId={paper.id}/>}</TabsContent>
-                            <TabsContent value="ask">
+                            <TabsContent className="h-full flex flex-col" value="summary">{paper &&
+                                <SummaryTab paper={paper}/>}</TabsContent>
+                            <TabsContent className="h-full flex flex-col" value="keypoints">{paper &&
+                                <KeypointsTab arxivId={paper.id}/>}</TabsContent>
+                            <TabsContent className="h-full flex flex-col" value="ask">
                                 {paper && (
                                     <AskPaperTab
                                         paper={paper}
@@ -591,7 +597,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                                     />
                                 )}
                             </TabsContent>
-                            <TabsContent value="related">
+                            <TabsContent className="h-full flex flex-col" value="related">
                                 <RelatedTab recommendations={recommendations} loading={loadingRecommendations}/>
                             </TabsContent>
                         </div>
@@ -607,6 +613,14 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                     authors={paper.authors}
                     arxivId={paper.id}
                     publishedDate={paper.published}
+                />
+            )}
+
+            {showNotes && paper && (
+                <NotesPopup
+                    open={showNotes}
+                    onCloseAction={() => setShowNotes(false)}
+                    pdfId={pdfId}
                 />
             )}
         </div>
