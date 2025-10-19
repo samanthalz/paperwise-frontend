@@ -5,10 +5,10 @@ import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/co
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
 
 type KeypointsTabProps = {
-    arxivId: string;
+    pdfId: string;
 };
 
-export default function KeypointsTab({arxivId}: KeypointsTabProps) {
+export default function KeypointsTab({pdfId}: KeypointsTabProps) {
     const supabase = createClientComponentClient();
 
     const [sections, setSections] = useState<
@@ -25,8 +25,9 @@ export default function KeypointsTab({arxivId}: KeypointsTabProps) {
     }, [sections]);
 
     useEffect(() => {
-        if (!arxivId) return;
+        if (!pdfId) return;
 
+        // Realtime subscription
         const channel = supabase
             .channel("papers-changes")
             .on(
@@ -35,11 +36,9 @@ export default function KeypointsTab({arxivId}: KeypointsTabProps) {
                     event: "UPDATE",
                     schema: "public",
                     table: "papers",
-                    filter: `arxiv_id=eq.${arxivId}`,
+                    filter: `pdf_id=eq.${pdfId}`, // <-- changed
                 },
                 (payload) => {
-                    console.log("📡 Realtime update:", payload.new);
-
                     const data = payload.new;
                     const mappedSections = [
                         {title: "Problem Statement", content: data.problem_statement},
@@ -57,18 +56,19 @@ export default function KeypointsTab({arxivId}: KeypointsTabProps) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [arxivId, supabase]);
+    }, [pdfId, supabase]);
 
     useEffect(() => {
         const fetchKeypoints = async () => {
-            console.log("🔍 Fetching keypoints for paper.id:", arxivId);
+            console.log("🔍 Fetching keypoints for paper.id:", pdfId);
 
+            // Fetch initial keypoints
             const {data, error} = await supabase
                 .from("papers")
                 .select(
                     "problem_statement, objectives, methodology, results, discussions, limitations"
                 )
-                .eq("arxiv_id", arxivId)
+                .eq("pdf_id", pdfId) // <-- changed
                 .single();
 
             if (error && error.code !== "PGRST116") {
@@ -105,9 +105,9 @@ export default function KeypointsTab({arxivId}: KeypointsTabProps) {
             setSections(mappedSections);
         };
 
-        if (arxivId) fetchKeypoints();
+        if (pdfId) fetchKeypoints();
         else console.warn("⚠️ No paper.id provided to KeypointsTab");
-    }, [arxivId, supabase]);
+    }, [pdfId, supabase]);
 
     return (
         <div className="pb-2">

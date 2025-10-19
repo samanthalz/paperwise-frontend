@@ -5,6 +5,7 @@ type ArxivPaper = {
     authors: string[];
     published: string;
     pdfUrl: string;
+    supabaseUrl?: string;
 };
 
 export default function SummaryTab({paper}: { paper: ArxivPaper }) {
@@ -27,25 +28,29 @@ export default function SummaryTab({paper}: { paper: ArxivPaper }) {
                 {paper?.authors.join(", ")}
             </p>
 
-            <p className="text-sm">
-                <span className="font-semibold">arXiv ID:</span>{" "}
-                <a
-                    href={`https://arxiv.org/abs/${arxivId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                >
-                    {arxivId}
-                </a>
-            </p>
+            {!paper.supabaseUrl && (
+                <>
+                    <p className="text-sm">
+                        <span className="font-semibold">arXiv ID:</span>{" "}
+                        <a
+                            href={`https://arxiv.org/abs/${arxivId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                        >
+                            {arxivId}
+                        </a>
+                    </p>
+
+                    <p className="text-sm">
+                        <span className="font-semibold">Citation Count:</span> 462
+                    </p>
+                </>
+            )}
 
             <p className="text-sm">
                 <span className="font-semibold">Published Date:</span>{" "}
                 {publishedDate}
-            </p>
-
-            <p className="text-sm">
-                <span className="font-semibold">Citation Count:</span> 462
             </p>
 
             <div>

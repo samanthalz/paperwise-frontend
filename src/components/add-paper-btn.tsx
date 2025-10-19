@@ -5,7 +5,6 @@ import {Button} from "@/components/ui/button";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
 import {Star} from "lucide-react";
 import type {Message} from "./paper-tabs/AskPaperTab";
-
 import {
     AlertDialog,
     AlertDialogAction,
@@ -22,9 +21,15 @@ type AddPaperButtonProps = {
     pdfId: string | null;
     messages: Message[];
     onChangeAction: (userPaperId: number | null, isSaved: boolean) => void;
+    disabled?: boolean;
 };
 
-export function AddPaperButton({pdfId, messages, onChangeAction}: AddPaperButtonProps) {
+export function AddPaperButton({
+                                   pdfId,
+                                   messages,
+                                   onChangeAction,
+                                   disabled = false, // default: false
+                               }: AddPaperButtonProps) {
     const supabase = createClientComponentClient();
     const router = useRouter();
 
@@ -59,9 +64,11 @@ export function AddPaperButton({pdfId, messages, onChangeAction}: AddPaperButton
 
     /** Save/Delete paper */
     const handleSavePaper = async () => {
+        if (disabled) return; // ✅ prevents click when disabled
+
         const {data: userData} = await supabase.auth.getUser();
         if (!userData?.user) {
-            setShowLoginDialog(true); // open dialog if not logged in
+            setShowLoginDialog(true);
             return;
         }
         if (!pdfId) return;
@@ -109,9 +116,13 @@ export function AddPaperButton({pdfId, messages, onChangeAction}: AddPaperButton
 
     return (
         <>
-            <Button onClick={handleSavePaper}>
+            <Button
+                onClick={handleSavePaper}
+                disabled={disabled}
+                className="flex items-center gap-1"
+            >
                 <Star className={isSaved ? "fill-white" : "stroke-white"}/>
-                {isSaved ? "Saved" : "Save"}
+                {isSaved ? "Saved" : disabled ? "Preparing..." : "Save"}
             </Button>
 
             <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>

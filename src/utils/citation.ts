@@ -77,15 +77,18 @@ export function generateCitations({
                                       publishedDate,
                                   }: {
     title: string;
-    authors: string[];
+    authors: string[] | null | undefined;
     arxivId: string;
     publishedDate: string;
 }): Citation[] {
+    // If authors is null, undefined, or empty, return empty array
+    if (!authors || authors.length === 0) return [];
+
     const date = new Date(publishedDate);
     const year = date.getFullYear();
     const url = `https://arxiv.org/abs/${arxivId}`;
 
-    // Harvard
+    // --- Harvard ---
     const harvardAuthors = formatAuthorsHarvard(authors);
     const harvardInText =
         authors.length > 2
@@ -98,31 +101,29 @@ export function generateCitations({
         inText: `(${harvardInText}, ${year})`,
     };
 
+    // --- APA7 ---
     const apaAuthors = formatAuthorsAPA(authors);
-
     const apa7: Citation = {
         style: "APA7",
-        fullText: `${apaAuthors} (${year}). ${title}. ArXiv.org. https://arxiv.org/abs/${arxivId}`,
+        fullText: `${apaAuthors} (${year}). ${title}. ArXiv.org. ${url}`,
         inText:
             authors.length > 2
                 ? `(${authors[0].split(" ").pop()} et al., ${year})`
                 : `(${authors.map((a) => a.split(" ").pop()).join(" & ")}, ${year})`,
     };
 
-    // Chicago
+    // --- Chicago ---
     const chicagoAuthors = formatAuthorsChicago(authors);
-
     const chicago: Citation = {
         style: "Chicago",
-        fullText: `${chicagoAuthors}. ${year}. “${title}.” ArXiv.org. ${year}. https://arxiv.org/abs/${arxivId}.`,
+        fullText: `${chicagoAuthors}. ${year}. “${title}.” ArXiv.org. ${year}. ${url}.`,
         inText: `(${authors.length > 2
             ? `${authors[0].split(" ").pop()} et al. ${year}`
             : authors.map((a) => a.split(" ").pop()).join(" and ") + ` ${year}`})`,
     };
 
-    // MLA8
+    // --- MLA8 ---
     const mlaAuthors = formatAuthorsMLA(authors);
-
     const mla: Citation = {
         style: "MLA8",
         fullText: `${mlaAuthors}. “${title}.” ArXiv.org, ${year}, ${url}.`,
@@ -133,3 +134,4 @@ export function generateCitations({
 
     return [harvard, apa7, chicago, mla];
 }
+

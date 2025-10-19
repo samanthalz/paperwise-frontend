@@ -1,11 +1,12 @@
 "use client";
 
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
 import {Search} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import SearchTopbar from "@/components/topbars/search-topbar";
+import {useSidebar} from "@/components/ui/sidebar";
 
 export default function SearchPage() {
     const [query, setQuery] = useState("");
@@ -23,6 +24,16 @@ export default function SearchPage() {
             router.push(`/search/results?query=${encodeURIComponent(query)}`);
         }
     };
+
+    const {setOpen} = useSidebar();
+    const [initialized, setInitialized] = useState(false);
+
+    useEffect(() => {
+        if (!initialized) {
+            setOpen(false);
+            setInitialized(true);
+        }
+    }, [initialized, setOpen]);
 
     return (
         <div className="flex flex-col h-full">

@@ -15,6 +15,7 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Button} from "@/components/ui/button";
@@ -28,10 +29,19 @@ export function AppSidebar() {
     const router = useRouter();
     const pathname = usePathname();
     const supabase = createClientComponentClient();
+    const {setOpen} = useSidebar();
+    const [initialized, setInitialized] = useState(false);
 
     const [user, setUser] = useState<{ fullName: string; email: string } | null>(
         null
     );
+
+    useEffect(() => {
+        if (!initialized) {
+            setOpen(false);
+            setInitialized(true);
+        }
+    }, [initialized, setOpen]);
 
     useEffect(() => {
         const fetchUser = async () => {

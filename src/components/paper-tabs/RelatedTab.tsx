@@ -1,7 +1,7 @@
 "use client";
 
 import {Button} from "@/components/ui/button";
-import {Activity} from "lucide-react";
+import {Activity, Info} from "lucide-react";
 import {useRouter} from "next/navigation";
 
 export interface SemanticPaper {
@@ -21,8 +21,20 @@ interface RelatedTabProps {
     loading: boolean;
 }
 
-export default function RelatedTab({recommendations, loading}: RelatedTabProps) {
+export default function RelatedTab({recommendations, loading, hasSupabaseUrl}: RelatedTabProps & {
+    hasSupabaseUrl?: boolean
+}) {
     useRouter();
+    if (hasSupabaseUrl) {
+        return (
+            <div className="text-sm mb-6 relative">
+                <p className="mt-1 text-muted-foreground">
+                    This paper was uploaded manually and therefore does not have automatically generated related papers.
+                    Related recommendations are available only for publications sourced from the arXiv repository.
+                </p>
+            </div>
+        );
+    }
     const renderPaper = (p: SemanticPaper, index: number) => {
         const arxivId = p.externalIds?.ArXiv;
         const pdfUrl = p.openAccessPdf?.url || (arxivId ? `https://arxiv.org/pdf/${arxivId}` : undefined);
@@ -35,6 +47,7 @@ export default function RelatedTab({recommendations, loading}: RelatedTabProps) 
 
         return (
             <div key={p.paperId || `${p.title}-${index}`} className="mb-6 p-4 border rounded-lg shadow-sm space-y-2">
+
                 {/* Title */}
                 <div className="font-bold text-blue-600">
                     {link ? (
@@ -53,58 +66,76 @@ export default function RelatedTab({recommendations, loading}: RelatedTabProps) 
                     </div>
                 )}
 
-                {/* Citation count */}
-                {typeof p.citationCount === "number" && (
-                    <div className="text-xs text-gray-500">Citations: {p.citationCount}</div>
-                )}
+                {/* Metadata section */}
+                <div className="flex items-end justify-between mt-2 w-full">
+                    {/* Left info (citations, authors, year) */}
+                    <div className="flex flex-col text-xs text-gray-500 space-y-1">
+                        {typeof p.citationCount === "number" && (
+                            <div>
+                                <span className="font-medium text-gray-700">Citation Count:</span>{" "}
+                                <span className="italic text-gray-600">{p.citationCount.toLocaleString()}</span>
+                            </div>
+                        )}
 
-                {/* Authors */}
-                {authors && <div className="text-xs text-gray-400">Authors: {authors}</div>}
+                        {authors && (
+                            <div>
+                                <span className="font-medium text-gray-700">Authors:</span>{" "}
+                                <span className="italic text-gray-600">{authors}</span>
+                            </div>
+                        )}
 
-                <div className="flex items-center mt-1 w-full">
-                    {pdfUrl && (
-                        <a
-                            href={pdfUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-gray-500 hover:underline mr-4"
-                        >
-                            [PDF]
-                        </a>
-                    )}
-
-                    {pubYear && <div className="text-xs text-gray-400">{pubYear}</div>}
-                    <div className="ml-auto">
-                        {arxivId && (
-                            <a
-                                href={`/${encodeURIComponent(arxivId)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <Button
-                                    size="sm"
-                                    variant="default"
-                                    className="flex items-center gap-1"
-                                    onClick={(e) => e.stopPropagation()} // prevent event bubbling if inside clickable div
-                                >
-                                    Analyse <Activity className="w-4 h-4"/>
-                                </Button>
-                            </a>
+                        {p.year && (
+                            <div>
+                                <span className="font-medium text-gray-700">Published Year:</span>{" "}
+                                <span className="italic text-gray-600">{p.year}</span>
+                            </div>
                         )}
                     </div>
+
+                    {/* Right side - Analyse button */}
+                    {arxivId && (
+                        <a
+                            href={`/${encodeURIComponent(arxivId)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-4 self-end"
+                        >
+                            <Button
+                                size="sm"
+                                variant="default"
+                                className="flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                Analyse <Activity className="w-4 h-4"/>
+                            </Button>
+                        </a>
+                    )}
                 </div>
+
             </div>
         );
     };
 
     return (
-        <div className="mt-2 text-sm mb-6 relative">
+        <div className="text-sm mb-6 relative">
             {loading ? (
                 <p className="mt-1 text-muted-foreground">Fetching Papers…</p>
             ) : recommendations.length === 0 ? (
                 <p className="mt-1 text-muted-foreground">No recommendations found.</p>
             ) : (
-                <ul className="list-disc pl-4 mt-1">{recommendations.map(renderPaper)}</ul>
+                <>
+                    {/* 🔹 Info note */}
+                    <div
+                        className="mb-3 flex items-start gap-2 text-xs text-gray-500 bg-blue-50 border border-blue-100 p-2 rounded-md">
+                        <Info className="w-4 h-4 text-blue-600 mt-0.5"/>
+                        <span>
+                            Only papers from <span className="font-medium text-blue-600">arXiv</span> include the
+                            “Analyse” button. Other papers can be opened via their title on Semantic Scholar.
+                        </span>
+                    </div>
+
+                    <ul className="list-disc pl-4 mt-1">{recommendations.map(renderPaper)}</ul>
+                </>
             )}
         </div>
     );

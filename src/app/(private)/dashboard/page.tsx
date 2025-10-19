@@ -8,16 +8,18 @@ import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 import {Edit3, Folder, MoreVertical, Trash2} from 'lucide-react'
 import Image from 'next/image'
 import DocumentsTopbar from '@/components/topbars/documents-topbar'
+import {useSidebar} from "@/components/ui/sidebar";
 
 type Paper = {
-    pdf_id: string
-    arxiv_id: string | null
-    title: string
-    date_added: string | null
-    saved_at: string
-    filename?: string
-    preview_url?: string
-}
+    pdf_id: string;
+    arxiv_id: string | null;
+    title: string;
+    date_added: string | null;
+    saved_at: string;
+    filename?: string;
+    preview_url?: string | null;
+    supabase_url?: string | null;
+};
 
 export default function Dashboard() {
     const supabase = createClientComponentClient()
@@ -25,6 +27,15 @@ export default function Dashboard() {
     const [userId, setUserId] = useState<string | null>(null)
     const [papers, setPapers] = useState<Paper[]>([])
     const [loading, setLoading] = useState(true)
+    const {setOpen} = useSidebar();
+    const [initialized, setInitialized] = useState(false);
+
+    useEffect(() => {
+        if (!initialized) {
+            setOpen(false);
+            setInitialized(true);
+        }
+    }, [initialized, setOpen]);
 
     useEffect(() => {
         const fetchUserAndPapers = async () => {
@@ -44,17 +55,19 @@ export default function Dashboard() {
             const {data, error} = await supabase
                 .from('user_papers')
                 .select(`
-          *,
-          paper_details:papers!user_papers_pdf_id_fkey (
-            pdf_id,
-            title,
-            arxiv_id,
-            date_added,
-            filename,
-            thumbnail_url
-          )
-        `)
+    *,
+    papers!user_papers_pdf_id_fkey (
+      pdf_id,
+      title,
+      arxiv_id,
+      date_added,
+      filename,
+      thumbnail_url,
+      supabase_url
+    )
+  `)
                 .eq('user_id', user.id)
+
 
             if (error) {
                 console.error('Error fetching user papers:', error.message)
@@ -65,13 +78,15 @@ export default function Dashboard() {
             if (data) {
                 const formattedPapers = data.map((up) => ({
                     pdf_id: up.pdf_id,
-                    title: up.paper_details?.title ?? 'Untitled',
-                    arxiv_id: up.paper_details?.arxiv_id ?? 'Unknown',
-                    date_added: up.paper_details?.date_added ?? null,
+                    title: up.papers?.title ?? (up.papers?.filename?.replace(/\.pdf$/i, '') ?? 'Untitled'),
+                    arxiv_id: up.papers?.arxiv_id ?? 'Unknown',
+                    date_added: up.papers?.date_added ?? null,
                     saved_at: up.saved_at,
-                    filename: up.paper_details?.filename,
-                    preview_url: up.paper_details?.thumbnail_url
-                }))
+                    filename: up.papers?.filename,
+                    preview_url: up.papers?.thumbnail_url,
+                    supabase_url: up.papers?.supabase_url
+                }));
+
                 setPapers(formattedPapers)
             }
 
@@ -81,6 +96,91 @@ export default function Dashboard() {
         fetchUserAndPapers()
     }, [supabase])
 
+    // --- Realtime subscription ---
+    useEffect(() => {
+        if (!userId) return;
+
+        // 1️⃣ Subscribe to changes in user_papers
+        const userPapersSub = supabase
+            .channel('realtime-user-papers')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'user_papers',
+                    filter: `user_id=eq.${userId}`,
+                },
+                async (payload) => {
+                    console.log('User_papers change:', payload);
+                    await refetchPapers(); // same refetch logic
+                }
+            )
+            .subscribe();
+
+        // 2️⃣ Subscribe to changes in papers (for title/thumbnail updates)
+        const papersSub = supabase
+            .channel('realtime-papers')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'papers',
+                },
+                async (payload) => {
+                    const newRow = payload.new as { thumbnail_url?: string; title?: string };
+                    console.log('Papers change:', newRow);
+
+                    // Only refetch if visual info changed
+                    if (newRow.thumbnail_url || newRow.title) {
+                        await refetchPapers();
+                    }
+                }
+            )
+            .subscribe();
+
+        // Shared refetch function
+        const refetchPapers = async () => {
+            const {data} = await supabase
+                .from('user_papers')
+                .select(`
+        *,
+        papers!user_papers_pdf_id_fkey (
+          pdf_id,
+          title,
+          arxiv_id,
+          date_added,
+          filename,
+          thumbnail_url,
+          supabase_url
+        )
+      `)
+                .eq('user_id', userId);
+
+            if (data) {
+                setPapers(
+                    data.map((up) => ({
+                        pdf_id: up.pdf_id,
+                        title: up.papers?.title ?? 'Untitled',
+                        arxiv_id: up.papers?.arxiv_id ?? 'Unknown',
+                        date_added: up.papers?.date_added ?? null,
+                        saved_at: up.saved_at,
+                        filename: up.papers?.filename,
+                        preview_url: up.papers?.thumbnail_url,
+                        supabase_url: up.papers?.supabase_url,
+                    }))
+                );
+            }
+        };
+
+        // Cleanup both
+        return () => {
+            supabase.removeChannel(userPapersSub);
+            supabase.removeChannel(papersSub);
+        };
+    }, [supabase, userId]);
+
     return (
         <div className="flex flex-col h-full">
             {/* Topbar */}
@@ -88,8 +188,6 @@ export default function Dashboard() {
 
             {/* Main content */}
             <div className="flex-1 overflow-y-auto px-6 py-6">
-                <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-                {userId ? <p>User ID: {userId}</p> : <p>Loading user...</p>}
 
                 <h2 className="mt-6 mb-2 text-lg font-semibold">Saved Papers</h2>
                 {loading && <p>Loading papers...</p>}
@@ -105,8 +203,17 @@ export default function Dashboard() {
                             <div
                                 className="w-full aspect-[4/3] relative overflow-hidden group cursor-pointer"
                                 onClick={() => {
-                                    if (paper.arxiv_id) router.push(`/${paper.arxiv_id}`)
+                                    console.log('Clicked paper:', paper);
+                                    if (paper.arxiv_id && paper.arxiv_id.toLowerCase() !== 'unknown') {
+                                        router.push(`/${paper.arxiv_id}`);
+                                    } else if (paper.supabase_url) {
+                                        router.push(`/${encodeURIComponent(paper.pdf_id)}`);
+
+                                    } else {
+                                        console.warn('No valid arxiv_id or supabase_url');
+                                    }
                                 }}
+
                             >
                                 <Image
                                     src={paper.preview_url ?? '/placeholder-pdf.png'}

@@ -134,7 +134,7 @@ export default function AskPaperTab({
             const res = await fetch("http://127.0.0.1:8000/ask_stream/", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({arxiv_id: paper.id, question: currentQuestion}),
+                body: JSON.stringify({pdf_id: pdfId, question: currentQuestion}),
             });
 
             if (!res.body) throw new Error("No response body");
