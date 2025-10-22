@@ -1,35 +1,10 @@
 "use client";
 
 import React, {useCallback, useEffect, useMemo, useState} from "react";
-import {
-    BaseEditor,
-    createEditor,
-    Descendant,
-    Editor,
-    Element as SlateElement,
-    Transforms,
-} from "slate";
-import {
-    Editable,
-    ReactEditor,
-    RenderElementProps,
-    RenderLeafProps,
-    Slate,
-    useSlate,
-    withReact,
-} from "slate-react";
+import {BaseEditor, createEditor, Descendant, Editor, Element as SlateElement, Transforms,} from "slate";
+import {Editable, ReactEditor, RenderElementProps, RenderLeafProps, Slate, useSlate, withReact,} from "slate-react";
 import {Button} from "@/components/ui/button";
-import {
-    Bold,
-    Code,
-    Italic,
-    List,
-    ListOrdered,
-    Quote,
-    Strikethrough,
-    Underline,
-    X,
-} from "lucide-react";
+import {Bold, Code, Italic, List, ListOrdered, LucideIcon, Quote, Strikethrough, Underline, X,} from "lucide-react";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
 
 type NotesPopupProps = {
@@ -214,7 +189,13 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
     if (!open) return null;
 
     // Toolbar button component
-    const ToolbarButton = ({format, Icon}: { format: string; Icon: any }) => {
+    const ToolbarButton = ({
+                               format,
+                               Icon,
+                           }: {
+        format: string;
+        Icon: LucideIcon;
+    }) => {
         const editor = useSlate();
         const active = ["blockquote", "numbered-list", "bulleted-list"].includes(format)
             ? isBlockActive(editor, format)
@@ -224,6 +205,11 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
             <Button
                 variant={active ? "default" : "ghost"}
                 size="icon"
+                className={`
+  ${active
+                    ? "bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[color-mix(in oklch, var(--primary) 85%, black)]"
+                    : "hover:bg-[var(--sidebar-accent)] "}
+`}
                 onMouseDown={e => {
                     e.preventDefault();
                     ReactEditor.focus(editor);
@@ -239,10 +225,12 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white w-full max-w-5xl h-[80vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
+            <div
+                className="bg-[var(--editor-bg)] w-full max-w-5xl h-[80vh] rounded-xl shadow-2xl flex flex-col overflow-hidden border border-[var(--toolbar-border)]">
                 {/* Header */}
-                <div className="flex justify-between items-center border-b p-4">
-                    <h2 className="text-xl font-semibold">My Notes</h2>
+                <div
+                    className="flex justify-between items-center border-b p-4 bg-[var(--toolbar-bg)] border-[var(--toolbar-border)]">
+                    <h2 className="text-xl font-semibold" style={{color: "var(--toolbar-heading)"}}>My Notes</h2>
                     <Button variant="ghost" size="icon" onClick={onCloseAction}>
                         <X className="w-5 h-5"/>
                     </Button>
@@ -250,7 +238,8 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
 
                 <Slate editor={editor} key={editorKey} initialValue={value} onChange={setValue}>
                     {/* Toolbar */}
-                    <div className="flex gap-2 border-b p-2 bg-gray-50 flex-wrap">
+                    <div
+                        className="flex gap-2 border-b p-2 bg-[var(--toolbar-bg)] border-[var(--toolbar-border)] flex-wrap">
                         {[
                             {icon: Bold, format: "bold"},
                             {icon: Italic, format: "italic"},
@@ -266,7 +255,7 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
                     </div>
 
                     {/* Editor */}
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 bg-gray-50">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 bg-[var(--editor-bg)]">
                         <Editable
                             renderElement={renderElement}
                             renderLeaf={renderLeaf}
@@ -279,7 +268,8 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
                 </Slate>
 
                 {/* Footer */}
-                <div className="border-t p-3 text-sm text-gray-500 flex justify-between items-center">
+                <div
+                    className="border-t p-3 text-sm text-gray-600 flex justify-between items-center bg-[var(--toolbar-bg)] border-[var(--toolbar-border)]">
                     <span>{saving ? "Saving..." : "Auto-saved every 3 seconds"}</span>
                 </div>
             </div>

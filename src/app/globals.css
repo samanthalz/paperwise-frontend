@@ -16,8 +16,8 @@
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
+    --primary: oklch(50.66% 0.2018 269.35);
+    --primary-foreground: oklch(0.98 0 0);
     --secondary: oklch(0.97 0 0);
     --secondary-foreground: oklch(0.205 0 0);
     --muted: oklch(0.97 0 0);
@@ -41,6 +41,23 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+
+    --topbar-bg: oklch(0.941 0.03 285.818 / 0.33);
+    --topbar-border: oklch(88% 0.02 269.35);
+
+    --editor-bg: oklch(98% 0.01 280);
+    --toolbar-bg: rgba(231, 231, 255, 0.35);
+    --toolbar-border: #d5cfff;
+    --toolbar-heading: oklch(40% 0.07 280);
+
+    --popup-bg: oklch(98% 0.01 280);
+    --popup-border: oklch(88% 0.015 280);
+    --popup-header-bg: oklch(93% 0.02 280 / 0.87);
+    --popup-text: oklch(28% 0.04 280);
+    --popup-heading: oklch(40% 0.07 280);
+    --popup-highlight: rgba(231, 231, 255, 0.35);
+    --popup-shadow: 0 4px 16px oklch(0% 0 0 / 0.12);
+
 }
 
 /* Set base styles */

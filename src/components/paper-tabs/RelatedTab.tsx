@@ -46,8 +46,15 @@ export default function RelatedTab({recommendations, loading, hasSupabaseUrl}: R
             : undefined;
 
         return (
-            <div key={p.paperId || `${p.title}-${index}`} className="mb-6 p-4 border rounded-lg shadow-sm space-y-2">
-
+            <div
+                key={p.paperId || `${p.title}-${index}`}
+                className="mb-6 p-4 border rounded-lg shadow-sm space-y-2"
+                style={{
+                    backgroundColor: "var(----editor-bg)",
+                    borderColor: "var(--popup-border)",
+                    color: "var(--popup-text)",
+                }}
+            >
                 {/* Title */}
                 <div className="font-bold text-blue-600">
                     {link ? (
@@ -61,7 +68,14 @@ export default function RelatedTab({recommendations, loading, hasSupabaseUrl}: R
 
                 {/* Abstract */}
                 {p.abstract && (
-                    <div className="text-sm text-gray-700 max-h-36 overflow-y-auto border p-2 rounded bg-gray-50">
+                    <div
+                        className="text-sm text-gray-700 max-h-36 overflow-y-auto border p-2 rounded"
+                        style={{
+                            backgroundColor: "var(--popup-bg)",
+                            borderColor: "var(--popup-border)",
+                            color: "var(--popup-text)",
+                        }}
+                    >
                         {p.abstract}
                     </div>
                 )}

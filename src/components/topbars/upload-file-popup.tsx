@@ -5,6 +5,8 @@ import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,} from "
 import {Button} from "@/components/ui/button";
 import {Dropzone} from "@/components/ui/dropzone";
 import {FileText, Upload} from "lucide-react";
+import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
+import {toast} from "sonner"; // ✅ ShadCN toast system
 
 interface UploadedPaper {
     pdf_id: string;
@@ -12,61 +14,98 @@ interface UploadedPaper {
 
 interface UploadPdfDialogProps {
     onUpload: (file: File) => Promise<UploadedPaper> | UploadedPaper;
+    onDuplicate?: (pdfId: string) => void;
     children?: React.ReactNode;
 }
 
-export default function UploadPdfDialog({onUpload, children}: UploadPdfDialogProps) {
+export default function UploadPdfDialog({
+                                            onUpload,
+                                            onDuplicate,
+                                            children,
+                                        }: UploadPdfDialogProps) {
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [open, setOpen] = useState(false); // ✅ add this
+    const [open, setOpen] = useState(false);
+    const supabase = createClientComponentClient();
 
     const handleFileSelect = (files: File[]) => {
         const selected = files[0];
         if (selected && selected.type === "application/pdf") {
             setFile(selected);
-            setError(null);
         } else {
             setFile(null);
-            setError("Please upload a PDF file only.");
+            toast.error("Please upload a PDF file only.");
         }
     };
 
     const handleUpload = async () => {
         if (!file) return;
         setIsUploading(true);
+
+        let channel: any = null;
+
         try {
+            // Step 1: Upload file
             const uploadedPaper = await onUpload(file);
             const pdfId = uploadedPaper?.pdf_id;
             if (!pdfId) throw new Error("No pdf_id returned from upload");
 
-            const response = await fetch("http://127.0.0.1:8000/process_existing_pdf/", {
+            toast.info("Processing your PDF...");
+
+            // Step 2: Subscribe to realtime updates
+            channel = supabase
+                .channel(`realtime-papers-${pdfId}`)
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "UPDATE",
+                        schema: "public",
+                        table: "papers",
+                        filter: `pdf_id=eq.${pdfId}`,
+                    },
+                    (payload) => {
+                        const checkpoint = payload.new.checkpoint || "";
+                        console.log("Realtime update:", checkpoint);
+
+                        // --- Handle duplicate case ---
+                        if (checkpoint.includes("Duplicate")) {
+                            toast.error("Upload failed! This file already exists.");
+                            setIsUploading(false);
+                            setFile(null);
+                            setOpen(false);
+                            if (onDuplicate) onDuplicate(pdfId);
+                            channel.unsubscribe();
+                            return;
+                        }
+
+                        // --- Handle successful processing ---
+                        if (checkpoint.includes("Background processing started")) {
+                            toast.success("Upload successful! 🎉");
+                            setIsUploading(false);
+                            setFile(null);
+                            setOpen(false);
+                            channel.unsubscribe();
+                            return;
+                        }
+                    }
+                )
+                .subscribe();
+
+            // Step 3: Trigger backend processing
+            await fetch("http://127.0.0.1:8000/process_existing_pdf/", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({pdf_id: pdfId}),
             });
-
-            const result = await response.json();
-            if (!response.ok) {
-                console.error("Backend processing failed:", result.detail || result);
-                alert("Processing failed: " + (result.detail || "Unknown error"));
-            } else {
-                console.log("Processing started:", result);
-                alert("Upload successful! Background processing started.");
-                setOpen(false); // ✅ close dialog
-            }
-
-            setFile(null);
         } catch (err) {
             console.error(err);
-            setError("Upload or processing failed. Try again.");
-        } finally {
+            toast.error("Upload or processing failed.");
             setIsUploading(false);
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}> {/* ✅ make it controlled */}
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {children || (
                     <Button variant="default" className="flex items-center gap-2 h-10 px-3">
@@ -76,19 +115,21 @@ export default function UploadPdfDialog({onUpload, children}: UploadPdfDialogPro
                 )}
             </DialogTrigger>
 
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md bg-white rounded-2xl shadow-lg border border-gray-200">
                 <DialogHeader>
-                    <DialogTitle>Upload PDF File</DialogTitle>
+                    <DialogTitle className="text-lg font-semibold text-gray-800">
+                        Upload PDF File
+                    </DialogTitle>
                 </DialogHeader>
 
                 <Dropzone
                     onDrop={handleFileSelect}
                     accept={{"application/pdf": [".pdf"]}}
-                    className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer"
+                    className="border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition"
                 >
                     {file ? (
                         <div className="flex flex-col items-center space-y-2">
-                            <FileText className="h-10 w-10 text-blue-600"/>
+                            <FileText className="h-10 w-10 text-primary"/>
                             <p className="font-medium">{file.name}</p>
                             <p className="text-sm text-gray-500">
                                 {(file.size / 1024 / 1024).toFixed(2)} MB
@@ -98,18 +139,19 @@ export default function UploadPdfDialog({onUpload, children}: UploadPdfDialogPro
                         <div className="flex flex-col items-center space-y-2 text-muted-foreground">
                             <Upload className="h-10 w-10 text-gray-400"/>
                             <p>Drag & drop your PDF here, or click to select</p>
-                            <p className="text-xs text-gray-400">Only .pdf files are allowed</p>
+                            <p className="text-xs text-gray-400">
+                                Only .pdf files are allowed
+                            </p>
                         </div>
                     )}
                 </Dropzone>
 
-                {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-
                 <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" onClick={() => setOpen(false)} disabled={isUploading}>
-                        Cancel
-                    </Button>
-                    <Button onClick={handleUpload} disabled={!file || isUploading}>
+                    <Button
+                        onClick={handleUpload}
+                        disabled={!file || isUploading}
+                        className="bg-primary text-white hover:bg-primary/90"
+                    >
                         {isUploading ? "Uploading..." : "Upload"}
                     </Button>
                 </div>

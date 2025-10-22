@@ -7,21 +7,25 @@ import {topbarClasses} from "@/components/topbars/topbar-base";
 import UploadPdfDialog from "@/components/topbars/upload-file-popup";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
 
-export default function DocumentsTopbar() {
+interface DocumentsTopbarProps {
+    onDuplicate?: (pdfId: string) => void;
+}
+
+export default function DocumentsTopbar({onDuplicate}: DocumentsTopbarProps) {
     const supabase = createClientComponentClient();
 
     const handleUpload = async (file: File) => {
         try {
-            // 🔹 1. Get current user
+            // Get current user
             const {data: {user}, error: userError} = await supabase.auth.getUser();
             if (userError || !user) throw new Error("User not authenticated");
 
-            // 🔹 2. Prepare a file path (match your RLS folder rule)
+            // Prepare a file path (match your RLS folder rule)
             const fileExt = file.name.split(".").pop();
             const fileName = `${crypto.randomUUID()}.${fileExt}`;
             const filePath = `${user.id}/${fileName}`; // user folder = auth.uid()
 
-            // 🔹 3. Upload to Supabase Storage bucket
+            // Upload to Supabase Storage bucket
             const {error: uploadError} = await supabase.storage
                 .from("papers") // must match your bucket name
                 .upload(filePath, file, {
@@ -32,14 +36,14 @@ export default function DocumentsTopbar() {
 
             if (uploadError) throw uploadError;
 
-            // 🔹 4. Get the public URL (or signed URL for private access)
+            // Get the public URL (or signed URL for private access)
             const {data: signedUrlData} = await supabase.storage
                 .from("papers")
                 .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7 days validity
 
             const fileUrl = signedUrlData?.signedUrl ?? null;
 
-            // 🔹 5. Insert into 'papers' table
+            // Insert into 'papers' table
             const {data: insertedPaper, error: paperError} = await supabase
                 .from("papers")
                 .insert({
@@ -56,7 +60,7 @@ export default function DocumentsTopbar() {
 
             if (paperError) throw paperError;
 
-            // 🔹 6. Insert into 'user_papers' (link table)
+            // Insert into 'user_papers' (link table)
             const {error: linkError} = await supabase
                 .from("user_papers")
                 .insert({
@@ -68,8 +72,7 @@ export default function DocumentsTopbar() {
 
             console.log("Uploaded:", insertedPaper);
 
-            // ✅ Return pdf_id for further processing
-            return insertedPaper;  // <-- return the whole record or just { pdf_id: insertedPaper.pdf_id }
+            return insertedPaper;
 
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -88,7 +91,7 @@ export default function DocumentsTopbar() {
             <div className="flex items-center gap-4 flex-nowrap">
                 <SidebarTrigger/>
                 <div className="h-6 w-[2px] bg-border flex-shrink-0"/>
-                <h1 className="text-lg font-semibold whitespace-nowrap">
+                <h1 className="text-lg font-semibold whitespace-nowrap" style={{color: "var(--popup-heading)"}}>
                     Documents
                 </h1>
             </div>
@@ -103,7 +106,7 @@ export default function DocumentsTopbar() {
                     Create Folder
                 </Button>
 
-                <UploadPdfDialog onUpload={handleUpload}>
+                <UploadPdfDialog onUpload={handleUpload} onDuplicate={onDuplicate}>
                     <Button
                         variant="default"
                         className="flex items-center gap-2 h-10 px-3"

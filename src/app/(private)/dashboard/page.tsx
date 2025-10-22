@@ -9,6 +9,10 @@ import {Edit3, Folder, MoreVertical, Trash2} from 'lucide-react'
 import Image from 'next/image'
 import DocumentsTopbar from '@/components/topbars/documents-topbar'
 import {useSidebar} from "@/components/ui/sidebar";
+import {RenamePaperPopup} from "@/components/rename-paper-popup";
+import {MovePaperPopup} from "@/components/move-paper-popup";
+import {DeletePaperPopup} from "@/components/delete-paper-popup";
+
 
 type Paper = {
     pdf_id: string;
@@ -29,6 +33,14 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true)
     const {setOpen} = useSidebar();
     const [initialized, setInitialized] = useState(false);
+    // Dialog control states
+    const [selectedPaper, setSelectedPaper] = useState<Paper | null>(null);
+    const [renameOpen, setRenameOpen] = useState(false);
+    const [moveOpen, setMoveOpen] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+
+    const [folders, setFolders] = useState<{ id: string; name: string }[]>([]);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!initialized) {
@@ -129,7 +141,7 @@ export default function Dashboard() {
                     table: 'papers',
                 },
                 async (payload) => {
-                    const newRow = payload.new as { thumbnail_url?: string; title?: string };
+                    const newRow = payload.new as { thumbnail_url?: string; title?: string; filename?: string };
                     console.log('Papers change:', newRow);
 
                     // Only refetch if visual info changed
@@ -162,7 +174,7 @@ export default function Dashboard() {
                 setPapers(
                     data.map((up) => ({
                         pdf_id: up.pdf_id,
-                        title: up.papers?.title ?? 'Untitled',
+                        title: up.papers?.title || up.papers?.filename?.replace(/\.pdf$/i, '') || 'Untitled',
                         arxiv_id: up.papers?.arxiv_id ?? 'Unknown',
                         date_added: up.papers?.date_added ?? null,
                         saved_at: up.saved_at,
@@ -181,13 +193,36 @@ export default function Dashboard() {
         };
     }, [supabase, userId]);
 
+    const removePaper = async (pdfId: string) => {
+        // Remove locally
+        setPapers(prev => prev.filter(p => p.pdf_id !== pdfId));
+
+        // Remove from Supabase
+        try {
+            const {error} = await supabase
+                .from('papers')
+                .delete()
+                .eq('pdf_id', pdfId);
+
+            if (error) throw error;
+
+            // Optional: also remove from user_papers link table
+            await supabase
+                .from('user_papers')
+                .delete()
+                .eq('pdf_id', pdfId);
+        } catch (err) {
+            console.error('Failed to delete paper:', err);
+        }
+    };
+
     return (
         <div className="flex flex-col h-full">
             {/* Topbar */}
-            <DocumentsTopbar/>
+            <DocumentsTopbar onDuplicate={removePaper}/>
 
             {/* Main content */}
-            <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="flex-1 overflow-y-auto px-6 ">
 
                 <h2 className="mt-6 mb-2 text-lg font-semibold">Saved Papers</h2>
                 {loading && <p>Loading papers...</p>}
@@ -227,27 +262,100 @@ export default function Dashboard() {
                             <div className="flex items-center justify-between p-2">
                                 <span className="font-medium truncate max-w-[90%]">{paper.title}</span>
 
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger>
-                                        <MoreVertical className="w-5 h-5 cursor-pointer text-gray-600"/>
+                                <DropdownMenu
+                                    key={`menu-${paper.pdf_id}`}
+                                    open={openMenuId === paper.pdf_id}
+                                    onOpenChange={(isOpen) => setOpenMenuId(isOpen ? paper.pdf_id : null)}
+                                >
+                                    <DropdownMenuTrigger asChild>
+                                        <button className="p-1">
+                                            <MoreVertical className="w-5 h-5 cursor-pointer text-gray-600"/>
+                                        </button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
-                                        <DropdownMenuItem className="flex items-center gap-2">
+                                        <DropdownMenuItem
+                                            className="flex items-center gap-2"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setOpenMenuId(null);
+                                                setSelectedPaper(paper);
+                                                setRenameOpen(true);
+                                            }}
+                                        >
                                             <Edit3 className="w-4 h-4"/> Rename
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="flex items-center gap-2">
+
+                                        <DropdownMenuItem
+                                            className="flex items-center gap-2"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setOpenMenuId(null);
+                                                setSelectedPaper(paper);
+                                                setMoveOpen(true);
+                                            }}
+                                        >
                                             <Folder className="w-4 h-4"/> Move to Folder
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="flex items-center gap-2 text-red-600">
+
+                                        <DropdownMenuItem
+                                            className="flex items-center gap-2 text-red-600"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setOpenMenuId(null);
+                                                setSelectedPaper(paper);
+                                                setDeleteOpen(true);
+                                            }}
+                                        >
                                             <Trash2 className="w-4 h-4"/> Delete
                                         </DropdownMenuItem>
+
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+
                             </div>
                         </Card>
                     ))}
                 </div>
             </div>
+            {/* Dialogs */}
+            {selectedPaper && (
+                <>
+                    <RenamePaperPopup
+                        open={renameOpen}
+                        onCloseAction={() => setRenameOpen(false)}
+                        pdfId={selectedPaper.pdf_id}
+                        currentTitle={selectedPaper.title}
+                        onRenamedAction={(newTitle) => {
+                            setPapers((prev) =>
+                                prev.map((p) =>
+                                    p.pdf_id === selectedPaper.pdf_id ? {...p, title: newTitle} : p
+                                )
+                            );
+                        }}
+                    />
+
+                    <MovePaperPopup
+                        pdfId={selectedPaper.pdf_id}
+                        open={moveOpen}
+                        folders={folders}
+                        onCloseAction={() => setMoveOpen(false)}
+                        onMovedAction={(folderId) => console.log("Moved to:", folderId)}
+                    />
+
+                    <DeletePaperPopup
+                        open={deleteOpen}
+                        onCloseAction={() => setDeleteOpen(false)}
+                        pdfId={selectedPaper.pdf_id}
+                        onDeletedAction={() => {
+                            setPapers(prev => prev.filter(p => p.pdf_id !== selectedPaper.pdf_id));
+                            setSelectedPaper(null); // <-- clear the selection
+                        }}
+                    />
+                </>
+            )}
         </div>
     )
 }
