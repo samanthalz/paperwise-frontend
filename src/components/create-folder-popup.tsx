@@ -1,52 +1,29 @@
 "use client";
 
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
-import {Edit3, X} from "lucide-react";
+import {FolderPlus, X} from "lucide-react";
 
-type RenamePaperPopupProps = {
+type CreateFolderPopupProps = {
     open: boolean;
-    onCloseAction: () => void;
-    pdfId: string;
-    currentTitle?: string;
-    onRenamedAction: (newTitle: string) => void;
+    onClose: () => void;
+    onCreate: (folderName: string) => void | Promise<void>;
 };
 
-export function RenamePaperPopup({
-                                     open,
-                                     onCloseAction,
-                                     pdfId,
-                                     currentTitle = "",
-                                     onRenamedAction,
-                                 }: RenamePaperPopupProps) {
-    const [newTitle, setNewTitle] = useState(currentTitle);
+export function CreateFolderPopup({open, onClose, onCreate}: CreateFolderPopupProps) {
+    const [folderName, setFolderName] = useState("");
     const [saving, setSaving] = useState(false);
 
-    // <-- IMPORTANT: reset local state whenever the popup opens or the currentTitle changes
-    useEffect(() => {
-        if (open) {
-            setNewTitle(currentTitle ?? "");
-        }
-    }, [open, currentTitle]);
-
-    const handleRename = async () => {
-        if (!newTitle.trim()) return;
+    const handleCreate = async () => {
+        if (!folderName.trim()) return;
         setSaving(true);
-
         try {
-            const res = await fetch(`http://127.0.0.1:8000/rename_pdf/`, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({pdf_id: pdfId, new_title: newTitle}),
-            });
-
-            if (res.ok) {
-                onRenamedAction(newTitle);
-                onCloseAction();
-            }
-        } catch (err) {
-            console.error("Rename failed:", err);
+            await onCreate(folderName.trim());
+            setFolderName("");
+            onClose();
+        } catch (e) {
+            console.error("Failed to create folder:", e);
         } finally {
             setSaving(false);
         }
@@ -65,11 +42,12 @@ export function RenamePaperPopup({
                     border: "1px solid var(--popup-border)",
                 }}
             >
+                {/* Close button */}
                 <Button
                     size="icon"
                     variant="ghost"
                     className="absolute top-2 right-2"
-                    onClick={onCloseAction}
+                    onClick={onClose}
                     style={{
                         backgroundColor: "var(--popup-header-bg)",
                         color: "var(--popup-text)",
@@ -78,18 +56,22 @@ export function RenamePaperPopup({
                     <X className="w-5 h-5"/>
                 </Button>
 
-                <h2
-                    className="text-lg font-semibold text-center flex items-center justify-center gap-2"
-                    style={{color: "var(--popup-heading)"}}
-                >
-                    <Edit3 className="w-5 h-5 text-blue-600"/>
-                    Rename Paper
-                </h2>
+                {/* Title */}
+                <div className="flex items-center justify-center gap-2">
+                    <FolderPlus className="w-6 h-6 text-blue-600"/>
+                    <h2
+                        className="text-lg font-semibold"
+                        style={{color: "var(--popup-heading)"}}
+                    >
+                        Create New Folder
+                    </h2>
+                </div>
 
+                {/* Input */}
                 <Input
-                    placeholder="Enter new title"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Folder name"
+                    value={folderName}
+                    onChange={(e) => setFolderName(e.target.value)}
                     style={{
                         backgroundColor: "var(--popup-highlight)",
                         borderColor: "var(--popup-border)",
@@ -97,10 +79,11 @@ export function RenamePaperPopup({
                     }}
                 />
 
+                {/* Footer buttons */}
                 <div className="flex justify-end gap-2 mt-3">
                     <Button
                         variant="outline"
-                        onClick={onCloseAction}
+                        onClick={onClose}
                         disabled={saving}
                         style={{
                             borderColor: "var(--popup-border)",
@@ -111,14 +94,16 @@ export function RenamePaperPopup({
                         Cancel
                     </Button>
                     <Button
-                        onClick={handleRename}
-                        disabled={saving}
+                        onClick={handleCreate}
+                        disabled={saving || !folderName.trim()}
                         style={{
-                            backgroundColor: saving ? "oklch(75% 0.05 280)" : "oklch(65% 0.15 280)",
+                            backgroundColor: saving
+                                ? "oklch(75% 0.05 280)"
+                                : "oklch(65% 0.15 280)",
                             color: "white",
                         }}
                     >
-                        {saving ? "Saving..." : "Save"}
+                        {saving ? "Creating..." : "Create"}
                     </Button>
                 </div>
             </div>

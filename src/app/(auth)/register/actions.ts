@@ -18,46 +18,54 @@ export async function registerUser(
     const confirmPassword = formData.get('confirmPassword') as string
 
     console.log('START registerUser')
-    console.log({fullName, email, password, confirmPassword})
+    console.log({fullName, email})
 
+    // ✅ 1. Password match check
     if (password !== confirmPassword) {
-        console.log('Passwords do not match')
         return {error: 'Passwords do not match'}
+    }
+
+    // ✅ 2. Password strength check
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+=\-{};:'",.<>/?]{8,}$/
+    if (!passwordRegex.test(password)) {
+        return {
+            error:
+                'Password must be at least 8 characters long and contain at least one letter and one number.',
+        }
     }
 
     const supabase = await createClient()
 
     console.log('Supabase client created')
 
-    // Create auth user
+    // ✅ 3. Create auth user
     const {data, error} = await supabase.auth.signUp({
         email,
         password,
         options: {
-            data: {full_name: fullName}, // custom metadata
+            data: {full_name: fullName},
         },
     })
+
     console.log('Signup result', {data, error})
 
     if (error || !data.user) {
-        console.log('Signup failed', error)
         return {error: error?.message ?? 'Signup failed'}
     }
 
     const userId = data.user.id
     console.log('User created with ID:', userId)
 
-    // ✅ Use service role client to insert into "users" table
+    // ✅ 4. Insert into public users table
     const supabaseAdmin = createSupabaseClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY! // 🔑 service role key
+        process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY!
     )
 
     const {error: dbError} = await supabaseAdmin.from('users').insert({
         id: userId,
         full_name: fullName,
     })
-    console.log('Insert result', dbError)
 
     if (dbError) {
         return {error: dbError.message}

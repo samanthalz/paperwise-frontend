@@ -16,23 +16,27 @@ export function MovePaperPopup({
     open: boolean;
     folders: { id: string; name: string }[];
     onCloseAction: () => void;
-    onMovedAction: (folderId: string) => void;
+    onMovedAction: (folderId: string | null) => void;
 }) {
     const [folderId, setFolderId] = useState("");
     const [moving, setMoving] = useState(false);
 
     const handleMove = async () => {
         if (!folderId) return;
+
+        // Convert "root" to null before sending to backend
+        const targetFolderId = folderId === "root" ? null : folderId;
+
         setMoving(true);
         const res = await fetch(`http://127.0.0.1:8000/move_pdf/`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({pdf_id: pdfId, folder_id: folderId}),
+            body: JSON.stringify({pdf_id: pdfId, folder_id: targetFolderId}),
         });
 
         setMoving(false);
         if (res.ok) {
-            onMovedAction(folderId);
+            onMovedAction(targetFolderId);
             onCloseAction();
             setFolderId("");
         }
@@ -67,7 +71,7 @@ export function MovePaperPopup({
 
                 {/* Title */}
                 <div className="flex items-center justify-center gap-2">
-                    <FolderCode className="w-5 h-5 text-muted-foreground"/>
+                    <FolderCode className="w-5 h-5 text-blue-600"/>
                     <h2 className="text-lg font-semibold" style={{color: "var(--popup-heading)"}}>
                         Move Paper
                     </h2>
@@ -90,6 +94,7 @@ export function MovePaperPopup({
                             <SelectValue placeholder="Select folder"/>
                         </SelectTrigger>
                         <SelectContent>
+                            <SelectItem value="root">Main Page</SelectItem> {/* Use "root" instead of "" */}
                             {folders.length > 0 ? (
                                 folders.map((f) => (
                                     <SelectItem key={f.id} value={f.id}>

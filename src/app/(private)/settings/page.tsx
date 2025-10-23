@@ -2,24 +2,45 @@
 
 import {useEffect, useState} from "react";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
-import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Card, CardContent, CardHeader, CardTitle,} from "@/components/ui/card";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
-import {ScrollArea} from "@/components/ui/scroll-area";
 import SettingsTopbar from "@/components/topbars/settings-topbar";
+import {useSidebar} from "@/components/ui/sidebar";
+import {toast} from "sonner";
+import {AuthApiError, AuthError} from "@supabase/supabase-js";
+import {Eye, EyeOff} from "lucide-react";
+import {deleteAccount} from "@/app/(private)/settings/delete-account";
 
 export default function SettingsPage() {
     const supabase = createClientComponentClient();
 
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [originalEmail, setOriginalEmail] = useState("");
+    const [provider, setProvider] = useState<"email" | string | null>(null);
+    const [loadingProfile, setLoadingProfile] = useState(false);
+    const [loadingPassword, setLoadingPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
 
-    // ✅ Fetch user info on mount
+    // Password change fields
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+
+    const {setOpen} = useSidebar();
+    const [initialized, setInitialized] = useState(false);
+
+    // ✅ Close sidebar on mount
+    useEffect(() => {
+        if (!initialized) {
+            setOpen(false);
+            setInitialized(true);
+        }
+    }, [initialized, setOpen]);
+
+    // ✅ Fetch user info
     useEffect(() => {
         const fetchUserData = async () => {
             setLoading(true);
@@ -36,40 +57,49 @@ export default function SettingsPage() {
 
             if (user) {
                 setEmail(user.email ?? "");
+                setOriginalEmail(user.email ?? "");
+                setProvider(user.app_metadata?.provider ?? "email");
 
-                // Pull fullName from `users` table
                 const {data, error} = await supabase
                     .from("users")
                     .select("full_name")
-                    .eq("id", user.id) // assuming "id" is your PK and matches auth.user.id
+                    .eq("id", user.id)
                     .single();
 
-                if (!error && data) {
-                    setFullName(data.full_name ?? "");
-                }
+                if (!error && data) setFullName(data.full_name ?? "");
             }
+
             setLoading(false);
         };
 
         fetchUserData();
     }, [supabase]);
 
-    // ✅ Update Profile
     const handleUpdateProfile = async () => {
-        setLoading(true);
+        setLoadingProfile(true);
         setMessage("");
 
         const {
             data: {user},
         } = await supabase.auth.getUser();
+
         if (!user) {
-            setMessage("Not logged in");
-            setLoading(false);
+            toast.error("You are not logged in");
+            setLoadingProfile(false);
+            return;
+        }
+
+        const noChanges = fullName === (user.user_metadata?.full_name ?? "") && email === user.email;
+        if (noChanges) {
+            toast.success("Profile updated successfully", {
+                description: "No changes were made, but your profile is up to date.",
+            });
+            setLoadingProfile(false);
             return;
         }
 
         try {
-            // Update full name in users table
+            // ✅ Update full name in your users table
             const {error: updateUserError} = await supabase
                 .from("users")
                 .update({full_name: fullName})
@@ -77,133 +107,308 @@ export default function SettingsPage() {
 
             if (updateUserError) throw updateUserError;
 
-            // Update email and password in Auth
-            const {error: authUpdateError} = await supabase.auth.updateUser({
-                email: email || undefined,
-                password: password || undefined,
-            });
+            // ✅ Handle email update if changed
+            if (provider === "email" && email !== user.email) {
+                let authUpdateError: AuthError | null = null;
+                let authUpdateData = null;
 
-            if (authUpdateError) throw authUpdateError;
+                try {
+                    const result = await supabase.auth.updateUser({email});
+                    authUpdateError = result.error;
+                    authUpdateData = result.data;
+                } catch (e) {
+                    if (e instanceof AuthApiError && e.message.includes("already been registered")) {
+                        authUpdateError = e;
+                    } else {
+                        console.error("Unexpected Supabase error:", e);
+                    }
+                }
 
-            setMessage("Profile updated successfully!");
+                if (authUpdateError) {
+                    if (authUpdateError.message.includes("already been registered")) {
+                        toast.error("Email already in use", {
+                            description: "Please choose a different email.",
+                        });
+                        setEmail(originalEmail);
+                        setLoadingProfile(false);
+                        return;
+                    }
+                    throw authUpdateError;
+                }
+
+                if (authUpdateData?.user?.email !== email) {
+                    toast.success("Email change requested", {
+                        description: "Check your new email to confirm the change.",
+                    });
+                } else {
+                    toast.success("Profile updated successfully", {
+                        description: "Your profile has been updated.",
+                    });
+                }
+            } else {
+                toast.success("Profile updated successfully", {
+                    description: "Your profile has been updated.",
+                });
+            }
         } catch (err: unknown) {
             console.error(err);
-
-            // Narrow the type to get the message safely
-            if (err instanceof Error) {
-                setMessage(err.message);
-            } else if (typeof err === "string") {
-                setMessage(err);
+            if (err instanceof AuthApiError) {
+                toast.error("Authentication error", {description: err.message});
+            } else if (err instanceof Error) {
+                toast.error("Error updating profile", {description: err.message});
             } else {
-                setMessage("Error updating profile.");
+                toast.error("Error updating profile", {
+                    description: "Something went wrong.",
+                });
             }
+        } finally {
+            setLoadingProfile(false);
+        }
+    };
+
+    const handleChangePassword = async () => {
+        setLoadingPassword(true);
+
+        const {
+            data: {user},
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            toast.error("You are not logged in");
+            setLoadingPassword(false);
+            return;
+        }
+
+        if (!currentPassword || !newPassword) {
+            toast.error("Missing fields", {
+                description: "Please fill in both current and new password.",
+            });
+            setLoadingPassword(false);
+            return;
+        }
+
+        // ✅ Step 0: Validate new password strength
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+=\-{};:'",.<>/?]{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            toast.error("Weak password", {
+                description:
+                    "Password must be at least 8 characters long and include at least one letter and one number.",
+            });
+            setLoadingPassword(false);
+            return;
+        }
+
+        try {
+            // Step 1: Verify current password
+            const {error: verifyError} = await supabase.auth.signInWithPassword({
+                email: user.email!,
+                password: currentPassword,
+            });
+
+            if (verifyError) {
+                toast.error("Incorrect password", {
+                    description: "Your current password is incorrect.",
+                });
+                setLoadingPassword(false);
+                return;
+            }
+
+            // Step 2: Update new password
+            const {error: updateError} = await supabase.auth.updateUser({
+                password: newPassword,
+            });
+
+            if (updateError) {
+                toast.error("Failed to change password", {
+                    description: updateError.message,
+                });
+                setLoadingPassword(false);
+                return;
+            }
+
+            toast.success("Password updated successfully", {
+                description: "You can now log in with your new password.",
+            });
+
+            setCurrentPassword("");
+            setNewPassword("");
+        } catch (err) {
+            console.error(err);
+            toast.error("Error changing password", {
+                description: "Something went wrong.",
+            });
+        } finally {
+            setLoadingPassword(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        setLoading(true);
+
+        try {
+            const {
+                data: {user},
+            } = await supabase.auth.getUser();
+
+            if (!user) {
+                toast.error("You are not logged in");
+                setLoading(false);
+                return;
+            }
+
+            // Confirm first
+            const confirmed = confirm("Are you sure you want to permanently delete your account?");
+            if (!confirmed) {
+                setLoading(false);
+                return;
+            }
+
+            // Call the server action
+            const result = await deleteAccount(user.id);
+
+            if (result.success) {
+                toast.success("Account deleted", {
+                    description: "Your account has been permanently removed.",
+                });
+                await supabase.auth.signOut();
+                window.location.href = "/";
+            } else {
+                toast.error("Failed to delete account", {
+                    description: result.error ?? "Something went wrong.",
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Unexpected error", {
+                description: "Could not delete your account.",
+            });
         } finally {
             setLoading(false);
         }
     };
 
-    // ✅ Delete Account
-    const handleDeleteAccount = async () => {
-        setLoading(true);
-        setMessage("Deleting account...");
-
-        // ⚠️ Supabase does not allow client-side account deletion directly
-        // You’d need to handle deletion securely via a serverless function (e.g. Edge Function)
-        // Example: Call your API route here.
-        setTimeout(() => {
-            setMessage("Account deletion must be handled via server.");
-            setLoading(false);
-        }, 1000);
-    };
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
 
     return (
         <div className="flex flex-col h-full">
             <SettingsTopbar/>
 
-            <div className="flex-1 p-6 overflow-y-auto">
-                <Tabs defaultValue="account" className="space-y-4">
-                    <TabsList>
-                        <TabsTrigger value="account">Account</TabsTrigger>
-                        <TabsTrigger value="recent">Recent</TabsTrigger>
-                    </TabsList>
+            <div className="flex-1 p-6 overflow-y-auto space-y-6">
+                {/* --- Account Info --- */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Account Settings</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="fullName">Full Name</Label>
+                            <Input
+                                id="fullName"
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                                placeholder="Enter your full name"
+                            />
+                        </div>
 
-                    <TabsContent value="account">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Account Settings</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {/* Full Name */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="fullName">Full Name</Label>
+                        {provider === "email" ? (
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                    id="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Enter new email"
+                                    type="email"
+                                />
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">
+                                Account managed via {provider}. Email changes not available.
+                            </p>
+                        )}
+
+                        <Button onClick={handleUpdateProfile} disabled={loadingProfile}>
+                            {loadingProfile ? "Saving..." : "Save Changes"}
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                {/* --- Change Password Section --- */}
+                {provider === "email" && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Change Password</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {/* Current Password */}
+                            <div className="space-y-2">
+                                <Label htmlFor="currentPassword">Current Password</Label>
+                                <div className="relative">
                                     <Input
-                                        id="fullName"
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                        placeholder="Enter your full name"
+                                        id="currentPassword"
+                                        type={showCurrentPassword ? "text" : "password"}
+                                        value={currentPassword}
+                                        onChange={(e) => setCurrentPassword(e.target.value)}
+                                        placeholder="Enter current password"
+                                        className="pr-10" // Add right padding for the icon
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowCurrentPassword((prev) => !prev)}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        tabIndex={-1}
+                                    >
+                                        {showCurrentPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                                    </button>
                                 </div>
+                            </div>
 
-                                {/* Email */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Email</Label>
+                            {/* New Password */}
+                            <div className="space-y-2">
+                                <Label htmlFor="newPassword">New Password</Label>
+                                <div className="relative">
                                     <Input
-                                        id="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="Enter new email"
-                                        type="email"
-                                    />
-                                </div>
-
-                                {/* Password */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="password">Password</Label>
-                                    <Input
-                                        id="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
+                                        id="newPassword"
+                                        type={showNewPassword ? "text" : "password"}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
                                         placeholder="Enter new password"
-                                        type="password"
+                                        className="pr-10"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewPassword((prev) => !prev)}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                        tabIndex={-1}
+                                    >
+                                        {showNewPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                                    </button>
                                 </div>
+                            </div>
 
-                                <Button onClick={handleUpdateProfile} disabled={loading}>
-                                    {loading ? "Saving..." : "Save Changes"}
-                                </Button>
+                            <Button onClick={handleChangePassword} disabled={loadingPassword}>
+                                {loadingPassword ? "Saving..." : "Change Password"}
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
 
-                                {message && (
-                                    <p className="text-sm text-muted-foreground">{message}</p>
-                                )}
-
-                                <hr className="my-4"/>
-
-                                <Button
-                                    variant="destructive"
-                                    onClick={handleDeleteAccount}
-                                    disabled={loading}
-                                >
-                                    Delete Account
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="recent">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Recent View</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <ScrollArea className="h-64">
-                                    <p className="text-sm text-muted-foreground">
-                                        You have no recent activity yet.
-                                    </p>
-                                </ScrollArea>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+                {/* --- Danger Zone --- */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Danger Zone</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteAccount}
+                            disabled={loading}
+                        >
+                            Delete Account
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

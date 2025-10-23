@@ -6,28 +6,36 @@ import {Plus, Upload} from "lucide-react";
 import {topbarClasses} from "@/components/topbars/topbar-base";
 import UploadPdfDialog from "@/components/topbars/upload-file-popup";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
+import {CreateFolderPopup} from "@/components/create-folder-popup";
+import {useState} from "react";
+import {toast} from "sonner";
 
 interface DocumentsTopbarProps {
     onDuplicate?: (pdfId: string) => void;
+    onCreateFolder: (folder: { id: string; name: string }) => void;
 }
 
-export default function DocumentsTopbar({onDuplicate}: DocumentsTopbarProps) {
+export default function DocumentsTopbar({
+                                            onDuplicate,
+                                            onCreateFolder,
+                                        }: DocumentsTopbarProps) {
     const supabase = createClientComponentClient();
+    const [createOpen, setCreateOpen] = useState(false);
 
     const handleUpload = async (file: File) => {
         try {
-            // Get current user
-            const {data: {user}, error: userError} = await supabase.auth.getUser();
+            const {
+                data: {user},
+                error: userError,
+            } = await supabase.auth.getUser();
             if (userError || !user) throw new Error("User not authenticated");
 
-            // Prepare a file path (match your RLS folder rule)
             const fileExt = file.name.split(".").pop();
             const fileName = `${crypto.randomUUID()}.${fileExt}`;
-            const filePath = `${user.id}/${fileName}`; // user folder = auth.uid()
+            const filePath = `${user.id}/${fileName}`;
 
-            // Upload to Supabase Storage bucket
             const {error: uploadError} = await supabase.storage
-                .from("papers") // must match your bucket name
+                .from("papers")
                 .upload(filePath, file, {
                     cacheControl: "3600",
                     upsert: false,
@@ -36,14 +44,12 @@ export default function DocumentsTopbar({onDuplicate}: DocumentsTopbarProps) {
 
             if (uploadError) throw uploadError;
 
-            // Get the public URL (or signed URL for private access)
             const {data: signedUrlData} = await supabase.storage
                 .from("papers")
-                .createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7 days validity
+                .createSignedUrl(filePath, 60 * 60 * 24 * 7);
 
             const fileUrl = signedUrlData?.signedUrl ?? null;
 
-            // Insert into 'papers' table
             const {data: insertedPaper, error: paperError} = await supabase
                 .from("papers")
                 .insert({
@@ -60,7 +66,6 @@ export default function DocumentsTopbar({onDuplicate}: DocumentsTopbarProps) {
 
             if (paperError) throw paperError;
 
-            // Insert into 'user_papers' (link table)
             const {error: linkError} = await supabase
                 .from("user_papers")
                 .insert({
@@ -71,27 +76,59 @@ export default function DocumentsTopbar({onDuplicate}: DocumentsTopbarProps) {
             if (linkError) throw linkError;
 
             console.log("Uploaded:", insertedPaper);
-
             return insertedPaper;
-
         } catch (error: unknown) {
             if (error instanceof Error) {
                 console.error("Upload failed:", error.message);
-                alert("Upload failed: " + error.message);
+                toast.error("Upload failed: " + error.message);
             } else {
                 console.error("Upload failed:", error);
-                alert("An unexpected error occurred.");
+                toast.error("An unexpected error occurred.");
             }
+        }
+    };
+
+    // ✅ renamed this to avoid conflict with prop
+    const handleCreateFolder = async (folderName: string) => {
+        try {
+            const {
+                data: {user},
+                error: userError,
+            } = await supabase.auth.getUser();
+            if (userError || !user) throw new Error("User not authenticated");
+
+            const {data, error: insertError} = await supabase
+                .from("folders")
+                .insert({
+                    name: folderName,
+                    user_id: user.id,
+                    created_at: new Date().toISOString(),
+                })
+                .select()
+                .single();
+
+            if (insertError) throw insertError;
+
+            // ✅ Update UI via parent callback
+            onCreateFolder({id: data.id, name: data.name});
+
+            toast.success(`Folder "${folderName}" created`);
+        } catch (err) {
+            console.error("❌ Failed to create folder:", err);
+            toast.error("Failed to create folder");
         }
     };
 
     return (
         <div className={`${topbarClasses} flex items-center gap-4 px-6`}>
-            {/* Left side: SidebarTrigger + Divider + Title */}
+            {/* Left side */}
             <div className="flex items-center gap-4 flex-nowrap">
                 <SidebarTrigger/>
                 <div className="h-6 w-[2px] bg-border flex-shrink-0"/>
-                <h1 className="text-lg font-semibold whitespace-nowrap" style={{color: "var(--popup-heading)"}}>
+                <h1
+                    className="text-lg font-semibold whitespace-nowrap"
+                    style={{color: "var(--popup-heading)"}}
+                >
                     Documents
                 </h1>
             </div>
@@ -101,6 +138,7 @@ export default function DocumentsTopbar({onDuplicate}: DocumentsTopbarProps) {
                 <Button
                     variant="outline"
                     className="flex items-center gap-2 h-10 px-3"
+                    onClick={() => setCreateOpen(true)}
                 >
                     <Plus className="w-4 h-4"/>
                     Create Folder
@@ -115,6 +153,12 @@ export default function DocumentsTopbar({onDuplicate}: DocumentsTopbarProps) {
                         Upload File
                     </Button>
                 </UploadPdfDialog>
+
+                <CreateFolderPopup
+                    open={createOpen}
+                    onClose={() => setCreateOpen(false)}
+                    onCreate={handleCreateFolder}
+                />
             </div>
         </div>
     );

@@ -2,6 +2,7 @@
 
 import {toast} from "sonner";
 import {Button} from "@/components/ui/button";
+import {Trash2} from "lucide-react";
 
 export function DeletePaperPopup({
                                      pdfId,
@@ -47,7 +48,8 @@ export function DeletePaperPopup({
                     border: "1px solid var(--popup-border)",
                 }}
             >
-                <h2 className="text-lg font-semibold text-center text-red-600">
+                <h2 className="text-lg font-semibold text-center flex items-center justify-center gap-2 text-red-600">
+                    <Trash2 className="w-5 h-5 text-red-600"/>
                     Delete Paper
                 </h2>
                 <p className="text-sm text-gray-600 text-center">

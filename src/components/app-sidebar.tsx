@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Button} from "@/components/ui/button";
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
 
 const topItems = [
     {title: "Documents", url: "/dashboard", icon: FileText},
@@ -31,11 +32,13 @@ export function AppSidebar() {
     const supabase = createClientComponentClient();
     const {setOpen} = useSidebar();
     const [initialized, setInitialized] = useState(false);
+    const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
     const [user, setUser] = useState<{ fullName: string; email: string } | null>(
         null
     );
 
+    // Close sidebar on first load
     useEffect(() => {
         if (!initialized) {
             setOpen(false);
@@ -43,6 +46,7 @@ export function AppSidebar() {
         }
     }, [initialized, setOpen]);
 
+    // Fetch user info
     useEffect(() => {
         const fetchUser = async () => {
             const {data} = await supabase.auth.getSession();
@@ -59,91 +63,109 @@ export function AppSidebar() {
         fetchUser();
     }, [supabase]);
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        router.push("/login");
-    };
-
     return (
-        <Sidebar>
-            <SidebarContent className="flex flex-col justify-between h-full">
-                {/* Top Section */}
-                <div>
-                    <SidebarGroup>
-                        <SidebarGroupLabel className="mb-4">PaperWise</SidebarGroupLabel>
-                        <SidebarGroupContent>
-                            <SidebarMenu>
-                                {topItems.map((item) => (
-                                    <SidebarMenuItem key={item.title}>
-                                        <SidebarMenuButton asChild>
-                                            <Link
-                                                href={item.url}
-                                                className={cn(
-                                                    "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
-                                                    pathname === item.url
-                                                        ? "bg-primary/10 text-primary font-semibold"
-                                                        : "hover:bg-muted/60 text-muted-foreground"
-                                                )}
-                                            >
-                                                <item.icon className="w-4 h-4"/>
-                                                <span>{item.title}</span>
-                                            </Link>
-                                        </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                ))}
-                            </SidebarMenu>
-                        </SidebarGroupContent>
-                    </SidebarGroup>
-                </div>
+        <>
+            <Sidebar>
+                <SidebarContent className="flex flex-col justify-between h-full">
+                    {/* Top Section */}
+                    <div>
+                        <SidebarGroup>
+                            <SidebarGroupLabel className="mb-4">PaperWise</SidebarGroupLabel>
+                            <SidebarGroupContent>
+                                <SidebarMenu>
+                                    {topItems.map((item) => (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton asChild>
+                                                <Link
+                                                    href={item.url}
+                                                    className={cn(
+                                                        "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+                                                        pathname === item.url
+                                                            ? "bg-primary/10 text-primary font-semibold"
+                                                            : "hover:bg-muted/60 text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <item.icon className="w-4 h-4"/>
+                                                    <span>{item.title}</span>
+                                                </Link>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </SidebarGroup>
+                    </div>
 
-                {/* Bottom Section */}
-                <div className="p-4 border-t">
-                    <SidebarMenu>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton asChild>
-                                <Link
-                                    href="/settings"
-                                    className={cn(
-                                        "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
-                                        pathname === "/settings"
-                                            ? "bg-primary/10 text-primary font-semibold"
-                                            : "hover:bg-muted/60 text-muted-foreground"
-                                    )}
-                                >
-                                    <Settings className="w-4 h-4"/>
-                                    <span>Settings</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
+                    {/* Bottom Section */}
+                    <div className="p-4 border-t">
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <Link
+                                        href="/settings"
+                                        className={cn(
+                                            "flex items-center gap-2 px-3 py-2 rounded-md transition-colors",
+                                            pathname === "/settings"
+                                                ? "bg-primary/10 text-primary font-semibold"
+                                                : "hover:bg-muted/60 text-muted-foreground"
+                                        )}
+                                    >
+                                        <Settings className="w-4 h-4"/>
+                                        <span>Settings</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
 
-                        {/* User Info + Logout */}
-                        <div className="mt-4 flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                                <Avatar>
-                                    <AvatarImage src="/avatar.jpg" alt="@user"/>
-                                    <AvatarFallback>{user?.fullName?.[0] ?? "U"}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex flex-col max-w-[120px]">
-                                    <p className="text-sm font-medium truncate">
-                                        {user?.fullName}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground truncate">
-                                        {user?.email}
-                                    </p>
+                            {/* User Info + Logout */}
+                            <div className="mt-4 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                    <Avatar>
+                                        <AvatarImage src="/avatar.jpg" alt="@user"/>
+                                        <AvatarFallback>{user?.fullName?.[0] ?? "U"}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col max-w-[120px]">
+                                        <p className="text-sm font-medium truncate">{user?.fullName}</p>
+                                        <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                                    </div>
                                 </div>
+                                {/* Logout icon button */}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setIsLogoutOpen(true)}
+                                    className="ml-2 bg-transparent hover:bg-muted"
+                                >
+                                    <LogOut className="w-5 h-5 text-black"/>
+                                </Button>
                             </div>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={handleLogout}
-                                className="ml-2 bg-transparent hover:bg-muted"
-                            >
-                                <LogOut className="w-5 h-5 text-black"/>
-                            </Button>
-                        </div>
-                    </SidebarMenu>
-                </div>
-            </SidebarContent>
-        </Sidebar>
+                        </SidebarMenu>
+                    </div>
+                </SidebarContent>
+            </Sidebar>
+
+            {/* Logout Confirmation Dialog */}
+            <Dialog open={isLogoutOpen} onOpenChange={setIsLogoutOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Logout</DialogTitle>
+                    </DialogHeader>
+                    <p>Are you sure you want to log out?</p>
+                    <DialogFooter className="mt-4 flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsLogoutOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={async () => {
+                                await supabase.auth.signOut();
+                                router.push("/");
+                            }}
+                        >
+                            Logout
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }

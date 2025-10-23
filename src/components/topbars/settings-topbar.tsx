@@ -6,7 +6,7 @@ export default function SettingsTopbar() {
         <div className={`${topbarClasses} flex items-center gap-4 px-6`}>
             <SidebarTrigger/>
             <div className="h-6 w-[2px] bg-border flex-shrink-0"/>
-            <h1 className="text-lg font-semibold">Settings</h1>
+            <h1 className="text-lg font-semibold" style={{color: "var(--popup-heading)"}}>Settings</h1>
         </div>
     );
 }

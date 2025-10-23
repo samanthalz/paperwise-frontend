@@ -137,7 +137,12 @@ export function AddPaperButton({
                         <AlertDialogCancel onClick={() => setShowLoginDialog(false)}>
                             Cancel
                         </AlertDialogCancel>
-                        <AlertDialogAction onClick={() => router.push("/login")}>
+                        <AlertDialogAction
+                            onClick={() => {
+                                const currentUrl = window.location.pathname + window.location.search;
+                                router.push(`/login?redirectTo=${encodeURIComponent(currentUrl)}`);
+                            }}
+                        >
                             Go to Login
                         </AlertDialogAction>
                     </AlertDialogFooter>

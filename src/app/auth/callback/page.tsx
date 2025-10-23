@@ -1,12 +1,80 @@
+// 'use client'
+//
+// import {useEffect} from 'react'
+// import {createClientComponentClient} from '@supabase/auth-helpers-nextjs'
+// import {useRouter} from 'next/navigation'
+//
+// export default function AuthCallback() {
+//     const supabase = createClientComponentClient()
+//     const router = useRouter()
+//
+//     useEffect(() => {
+//         const handleAuth = async () => {
+//             const {data: {session}, error} = await supabase.auth.getSession()
+//
+//             if (error) {
+//                 console.error('Failed to get session:', error.message)
+//                 router.replace('/login')
+//                 return
+//             }
+//
+//             if (session) {
+//                 console.log('Session available, inserting user...')
+//
+//                 const {data: {user}, error: userError} = await supabase.auth.getUser()
+//                 if (userError) {
+//                     console.error('Failed to fetch user:', userError.message)
+//                     router.replace('/login')
+//                     return
+//                 }
+//
+//                 if (user) {
+//                     const {error: dbError} = await supabase.from('users').upsert(
+//                         {
+//                             id: user.id,
+//                             full_name:
+//                                 user.user_metadata?.full_name ??
+//                                 user.user_metadata?.name ??
+//                                 null,
+//                         },
+//                         {onConflict: 'id'}
+//                     )
+//
+//                     if (dbError) {
+//                         console.error('Failed to insert user:', dbError.message)
+//                         // 🚨 Don’t throw — just redirect anyway
+//                         router.replace('/dashboard')
+//                         return
+//                     }
+//                 }
+//
+//                 router.replace('/dashboard')
+//             } else {
+//                 console.log('No session, redirecting to /login')
+//                 router.replace('/login')
+//             }
+//         }
+//
+//         handleAuth()
+//     }, [router, supabase])
+//
+//     return (
+//         <div className="flex items-center justify-center h-screen">
+//             <p className="animate-pulse text-lg font-medium">Finishing login...</p>
+//         </div>
+//     )
+// }
+
 'use client'
 
 import {useEffect} from 'react'
 import {createClientComponentClient} from '@supabase/auth-helpers-nextjs'
-import {useRouter} from 'next/navigation'
+import {useRouter, useSearchParams} from 'next/navigation'
 
 export default function AuthCallback() {
     const supabase = createClientComponentClient()
     const router = useRouter()
+    const searchParams = useSearchParams()
 
     useEffect(() => {
         const handleAuth = async () => {
@@ -42,13 +110,12 @@ export default function AuthCallback() {
 
                     if (dbError) {
                         console.error('Failed to insert user:', dbError.message)
-                        // 🚨 Don’t throw — just redirect anyway
-                        router.replace('/dashboard')
-                        return
                     }
                 }
 
-                router.replace('/dashboard')
+                // ✅ Get redirectTo param if exists
+                const redirectTo = searchParams.get('redirectTo')
+                router.replace(redirectTo || '/dashboard')
             } else {
                 console.log('No session, redirecting to /login')
                 router.replace('/login')
@@ -56,7 +123,7 @@ export default function AuthCallback() {
         }
 
         handleAuth()
-    }, [router, supabase])
+    }, [router, supabase, searchParams])
 
     return (
         <div className="flex items-center justify-center h-screen">
@@ -64,3 +131,4 @@ export default function AuthCallback() {
         </div>
     )
 }
+

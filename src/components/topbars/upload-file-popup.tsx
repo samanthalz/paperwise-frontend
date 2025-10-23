@@ -108,54 +108,77 @@ export default function UploadPdfDialog({
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {children || (
-                    <Button variant="default" className="flex items-center gap-2 h-10 px-3">
-                        <Upload className="w-4 h-4"/>
+                    <Button
+                        variant="default"
+                        className="flex items-center gap-2 h-10 px-3 cursor-pointer"
+                    >
+                        <Upload className="w-4 h-4 text-[var(--popup-heading)]"/>
                         Upload File
                     </Button>
                 )}
             </DialogTrigger>
 
-            <DialogContent className="max-w-md bg-white rounded-2xl shadow-lg border border-gray-200">
-                <DialogHeader>
-                    <DialogTitle className="text-lg font-semibold text-gray-800">
-                        Upload PDF File
-                    </DialogTitle>
+            <DialogContent
+                className="max-w-md rounded-2xl shadow-lg border p-6"
+                style={{
+                    backgroundColor: "var(--popup-bg)",
+                    borderColor: "var(--popup-border)",
+                    boxShadow: "var(--popup-shadow)",
+                    color: "var(--popup-text)",
+                }}
+            >
+                {/* --- Header --- */}
+                <DialogHeader
+                    className="text-center rounded-xl p-3 mb-2"
+                    style={{
+                        color: "var(--popup-heading)",
+                    }}
+                >
+                    <div className="flex items-center justify-center gap-2">
+                        <Upload className="w-5 h-5 text-blue-600"/>
+                        <DialogTitle className="text-lg font-semibold">
+                            Upload PDF File
+                        </DialogTitle>
+                    </div>
                 </DialogHeader>
 
+                {/* --- Dropzone --- */}
                 <Dropzone
                     onDrop={handleFileSelect}
                     accept={{"application/pdf": [".pdf"]}}
-                    className="border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition"
+                    className="border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition hover:bg-[var(--popup-highlight)]"
                 >
                     {file ? (
                         <div className="flex flex-col items-center space-y-2">
-                            <FileText className="h-10 w-10 text-primary"/>
+                            <FileText className="h-10 w-10 text-[var(--popup-heading)]"/>
                             <p className="font-medium">{file.name}</p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm opacity-70">
                                 {(file.size / 1024 / 1024).toFixed(2)} MB
                             </p>
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center space-y-2 text-muted-foreground">
-                            <Upload className="h-10 w-10 text-gray-400"/>
+                        <div className="flex flex-col items-center space-y-2 opacity-70">
+                            <Upload className="h-10 w-10 text-[var(--popup-heading)]"/>
                             <p>Drag & drop your PDF here, or click to select</p>
-                            <p className="text-xs text-gray-400">
-                                Only .pdf files are allowed
-                            </p>
+                            <p className="text-xs">Only .pdf files are allowed</p>
                         </div>
                     )}
                 </Dropzone>
 
+                {/* --- Footer --- */}
                 <div className="flex justify-end gap-2 mt-4">
                     <Button
                         onClick={handleUpload}
                         disabled={!file || isUploading}
-                        className="bg-primary text-white hover:bg-primary/90"
+                        className="text-white cursor-pointer transition hover:opacity-90"
                     >
                         {isUploading ? "Uploading..." : "Upload"}
                     </Button>
                 </div>
             </DialogContent>
         </Dialog>
+
+
     );
+
 }
