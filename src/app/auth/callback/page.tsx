@@ -2,15 +2,18 @@
 
 import {useEffect} from 'react'
 import {createClientComponentClient} from '@supabase/auth-helpers-nextjs'
-import {useRouter, useSearchParams} from 'next/navigation'
+import {useRouter} from 'next/navigation'
 
 export default function AuthCallback() {
     const supabase = createClientComponentClient()
     const router = useRouter()
-    const searchParams = useSearchParams()
 
     useEffect(() => {
         const handleAuth = async () => {
+            // Get search params inside the effect
+            const params = new URLSearchParams(window.location.search)
+            const redirectTo = params.get('redirectTo')
+
             const {data: {session}, error} = await supabase.auth.getSession()
 
             if (error) {
@@ -33,10 +36,7 @@ export default function AuthCallback() {
                     const {error: dbError} = await supabase.from('users').upsert(
                         {
                             id: user.id,
-                            full_name:
-                                user.user_metadata?.full_name ??
-                                user.user_metadata?.name ??
-                                null,
+                            full_name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? null,
                         },
                         {onConflict: 'id'}
                     )
@@ -46,8 +46,6 @@ export default function AuthCallback() {
                     }
                 }
 
-                // Get redirectTo param if exists
-                const redirectTo = searchParams.get('redirectTo')
                 router.replace(redirectTo || '/dashboard')
             } else {
                 console.log('No session, redirecting to /login')
@@ -56,7 +54,7 @@ export default function AuthCallback() {
         }
 
         handleAuth()
-    }, [router, supabase, searchParams])
+    }, [router, supabase]) // <-- remove searchParams from dependency
 
     return (
         <div className="flex items-center justify-center h-screen">
@@ -64,4 +62,3 @@ export default function AuthCallback() {
         </div>
     )
 }
-
