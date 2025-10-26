@@ -3,37 +3,41 @@
 import Image from 'next/image';
 import InputField from '@/components/input-field';
 import SocialLoginButtons from '@/components/social-login-btn';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useRouter, useSearchParams} from 'next/navigation';
 import {createClientComponentClient} from '@supabase/auth-helpers-nextjs';
-import Link from "next/link";
+import Link from 'next/link';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
+    const [redirect, setRedirect] = useState('/dashboard');
+
     const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createClientComponentClient();
 
-    // Capture redirect target (if exists)
-    const redirect = searchParams.get("redirect") || "/dashboard";
+    // Capture redirect target safely inside useEffect
+    useEffect(() => {
+        setRedirect(searchParams.get('redirect') || '/dashboard');
+    }, [searchParams]);
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
+        e.preventDefault();
 
-        const {data, error} = await supabase.auth.signInWithPassword({
+        const {error} = await supabase.auth.signInWithPassword({
             email,
             password,
-        })
+        });
 
         if (error) {
-            setErrorMsg('Incorrect email or password. Please try again.')
-            return
+            setErrorMsg('Incorrect email or password. Please try again.');
+            return;
         }
 
-        router.push(redirect)
-    }
+        router.push(redirect);
+    };
 
     return (
         <div className="flex h-screen">
@@ -76,12 +80,10 @@ export default function LoginPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                             />
 
-                            {/* Error message */}
                             {errorMsg && (
                                 <p className="text-red-500 mt-2 text-sm">{errorMsg}</p>
                             )}
 
-                            {/* Forgot Password link */}
                             <div className="flex justify-end mt-2 text-sm">
                                 <Link href="/forgot-password" className="text-blue-600 hover:underline">
                                     Forgot Password?
