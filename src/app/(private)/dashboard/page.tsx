@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {createClientComponentClient} from '@supabase/auth-helpers-nextjs';
 import {Card} from '@/components/ui/card';
@@ -14,6 +14,7 @@ import {MovePaperPopup} from '@/components/move-paper-popup';
 import {DeletePaperPopup} from '@/components/delete-paper-popup';
 import {DeleteFolderPopup} from '@/components/delete-folder-popup';
 import {toast} from 'sonner';
+import {AppRouterInstance} from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 type Paper = {
     pdf_id: string;
@@ -31,6 +32,18 @@ type Folder = {
     name: string;
 };
 
+type PaperCardProps = {
+    paper: Paper;
+    openMenuId: string | null;
+    setOpenMenuId: React.Dispatch<React.SetStateAction<string | null>>;
+    setSelectedPaper: React.Dispatch<React.SetStateAction<Paper | null>>;
+    setRenameOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    setMoveOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    setDeleteOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    router: AppRouterInstance;
+};
+
+
 // Subcomponent for individual paper card
 function PaperCard({
                        paper,
@@ -41,7 +54,7 @@ function PaperCard({
                        setMoveOpen,
                        setDeleteOpen,
                        router,
-                   }: any) {
+                   }: PaperCardProps) {
     return (
         <Card className="hover:shadow-lg transition-shadow relative flex flex-col">
             <div

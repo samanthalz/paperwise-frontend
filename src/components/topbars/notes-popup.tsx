@@ -51,13 +51,14 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
     // Get user session
     useEffect(() => {
         const getUser = async () => {
-            const {data: {session}, error} = await supabase.auth.getSession();
-            if (error) return console.error("Session fetch error:", error);
-            if (session) setUserId(session.user.id);
-            else setUserId(null);
-        };
-        getUser();
-    }, [supabase]);
+            const {data: {session}, error} = await supabase.auth.getSession()
+            if (error) return console.error("Session fetch error:", error)
+            if (session) setUserId(session.user.id)
+            else setUserId(null)
+        }
+        getUser()
+    }, [])
+
 
     // Load notes
     useEffect(() => {
@@ -92,32 +93,35 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
         };
 
         loadNotes();
-    }, [userId, pdfId]);
+    }, [userId, pdfId, supabase]);
+
+    const saveNotes = useCallback(
+        async (newValue: Descendant[]) => {
+            if (!userId || !pdfId) return
+            setSaving(true)
+            const {error} = await supabase
+                .from("notes")
+                .upsert(
+                    {
+                        user_id: userId,
+                        pdf_id: pdfId,
+                        content: newValue,
+                        updated_at: new Date().toISOString(),
+                    },
+                    {onConflict: "user_id,pdf_id"}
+                )
+            if (error) console.error("Save error:", error)
+            setSaving(false)
+        },
+        [supabase, userId, pdfId]
+    )
 
     // Auto-save every 3 seconds
     useEffect(() => {
-        if (!userId || !pdfId) return;
-        const interval = setInterval(() => saveNotes(value), 3000);
-        return () => clearInterval(interval);
-    }, [value, userId, pdfId]);
-
-    const saveNotes = async (newValue: Descendant[]) => {
-        if (!userId || !pdfId) return;
-        setSaving(true);
-        const {error} = await supabase
-            .from("notes")
-            .upsert(
-                {
-                    user_id: userId,
-                    pdf_id: pdfId,
-                    content: newValue,
-                    updated_at: new Date().toISOString(),
-                },
-                {onConflict: "user_id,pdf_id"}
-            );
-        if (error) console.error("Save error:", error);
-        setSaving(false);
-    };
+        if (!userId || !pdfId) return
+        const interval = setInterval(() => saveNotes(value), 3000)
+        return () => clearInterval(interval)
+    }, [value, userId, pdfId, saveNotes])
 
     // Toolbar helpers
     const isMarkActive = (editor: Editor, format: keyof Omit<CustomText, "text">) => {
