@@ -131,10 +131,16 @@ export default function AskPaperTab({
                 if (error) console.error("Error saving user message:", error);
             }
 
-            const res = await fetch("http://127.0.0.1:8000/ask_stream/", {
+            const backendUrl =
+                process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+
+            const res = await fetch(`${backendUrl}/ask_stream/`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({pdf_id: pdfId, question: currentQuestion}),
+                body: JSON.stringify({
+                    pdf_id: pdfId,
+                    question: currentQuestion,
+                }),
             });
 
             if (!res.body) throw new Error("No response body");

@@ -46,7 +46,7 @@ export default function AuthCallback() {
                     }
                 }
 
-                // ✅ Get redirectTo param if exists
+                // Get redirectTo param if exists
                 const redirectTo = searchParams.get('redirectTo')
                 router.replace(redirectTo || '/dashboard')
             } else {

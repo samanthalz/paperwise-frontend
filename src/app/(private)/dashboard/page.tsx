@@ -195,14 +195,14 @@ export default function Dashboard() {
                     filter: `user_id=eq.${userId}`,
                 },
                 async (payload) => {
-                    if (moveInProgressRef.current) return; // 👈 Skip updates during local move
+                    if (moveInProgressRef.current) return;
 
                     const newRow = payload.new as { folder_id?: string | null; pdf_id?: string };
                     const oldRow = payload.old as { folder_id?: string | null; pdf_id?: string };
 
                     const currentFolderId = activeFolder?.id ?? null;
 
-                    // ✅ Handle when folder changes
+                    // Handle when folder changes
                     if (newRow.folder_id !== oldRow.folder_id) {
                         // Paper moved out of current folder
                         if (currentFolderId && oldRow.folder_id === currentFolderId) {
@@ -396,7 +396,8 @@ export default function Dashboard() {
                         )}
 
                         {/* Root Papers */}
-                        <h2 className="mb-2 text-lg font-semibold">Saved Papers</h2>
+                        <h2 className="mt-6 mb-2 text-lg font-semibold">Saved Papers</h2>
+
                         {loading && <p>Loading papers...</p>}
                         {!loading && papers.length === 0 && (
                             <p className="text-sm text-muted-foreground">No papers saved yet.</p>

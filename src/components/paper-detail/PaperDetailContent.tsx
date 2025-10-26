@@ -146,10 +146,20 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
             setPaper({id, title, summary, authors, published, pdfUrl});
 
             // Send to backend
-            const ingestRes = await fetch("http://127.0.0.1:8000/process_pdf/", {
+            const backendUrl =
+                process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+
+            const ingestRes = await fetch(`${backendUrl}/process_pdf/`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({arxiv_id: id, arxiv_url: pdfUrl, title, summary, authors, published}),
+                body: JSON.stringify({
+                    arxiv_id: id,
+                    arxiv_url: pdfUrl,
+                    title,
+                    summary,
+                    authors,
+                    published,
+                }),
             });
 
             const ingestData = await ingestRes.json();
@@ -231,7 +241,10 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
 
         const fetchRecommendations = async () => {
             try {
-                const res = await fetch("http://127.0.0.1:8000/recommendations", {
+                const backendUrl =
+                    process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+
+                const res = await fetch(`${backendUrl}/recommendations`, {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({arxiv_id: canonicalArxivId, limit: 10}),

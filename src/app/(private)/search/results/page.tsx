@@ -6,6 +6,7 @@ import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {SidebarTrigger, useSidebar} from "@/components/ui/sidebar";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
+import {toast} from "sonner";
 
 type ArxivPaper = {
     id: string;
@@ -36,6 +37,7 @@ export default function SearchResultsPage() {
     const [customRange, setCustomRange] = useState({start: "", end: ""});
     const [isCustomMode, setIsCustomMode] = useState(false);
     const [appliedYearRange, setAppliedYearRange] = useState<string | null>(null);
+    const [applying, setApplying] = useState(false);
 
     const [page, setPage] = useState(0);
     const RESULTS_PER_PAGE = 20;
@@ -126,16 +128,22 @@ export default function SearchResultsPage() {
         }
     };
 
-    // Refetch when filters or query change (not in custom mode)
+    // Refetch when filters or query change
     useEffect(() => {
         if (year === "custom") return;
         setPage(0);
         fetchArxivResults(true);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [query, year, sort]);
+    }, [year, sort]);
 
-    const handleSearch = () => {
+    const handleSearch = async () => {
         if (!query.trim()) return;
+
+        // reset paging and run the search right away
+        setPage(0);
+        await fetchArxivResults(true);
+
+        // then update the URL so the search is shareable/bookmarkable
         const params = new URLSearchParams({query});
         if (year !== "any") params.append("year", year);
         if (sort) params.append("sort", sort);
@@ -189,9 +197,9 @@ export default function SearchResultsPage() {
                     >
                         <option value="any">Any year</option>
                         <option value="2025">Since 2025</option>
+                        <option value="2024">Since 2024</option>
                         <option value="2023">Since 2023</option>
-                        <option value="2020">Since 2020</option>
-                        <option value="2015">Since 2015</option>
+                        <option value="2022">Since 2022</option>
                         <option value="custom">Custom range...</option>
                     </select>
 
@@ -222,16 +230,46 @@ export default function SearchResultsPage() {
                                 }
                             />
                             <Button
-                                onClick={() => {
-                                    if (!customRange.start || !customRange.end) return;
-                                    const rangeString = `${customRange.start}-${customRange.end}`;
+                                onClick={async () => {
+                                    const start = customRange.start.trim();
+                                    const end = customRange.end.trim();
+                                    const currentYear = new Date().getFullYear();
+
+                                    if (!start && !end) {
+                                        toast.error("Please enter at least a start or end year.");
+                                        return;
+                                    }
+
+                                    setApplying(true);
+
+                                    // Handle flexible input
+                                    const startYear = start || "1900";
+                                    const endYear = end || currentYear.toString();
+
+                                    if (parseInt(startYear) > parseInt(endYear)) {
+                                        toast.error("Start year cannot be after end year.");
+                                        setApplying(false);
+                                        return;
+                                    }
+
+                                    const rangeString = `${startYear}-${endYear}`;
                                     setAppliedYearRange(rangeString);
                                     setPage(0);
-                                    fetchArxivResults(true, rangeString); // ✅ pass immediately
+                                    await fetchArxivResults(true, rangeString);
+
+                                    // small delay to feel the click
+                                    setTimeout(() => setApplying(false), 600);
                                 }}
+                                disabled={applying}
+                                className={`relative transition-all duration-300 px-5 ${
+                                    applying
+                                        ? "bg-blue-400 cursor-wait"
+                                        : "bg-blue-600 hover:bg-blue-700 shadow hover:shadow-blue-400/50"
+                                } text-white font-medium rounded-md`}
                             >
-                                Apply
+                                {applying ? "Applying..." : "Apply"}
                             </Button>
+
                         </div>
                     )}
                 </div>

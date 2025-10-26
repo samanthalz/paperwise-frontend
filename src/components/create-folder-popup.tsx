@@ -7,11 +7,11 @@ import {FolderPlus, X} from "lucide-react";
 
 type CreateFolderPopupProps = {
     open: boolean;
-    onClose: () => void;
-    onCreate: (folderName: string) => void | Promise<void>;
+    onCloseAction: () => void;
+    onCreateAction: (folderName: string) => void | Promise<void>;
 };
 
-export function CreateFolderPopup({open, onClose, onCreate}: CreateFolderPopupProps) {
+export function CreateFolderPopup({open, onCloseAction, onCreateAction}: CreateFolderPopupProps) {
     const [folderName, setFolderName] = useState("");
     const [saving, setSaving] = useState(false);
 
@@ -19,9 +19,9 @@ export function CreateFolderPopup({open, onClose, onCreate}: CreateFolderPopupPr
         if (!folderName.trim()) return;
         setSaving(true);
         try {
-            await onCreate(folderName.trim());
+            await onCreateAction(folderName.trim());
             setFolderName("");
-            onClose();
+            onCloseAction();
         } catch (e) {
             console.error("Failed to create folder:", e);
         } finally {
@@ -46,12 +46,8 @@ export function CreateFolderPopup({open, onClose, onCreate}: CreateFolderPopupPr
                 <Button
                     size="icon"
                     variant="ghost"
-                    className="absolute top-2 right-2"
-                    onClick={onClose}
-                    style={{
-                        backgroundColor: "var(--popup-header-bg)",
-                        color: "var(--popup-text)",
-                    }}
+                    className="absolute top-2 right-2 text-gray-700 hover:text-gray-950 transition-colors"
+                    onClick={onCloseAction}
                 >
                     <X className="w-5 h-5"/>
                 </Button>
@@ -83,7 +79,7 @@ export function CreateFolderPopup({open, onClose, onCreate}: CreateFolderPopupPr
                 <div className="flex justify-end gap-2 mt-3">
                     <Button
                         variant="outline"
-                        onClick={onClose}
+                        onClick={onCloseAction}
                         disabled={saving}
                         style={{
                             borderColor: "var(--popup-border)",

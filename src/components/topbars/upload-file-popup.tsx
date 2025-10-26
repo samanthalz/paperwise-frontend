@@ -92,11 +92,13 @@ export default function UploadPdfDialog({
                 .subscribe();
 
             // Step 3: Trigger backend processing
-            await fetch("http://127.0.0.1:8000/process_existing_pdf/", {
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+            await fetch(`${backendUrl}/process_existing_pdf/`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({pdf_id: pdfId}),
             });
+
         } catch (err) {
             console.error(err);
             toast.error("Upload or processing failed.");

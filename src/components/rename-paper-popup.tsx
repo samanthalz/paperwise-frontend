@@ -68,12 +68,8 @@ export function RenamePaperPopup({
                 <Button
                     size="icon"
                     variant="ghost"
-                    className="absolute top-2 right-2"
+                    className="absolute top-2 right-2 text-gray-700 hover:text-gray-950 transition-colors"
                     onClick={onCloseAction}
-                    style={{
-                        backgroundColor: "var(--popup-header-bg)",
-                        color: "var(--popup-text)",
-                    }}
                 >
                     <X className="w-5 h-5"/>
                 </Button>

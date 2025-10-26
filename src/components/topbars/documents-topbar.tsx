@@ -156,8 +156,8 @@ export default function DocumentsTopbar({
 
                 <CreateFolderPopup
                     open={createOpen}
-                    onClose={() => setCreateOpen(false)}
-                    onCreate={handleCreateFolder}
+                    onCloseAction={() => setCreateOpen(false)}
+                    onCreateAction={handleCreateFolder}
                 />
             </div>
         </div>
