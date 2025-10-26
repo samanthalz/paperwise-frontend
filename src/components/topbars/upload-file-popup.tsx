@@ -7,6 +7,7 @@ import {Dropzone} from "@/components/ui/dropzone";
 import {FileText, Upload} from "lucide-react";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
 import {toast} from "sonner"; // ✅ ShadCN toast system
+import {RealtimeChannel} from "@supabase/supabase-js";
 
 interface UploadedPaper {
     pdf_id: string;
@@ -42,7 +43,7 @@ export default function UploadPdfDialog({
         if (!file) return;
         setIsUploading(true);
 
-        let channel: any = null;
+        let channel: RealtimeChannel | null = null;
 
         try {
             // Step 1: Upload file
@@ -74,7 +75,7 @@ export default function UploadPdfDialog({
                             setFile(null);
                             setOpen(false);
                             if (onDuplicate) onDuplicate(pdfId);
-                            channel.unsubscribe();
+                            channel?.unsubscribe();
                             return;
                         }
 
@@ -84,7 +85,7 @@ export default function UploadPdfDialog({
                             setIsUploading(false);
                             setFile(null);
                             setOpen(false);
-                            channel.unsubscribe();
+                            channel?.unsubscribe();
                             return;
                         }
                     }
@@ -92,7 +93,9 @@ export default function UploadPdfDialog({
                 .subscribe();
 
             // Step 3: Trigger backend processing
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+            const backendUrl =
+                process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+
             await fetch(`${backendUrl}/process_existing_pdf/`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
