@@ -37,6 +37,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
     const [paper, setPaper] = useState<ArxivPaper | null>(null);
     const [signedUrl, setSignedUrl] = useState<string | null>(null);
     const [pdfId, setPdfId] = useState<string | null>(null);
+    const [arxivId, setArxivId] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [userPaperId, setUserPaperId] = useState<number | null>(null);
     const [isSaved, setIsSaved] = useState(false);
@@ -51,7 +52,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
     const pdfUrlToRender = signedUrl || paper?.pdfUrl || null;
     const CACHE_EXPIRY_MS = 60 * 60 * 1000;
 
-    const canonicalArxivId = paperId.replace(/v\d+$/i, "");
+    const canonicalArxivId = paper?.id?.replace(/v\d+$/i, "");
 
     // --- Close sidebar on mount
     useEffect(() => {
@@ -66,66 +67,69 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
         supabase.auth.getSession().then(({data}) => setIsLoggedIn(!!data.session));
     }, [supabase]);
 
-    const fetchUserPaper = useCallback(async (id: string) => {
-        console.log("fetchUserPaper called with id:", id);
-        try {
-            const {data, error} = await supabase
-                .from("papers")
-                .select("supabase_url, title, authors, published, abstract")
-                .eq("pdf_id", id)
-                .single();
+    // --- Fetch user paper
+    const fetchUserPaper = useCallback(
+        async (id: string) => {
+            try {
+                const {data, error} = await supabase
+                    .from("papers")
+                    .select("supabase_url, title, authors, published, abstract, pdf_id, arxiv_id")
+                    .or(`pdf_id.eq.${id},arxiv_id.eq.${id}`)
+                    .single();
 
-            if (error) {
-                console.log("Supabase fetch error:", error);
-                return false;
-            }
-
-            if (data?.supabase_url) {
-                let finalSignedUrl = data.supabase_url;
-
-                // Create signed URL first
-                const match = data.supabase_url.match(/\/storage\/v1\/object\/sign\/([^/]+)\/(.+)/);
-                if (match) {
-                    const bucket = match[1];
-                    const path = match[2].split("?")[0];
-
-                    const {data: signed, error: signedError} = await supabase
-                        .storage
-                        .from(bucket)
-                        .createSignedUrl(path, 60 * 60);
-
-                    if (!signedError) {
-                        finalSignedUrl = signed.signedUrl;
-                    }
+                if (error) {
+                    console.log("Supabase fetch error:", error);
+                    return false;
                 }
 
-                // Batch all state updates
-                setPaper({
-                    id,
-                    title: data.title,
-                    authors: data.authors || [],
-                    published: data.published || new Date().toISOString(),
-                    summary: data.abstract || "",
-                    pdfUrl: data.supabase_url,
-                    supabaseUrl: data.supabase_url,
-                });
-                setPdfId(id);
-                setSignedUrl(finalSignedUrl);
+                if (data) {
+                    setPaper({
+                        id: data.arxiv_id || data.pdf_id || id,
+                        title: data.title,
+                        authors: data.authors || [],
+                        published: data.published || new Date().toISOString(),
+                        summary: data.abstract || "",
+                        pdfUrl: data.supabase_url || "",
+                        supabaseUrl: data.supabase_url,
+                    });
 
-                return true;
+                    setPdfId(data.pdf_id || null);
+                    setArxivId(data.arxiv_id || null);
+
+                    if (data.supabase_url) {
+                        const match = data.supabase_url.match(/\/storage\/v1\/object\/sign\/([^/]+)\/(.+)/);
+                        if (match) {
+                            const bucket = match[1];
+                            const path = match[2].split("?")[0];
+                            const {data: signed, error: signedError} = await supabase
+                                .storage
+                                .from(bucket)
+                                .createSignedUrl(path, 60 * 60);
+
+                            if (!signedError) setSignedUrl(signed.signedUrl);
+                        } else {
+                            setSignedUrl(data.supabase_url);
+                        }
+                    }
+
+                    return true;
+                }
+
+                return false;
+            } catch (err) {
+                console.error("Fetch user paper error:", err);
+                return false;
             }
-
-            return false;
-        } catch (err) {
-            console.error("Fetch user paper error:", err);
-            return false;
-        }
-    }, [supabase]);
+        },
+        [supabase]
+    );
 
     // --- Fetch arXiv paper
     const fetchArxivPaper = useCallback(async () => {
         try {
-            const res = await fetch(`https://export.arxiv.org/api/query?id_list=${encodeURIComponent(paperId)}`);
+            const res = await fetch(
+                `https://export.arxiv.org/api/query?id_list=${encodeURIComponent(paperId)}`
+            );
             if (!res.ok) throw new Error(`Failed to fetch arXiv: ${res.status}`);
 
             const xmlText = await res.text();
@@ -138,28 +142,23 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
             const title = entry.querySelector("title")?.textContent?.trim() ?? "";
             const summary = entry.querySelector("summary")?.textContent?.trim() ?? "";
             const published = entry.querySelector("published")?.textContent ?? "";
-            const authors = Array.from(entry.querySelectorAll("author name")).map((n) => n.textContent ?? "");
-            const pdfUrl = Array.from(entry.querySelectorAll("link"))
-                .find((l) => l.getAttribute("title") === "pdf")
-                ?.getAttribute("href") ?? "";
+            const authors = Array.from(entry.querySelectorAll("author name")).map(
+                (n) => n.textContent ?? ""
+            );
+            const pdfUrl =
+                Array.from(entry.querySelectorAll("link"))
+                    .find((l) => l.getAttribute("title") === "pdf")
+                    ?.getAttribute("href") ?? "";
 
             setPaper({id, title, summary, authors, published, pdfUrl});
+            setArxivId(id);
 
-            // Send to backend
-            const backendUrl =
-                process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
 
             const ingestRes = await fetch(`${backendUrl}/process_pdf/`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    arxiv_id: id,
-                    arxiv_url: pdfUrl,
-                    title,
-                    summary,
-                    authors,
-                    published,
-                }),
+                body: JSON.stringify({arxiv_id: id, arxiv_url: pdfUrl, title, summary, authors, published}),
             });
 
             const ingestData = await ingestRes.json();
@@ -172,29 +171,21 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
         }
     }, [paperId]);
 
-    // --- Initialize paper (user PDF or arXiv)
+
+    // --- Initialize paper
     useEffect(() => {
         let mounted = true;
 
         const init = async () => {
             if (!paperId || !mounted) return;
 
-            console.log("🔄 Starting paper initialization");
             setProcessing(true);
-
             const isUser = await fetchUserPaper(paperId);
-            if (!isUser && mounted) {
-                await fetchArxivPaper();
-            }
-
-            if (mounted) {
-                setProcessing(false);
-                console.log("✅ Paper initialization complete");
-            }
+            if (!isUser && mounted) await fetchArxivPaper();
+            if (mounted) setProcessing(false);
         };
 
         init();
-
         return () => {
             mounted = false;
         };
@@ -203,7 +194,6 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
     // --- Poll arXiv processing
     useEffect(() => {
         if (!pdfId) return;
-
         const interval = setInterval(async () => {
             try {
                 const res = await fetch(`/api/paper_status?pdfId=${pdfId}`);
@@ -215,15 +205,12 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                 console.error("Status poll error:", err);
             }
         }, 2000);
-
         return () => clearInterval(interval);
     }, [pdfId, paper?.supabaseUrl]);
 
-    // --- Fetch recommendations for arXiv
+    // --- Fetch recommendations
     useEffect(() => {
-        if (!canonicalArxivId) return;
-        if (!paper) return;                // wait until paper is loaded
-        if (paper.supabaseUrl) return;     // skip if supabaseUrl exists
+        if (!canonicalArxivId || !paper || paper.supabaseUrl) return;
 
         const cacheKey = `recommendations_${canonicalArxivId}`;
         const cached = sessionStorage.getItem(cacheKey);
@@ -241,18 +228,14 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
 
         const fetchRecommendations = async () => {
             try {
-                const backendUrl =
-                    process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
-
+                const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
                 const res = await fetch(`${backendUrl}/recommendations`, {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({arxiv_id: canonicalArxivId, limit: 10}),
                 });
-
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.detail || "Failed to fetch recommendations");
-
                 setRecommendations(data.recommendations || []);
                 sessionStorage.setItem(
                     cacheKey,
@@ -266,10 +249,9 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
         };
 
         fetchRecommendations();
-    }, [CACHE_EXPIRY_MS, canonicalArxivId, paper]);
+    }, [canonicalArxivId, paper, CACHE_EXPIRY_MS]);
 
-
-    // --- UI
+    // --- Render
     return (
         <div className="flex flex-col h-screen overflow-hidden">
             {/* Topbar */}
@@ -303,7 +285,6 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
 
             {/* Content */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 pb-4 min-h-0 overflow-hidden">
-                {/* PDF */}
                 <div className="w-full h-full border rounded-lg overflow-hidden">
                     {pdfUrlToRender ? (
                         <iframe src={pdfUrlToRender} className="w-full h-full" title={paper?.title || "PDF"}/>
@@ -312,7 +293,6 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                     )}
                 </div>
 
-                {/* Tabs */}
                 <div className="border rounded-md shadow-sm flex flex-col h-full overflow-hidden">
                     <Tabs value={activeTab} onValueChange={setActiveTab}
                           className="flex flex-col h-full overflow-hidden">
@@ -324,14 +304,8 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                                 {key: "ask", label: "Ask Paper"},
                                 {key: "related", label: "Related Papers"},
                             ].map(({key, label}) => (
-                                <TabsTrigger
-                                    key={key}
-                                    value={key}
-                                    className="relative rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none focus-visible:ring-0
-                      data-[state=active]:border-b-blue-600
-                      data-[state=active]:text-blue-600
-                      data-[state=active]:shadow-none"
-                                >
+                                <TabsTrigger key={key} value={key}
+                                             className="relative rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none focus-visible:ring-0 data-[state=active]:border-b-blue-600 data-[state=active]:text-blue-600 data-[state=active]:shadow-none">
                                     {label}
                                 </TabsTrigger>
                             ))}
@@ -365,7 +339,6 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                                     loading={loadingRecommendations}
                                     hasSupabaseUrl={!!paper?.supabaseUrl}
                                 />
-
                             </TabsContent>
                         </div>
                     </Tabs>
@@ -378,14 +351,14 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                     onCloseAction={() => setShowCitation(false)}
                     title={paper.title}
                     authors={paper.authors ?? []}
-                    arxivId={paper.id}
+                    arxivId={arxivId ?? ""}
                     publishedDate={paper.published}
                 />
             )}
 
-            {showNotes && paper &&
-                <NotesPopup open={showNotes} onCloseAction={() => setShowNotes(false)} pdfId={pdfId}/>}
+            {showNotes && paper && (
+                <NotesPopup open={showNotes} onCloseAction={() => setShowNotes(false)} pdfId={pdfId}/>
+            )}
         </div>
     );
 }
-

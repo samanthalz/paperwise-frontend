@@ -24,6 +24,7 @@ export default function SettingsPage() {
     const [loadingPassword, setLoadingPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
+    const [originalFullName, setOriginalFullName] = useState("");
 
     // Password change fields
     const [currentPassword, setCurrentPassword] = useState("");
@@ -66,7 +67,10 @@ export default function SettingsPage() {
                     .eq("id", user.id)
                     .single();
 
-                if (!error && data) setFullName(data.full_name ?? "");
+                if (!error && data) {
+                    setFullName(data.full_name ?? "");
+                    setOriginalFullName(data.full_name ?? "");
+                }
             }
 
             setLoading(false);
@@ -79,17 +83,23 @@ export default function SettingsPage() {
         setLoadingProfile(true);
         setMessage("");
 
-        const {
-            data: {user},
-        } = await supabase.auth.getUser();
+        if (!fullName.trim() || !email.trim()) {
+            toast.error("Missing information", {
+                description: "Field cannot be empty.",
+            });
+            setLoadingProfile(false);
+            return;
+        }
 
+        const {data: {user}} = await supabase.auth.getUser();
         if (!user) {
             toast.error("You are not logged in");
             setLoadingProfile(false);
             return;
         }
 
-        const noChanges = fullName === (user.user_metadata?.full_name ?? "") && email === user.email;
+        const noChanges = fullName === originalFullName && email === originalEmail;
+
         if (noChanges) {
             toast.success("Profile updated successfully", {
                 description: "No changes were made, but your profile is up to date.",
@@ -99,7 +109,7 @@ export default function SettingsPage() {
         }
 
         try {
-            // ✅ Update full name in your users table
+            // Update full name in your users table
             const {error: updateUserError} = await supabase
                 .from("users")
                 .update({full_name: fullName})
@@ -107,7 +117,7 @@ export default function SettingsPage() {
 
             if (updateUserError) throw updateUserError;
 
-            // ✅ Handle email update if changed
+            // Handle email update if changed
             if (provider === "email" && email !== user.email) {
                 let authUpdateError: AuthError | null = null;
                 let authUpdateData = null;
@@ -117,7 +127,10 @@ export default function SettingsPage() {
                     authUpdateError = result.error;
                     authUpdateData = result.data;
                 } catch (e) {
-                    if (e instanceof AuthApiError && e.message.includes("already been registered")) {
+                    if (
+                        e instanceof AuthApiError &&
+                        e.message.includes("already been registered")
+                    ) {
                         authUpdateError = e;
                     } else {
                         console.error("Unexpected Supabase error:", e);
@@ -164,6 +177,8 @@ export default function SettingsPage() {
         } finally {
             setLoadingProfile(false);
         }
+        setOriginalFullName(fullName);
+        setOriginalEmail(email);
     };
 
     const handleChangePassword = async () => {
@@ -179,7 +194,7 @@ export default function SettingsPage() {
             return;
         }
 
-        if (!currentPassword || !newPassword) {
+        if (!currentPassword.trim() || !newPassword.trim()) {
             toast.error("Missing fields", {
                 description: "Please fill in both current and new password.",
             });
@@ -187,7 +202,7 @@ export default function SettingsPage() {
             return;
         }
 
-        // ✅ Step 0: Validate new password strength
+        // Validate new password strength
         const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+=\-{};:'",.<>/?]{8,}$/;
         if (!passwordRegex.test(newPassword)) {
             toast.error("Weak password", {

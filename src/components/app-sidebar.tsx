@@ -31,14 +31,14 @@ export function AppSidebar() {
     const pathname = usePathname();
     const supabase = createClientComponentClient();
     const {setOpen} = useSidebar();
+
     const [initialized, setInitialized] = useState(false);
     const [isLogoutOpen, setIsLogoutOpen] = useState(false);
-
     const [user, setUser] = useState<{ fullName: string; email: string } | null>(
         null
     );
 
-    // Close sidebar on first load
+    // ✅ Close sidebar on first load only
     useEffect(() => {
         if (!initialized) {
             setOpen(false);
@@ -46,21 +46,65 @@ export function AppSidebar() {
         }
     }, [initialized, setOpen]);
 
-    // Fetch user info
+    // ✅ Fetch user info and listen for realtime updates
     useEffect(() => {
-        const fetchUser = async () => {
-            const {data} = await supabase.auth.getSession();
-            const currentUser = data?.session?.user;
+        let channel: ReturnType<typeof supabase.channel> | null = null;
 
-            if (currentUser) {
-                setUser({
-                    fullName: currentUser.user_metadata?.full_name ?? "User",
-                    email: currentUser.email ?? "",
-                });
+        const fetchUserAndSubscribe = async () => {
+            const {
+                data: {user},
+                error,
+            } = await supabase.auth.getUser();
+
+            if (error || !user) return;
+
+            // Fetch initial profile
+            const {data: profile, error: profileError} = await supabase
+                .from("users")
+                .select("full_name")
+                .eq("id", user.id)
+                .single();
+
+            if (profileError) {
+                console.error("Error fetching profile:", profileError);
             }
+
+            setUser({
+                fullName: profile?.full_name ?? "User",
+                email: user.email ?? "",
+            });
+
+            // ✅ Setup realtime subscription
+            channel = supabase
+                .channel(`user-profile-listener-${user.id}`) // unique per user
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "UPDATE",
+                        schema: "public",
+                        table: "users",
+                        filter: `id=eq.${user.id}`,
+                    },
+                    (payload) => {
+                        const updatedName = payload.new.full_name;
+                        setUser((prev) =>
+                            prev ? {...prev, fullName: updatedName ?? prev.fullName} : prev
+                        );
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === "SUBSCRIBED") {
+                        console.log(`✅ Listening for name updates for user ${user.id}`);
+                    }
+                });
         };
 
-        fetchUser();
+        fetchUserAndSubscribe();
+
+        // ✅ Cleanup channel properly on unmount
+        return () => {
+            if (channel) supabase.removeChannel(channel);
+        };
     }, [supabase]);
 
     return (
@@ -121,11 +165,17 @@ export function AppSidebar() {
                                 <div className="flex items-center gap-3">
                                     <Avatar>
                                         <AvatarImage src="/avatar.jpg" alt="@user"/>
-                                        <AvatarFallback>{user?.fullName?.[0] ?? "U"}</AvatarFallback>
+                                        <AvatarFallback>
+                                            {user?.fullName?.[0]?.toUpperCase() ?? "U"}
+                                        </AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col max-w-[120px]">
-                                        <p className="text-sm font-medium truncate">{user?.fullName}</p>
-                                        <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                                        <p className="text-sm font-medium truncate">
+                                            {user?.fullName}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground truncate">
+                                            {user?.email}
+                                        </p>
                                     </div>
                                 </div>
                                 {/* Logout icon button */}

@@ -11,7 +11,7 @@ type CitationPopupProps = {
     onCloseAction: () => void;
     title: string;
     authors: string[];
-    arxivId: string;
+    arxivId?: string;
     publishedDate: string;
 };
 

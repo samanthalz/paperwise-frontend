@@ -78,7 +78,7 @@ export function generateCitations({
                                   }: {
     title: string;
     authors: string[] | null | undefined;
-    arxivId: string;
+    arxivId?: string;
     publishedDate: string;
 }): Citation[] {
     // If authors is null, undefined, or empty, return empty array

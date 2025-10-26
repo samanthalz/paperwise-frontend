@@ -59,7 +59,11 @@ function PaperCard({
         <Card className="hover:shadow-lg transition-shadow relative flex flex-col">
             <div
                 className="w-full aspect-[4/3] relative overflow-hidden group cursor-pointer"
-                onClick={() => router.push(`/${encodeURIComponent(paper.pdf_id)}`)}
+                onClick={() => {
+                    const idToUse = paper.arxiv_id ?? paper.pdf_id;
+                    router.push(`/${encodeURIComponent(idToUse)}`);
+                }}
+
             >
                 <Image
                     src={paper.preview_url ?? '/placeholder-pdf.png'}
@@ -378,7 +382,7 @@ export default function Dashboard() {
                                     {folders.map((folder) => (
                                         <Card key={folder.id}
                                               className="relative group p-3 bg-card hover:bg-muted/60 transition-all duration-150 rounded-lg flex flex-col items-center justify-center">
-                                            {/* Open folder button - small and clean */}
+                                            {/* Open folder button */}
                                             <button
                                                 onClick={() => openFolder(folder)}
                                                 className="flex flex-col items-center justify-center ..."
