@@ -1,27 +1,29 @@
 'use client';
 
+import React, {useEffect, useState} from 'react';
+import {useRouter} from 'next/navigation';
 import Image from 'next/image';
 import InputField from '@/components/input-field';
 import SocialLoginButtons from '@/components/social-login-btn';
-import React, {useEffect, useState} from 'react';
-import {useRouter, useSearchParams} from 'next/navigation';
-import {createClientComponentClient} from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
+import {createClientComponentClient} from '@supabase/auth-helpers-nextjs';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
     const [redirect, setRedirect] = useState('/dashboard');
+    const [searchParamsReady, setSearchParamsReady] = useState(false);
 
     const router = useRouter();
-    const searchParams = useSearchParams();
     const supabase = createClientComponentClient();
 
-    // Capture redirect target safely inside useEffect
+    // Lazy read search params in effect
     useEffect(() => {
-        setRedirect(searchParams.get('redirect') || '/dashboard');
-    }, [searchParams]);
+        const params = new URLSearchParams(window.location.search);
+        setRedirect(params.get('redirect') || '/dashboard');
+        setSearchParamsReady(true);
+    }, []);
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -38,6 +40,9 @@ export default function LoginPage() {
 
         router.push(redirect);
     };
+
+    // Prevent rendering until searchParams are ready (avoids SSR issue)
+    if (!searchParamsReady) return null;
 
     return (
         <div className="flex h-screen">
