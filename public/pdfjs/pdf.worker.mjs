@@ -309,32 +309,39 @@ const PasswordResponses = {
     INCORRECT_PASSWORD: 2
 };
 let verbosity = VerbosityLevel.WARNINGS;
+
 function setVerbosityLevel(level) {
     if (Number.isInteger(level)) {
         verbosity = level;
     }
 }
+
 function getVerbosityLevel() {
     return verbosity;
 }
+
 function info(msg) {
     if (verbosity >= VerbosityLevel.INFOS) {
         console.log(`Info: ${msg}`);
     }
 }
+
 function warn(msg) {
     if (verbosity >= VerbosityLevel.WARNINGS) {
         console.log(`Warning: ${msg}`);
     }
 }
+
 function unreachable(msg) {
     throw new Error(msg);
 }
+
 function assert(cond, msg) {
     if (!cond) {
         unreachable(msg);
     }
 }
+
 function _isValidProtocol(url) {
     switch (url?.protocol) {
         case "http:":
@@ -347,6 +354,7 @@ function _isValidProtocol(url) {
             return false;
     }
 }
+
 function createValidAbsoluteUrl(url, baseUrl = null, options = null) {
     if (!url) {
         return null;
@@ -361,12 +369,14 @@ function createValidAbsoluteUrl(url, baseUrl = null, options = null) {
         if (options.tryConvertEncoding) {
             try {
                 url = stringToUTF8String(url);
-            } catch {}
+            } catch {
+            }
         }
     }
     const absoluteUrl = baseUrl ? URL.parse(url, baseUrl) : URL.parse(url);
     return _isValidProtocol(absoluteUrl) ? absoluteUrl : null;
 }
+
 function updateUrlHash(url, hash, allowRel = false) {
     const res = URL.parse(url);
     if (res) {
@@ -378,6 +388,7 @@ function updateUrlHash(url, hash, allowRel = false) {
     }
     return "";
 }
+
 function shadow(obj, prop, value, nonSerializable = false) {
     Object.defineProperty(obj, prop, {
         value,
@@ -387,32 +398,38 @@ function shadow(obj, prop, value, nonSerializable = false) {
     });
     return value;
 }
+
 const BaseException = function BaseExceptionClosure() {
     function BaseException(message, name) {
         this.message = message;
         this.name = name;
     }
+
     BaseException.prototype = new Error();
     BaseException.constructor = BaseException;
     return BaseException;
 }();
+
 class PasswordException extends BaseException {
     constructor(msg, code) {
         super(msg, "PasswordException");
         this.code = code;
     }
 }
+
 class UnknownErrorException extends BaseException {
     constructor(msg, details) {
         super(msg, "UnknownErrorException");
         this.details = details;
     }
 }
+
 class InvalidPDFException extends BaseException {
     constructor(msg) {
         super(msg, "InvalidPDFException");
     }
 }
+
 class ResponseException extends BaseException {
     constructor(msg, status, missing) {
         super(msg, "ResponseException");
@@ -420,16 +437,19 @@ class ResponseException extends BaseException {
         this.missing = missing;
     }
 }
+
 class FormatError extends BaseException {
     constructor(msg) {
         super(msg, "FormatError");
     }
 }
+
 class AbortException extends BaseException {
     constructor(msg) {
         super(msg, "AbortException");
     }
 }
+
 function bytesToString(bytes) {
     if (typeof bytes !== "object" || bytes?.length === undefined) {
         unreachable("Invalid argument for bytesToString");
@@ -447,6 +467,7 @@ function bytesToString(bytes) {
     }
     return strBuf.join("");
 }
+
 function stringToBytes(str) {
     if (typeof str !== "string") {
         unreachable("Invalid argument for stringToBytes");
@@ -458,18 +479,22 @@ function stringToBytes(str) {
     }
     return bytes;
 }
+
 function string32(value) {
     return String.fromCharCode(value >> 24 & 0xff, value >> 16 & 0xff, value >> 8 & 0xff, value & 0xff);
 }
+
 function objectSize(obj) {
     return Object.keys(obj).length;
 }
+
 function isLittleEndian() {
     const buffer8 = new Uint8Array(4);
     buffer8[0] = 1;
     const view32 = new Uint32Array(buffer8.buffer, 0, 1);
     return view32[0] === 1;
 }
+
 function isEvalSupported() {
     try {
         new Function("");
@@ -478,19 +503,24 @@ function isEvalSupported() {
         return false;
     }
 }
+
 class FeatureTest {
     static get isLittleEndian() {
         return shadow(this, "isLittleEndian", isLittleEndian());
     }
+
     static get isEvalSupported() {
         return shadow(this, "isEvalSupported", isEvalSupported());
     }
+
     static get isOffscreenCanvasSupported() {
         return shadow(this, "isOffscreenCanvasSupported", typeof OffscreenCanvas !== "undefined");
     }
+
     static get isImageDecoderSupported() {
         return shadow(this, "isImageDecoderSupported", typeof ImageDecoder !== "undefined");
     }
+
     static get platform() {
         const {
             platform,
@@ -504,15 +534,19 @@ class FeatureTest {
             isFirefox: userAgent.includes("Firefox")
         });
     }
+
     static get isCSSRoundSupported() {
         return shadow(this, "isCSSRoundSupported", globalThis.CSS?.supports?.("width: round(1.5px, 1px)"));
     }
 }
+
 const hexNumbers = Array.from(Array(256).keys(), n => n.toString(16).padStart(2, "0"));
+
 class Util {
     static makeHexColor(r, g, b) {
         return `#${hexNumbers[r]}${hexNumbers[g]}${hexNumbers[b]}`;
     }
+
     static scaleMinMax(transform, minMax) {
         let temp;
         if (transform[0]) {
@@ -557,15 +591,18 @@ class Util {
         minMax[2] += transform[4];
         minMax[3] += transform[5];
     }
+
     static transform(m1, m2) {
         return [m1[0] * m2[0] + m1[2] * m2[1], m1[1] * m2[0] + m1[3] * m2[1], m1[0] * m2[2] + m1[2] * m2[3], m1[1] * m2[2] + m1[3] * m2[3], m1[0] * m2[4] + m1[2] * m2[5] + m1[4], m1[1] * m2[4] + m1[3] * m2[5] + m1[5]];
     }
+
     static applyTransform(p, m, pos = 0) {
         const p0 = p[pos];
         const p1 = p[pos + 1];
         p[pos] = p0 * m[0] + p1 * m[2] + m[4];
         p[pos + 1] = p0 * m[1] + p1 * m[3] + m[5];
     }
+
     static applyTransformToBezier(p, transform, pos = 0) {
         const m0 = transform[0];
         const m1 = transform[1];
@@ -580,6 +617,7 @@ class Util {
             p[pos + i + 1] = pI * m1 + pI1 * m3 + m5;
         }
     }
+
     static applyInverseTransform(p, m) {
         const p0 = p[0];
         const p1 = p[1];
@@ -587,6 +625,7 @@ class Util {
         p[0] = (p0 * m[3] - p1 * m[2] + m[2] * m[5] - m[4] * m[3]) / d;
         p[1] = (-p0 * m[1] + p1 * m[0] + m[4] * m[1] - m[5] * m[0]) / d;
     }
+
     static axialAlignedBoundingBox(rect, transform, output) {
         const m0 = transform[0];
         const m1 = transform[1];
@@ -625,10 +664,12 @@ class Util {
         output[2] = Math.max(output[2], a0, a1, a2, a3);
         output[3] = Math.max(output[3], b0, b1, b2, b3);
     }
+
     static inverseTransform(m) {
         const d = m[0] * m[3] - m[1] * m[2];
         return [m[3] / d, -m[1] / d, -m[2] / d, m[0] / d, (m[2] * m[5] - m[4] * m[3]) / d, (m[4] * m[1] - m[5] * m[0]) / d];
     }
+
     static singularValueDecompose2dScale(matrix, output) {
         const m0 = matrix[0];
         const m1 = matrix[1];
@@ -642,6 +683,7 @@ class Util {
         output[0] = Math.sqrt(first + second || 1);
         output[1] = Math.sqrt(first - second || 1);
     }
+
     static normalizeRect(rect) {
         const r = rect.slice(0);
         if (rect[0] > rect[2]) {
@@ -654,6 +696,7 @@ class Util {
         }
         return r;
     }
+
     static intersect(rect1, rect2) {
         const xLow = Math.max(Math.min(rect1[0], rect1[2]), Math.min(rect2[0], rect2[2]));
         const xHigh = Math.min(Math.max(rect1[0], rect1[2]), Math.max(rect2[0], rect2[2]));
@@ -667,18 +710,21 @@ class Util {
         }
         return [xLow, yLow, xHigh, yHigh];
     }
+
     static pointBoundingBox(x, y, minMax) {
         minMax[0] = Math.min(minMax[0], x);
         minMax[1] = Math.min(minMax[1], y);
         minMax[2] = Math.max(minMax[2], x);
         minMax[3] = Math.max(minMax[3], y);
     }
+
     static rectBoundingBox(x0, y0, x1, y1, minMax) {
         minMax[0] = Math.min(minMax[0], x0, x1);
         minMax[1] = Math.min(minMax[1], y0, y1);
         minMax[2] = Math.max(minMax[2], x0, x1);
         minMax[3] = Math.max(minMax[3], y0, y1);
     }
+
     static #getExtremumOnCurve(x0, x1, x2, x3, y0, y1, y2, y3, t, minMax) {
         if (t <= 0 || t >= 1) {
             return;
@@ -693,6 +739,7 @@ class Util {
         minMax[2] = Math.max(minMax[2], x);
         minMax[3] = Math.max(minMax[3], y);
     }
+
     static #getExtremum(x0, x1, x2, x3, y0, y1, y2, y3, a, b, c, minMax) {
         if (Math.abs(a) < 1e-12) {
             if (Math.abs(b) >= 1e-12) {
@@ -709,6 +756,7 @@ class Util {
         this.#getExtremumOnCurve(x0, x1, x2, x3, y0, y1, y2, y3, (-b + sqrtDelta) / a2, minMax);
         this.#getExtremumOnCurve(x0, x1, x2, x3, y0, y1, y2, y3, (-b - sqrtDelta) / a2, minMax);
     }
+
     static bezierBoundingBox(x0, y0, x1, y1, x2, y2, x3, y3, minMax) {
         minMax[0] = Math.min(minMax[0], x0, x3);
         minMax[1] = Math.min(minMax[1], y0, y3);
@@ -718,7 +766,9 @@ class Util {
         this.#getExtremum(x0, x1, x2, x3, y0, y1, y2, y3, 3 * (-y0 + 3 * (y1 - y2) + y3), 6 * (y0 - 2 * y1 + y2), 3 * (y1 - y0), minMax);
     }
 }
+
 const PDFStringTranslateTable = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x2d8, 0x2c7, 0x2c6, 0x2d9, 0x2dd, 0x2db, 0x2da, 0x2dc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x2022, 0x2020, 0x2021, 0x2026, 0x2014, 0x2013, 0x192, 0x2044, 0x2039, 0x203a, 0x2212, 0x2030, 0x201e, 0x201c, 0x201d, 0x2018, 0x2019, 0x201a, 0x2122, 0xfb01, 0xfb02, 0x141, 0x152, 0x160, 0x178, 0x17d, 0x131, 0x142, 0x153, 0x161, 0x17e, 0, 0x20ac];
+
 function stringToPDFString(str, keepEscapeSequence = false) {
     if (str[0] >= "\xEF") {
         let encoding;
@@ -755,7 +805,8 @@ function stringToPDFString(str, keepEscapeSequence = false) {
     for (let i = 0, ii = str.length; i < ii; i++) {
         const charCode = str.charCodeAt(i);
         if (!keepEscapeSequence && charCode === 0x1b) {
-            while (++i < ii && str.charCodeAt(i) !== 0x1b) {}
+            while (++i < ii && str.charCodeAt(i) !== 0x1b) {
+            }
             continue;
         }
         const code = PDFStringTranslateTable[charCode];
@@ -763,12 +814,15 @@ function stringToPDFString(str, keepEscapeSequence = false) {
     }
     return strBuf.join("");
 }
+
 function stringToUTF8String(str) {
     return decodeURIComponent(escape(str));
 }
+
 function utf8StringToString(str) {
     return unescape(encodeURIComponent(str));
 }
+
 function isArrayEqual(arr1, arr2) {
     if (arr1.length !== arr2.length) {
         return false;
@@ -780,6 +834,7 @@ function isArrayEqual(arr1, arr2) {
     }
     return true;
 }
+
 function getModificationDate(date = new Date()) {
     if (!(date instanceof Date)) {
         date = new Date(date);
@@ -787,8 +842,10 @@ function getModificationDate(date = new Date()) {
     const buffer = [date.getUTCFullYear().toString(), (date.getUTCMonth() + 1).toString().padStart(2, "0"), date.getUTCDate().toString().padStart(2, "0"), date.getUTCHours().toString().padStart(2, "0"), date.getUTCMinutes().toString().padStart(2, "0"), date.getUTCSeconds().toString().padStart(2, "0")];
     return buffer.join("");
 }
+
 let NormalizeRegex = null;
 let NormalizationMap = null;
+
 function normalizeUnicode(str) {
     if (!NormalizeRegex) {
         NormalizeRegex = /([\u00a0\u00b5\u037e\u0eb3\u2000-\u200a\u202f\u2126\ufb00-\ufb04\ufb06\ufb20-\ufb36\ufb38-\ufb3c\ufb3e\ufb40-\ufb41\ufb43-\ufb44\ufb46-\ufba1\ufba4-\ufba9\ufbae-\ufbb1\ufbd3-\ufbdc\ufbde-\ufbe7\ufbea-\ufbf8\ufbfc-\ufbfd\ufc00-\ufc5d\ufc64-\ufcf1\ufcf5-\ufd3d\ufd88\ufdf4\ufdfa-\ufdfb\ufe71\ufe77\ufe79\ufe7b\ufe7d]+)|(\ufb05+)/gu;
@@ -796,6 +853,7 @@ function normalizeUnicode(str) {
     }
     return str.replaceAll(NormalizeRegex, (_, p1, p2) => p1 ? p1.normalize("NFKC") : NormalizationMap.get(p2));
 }
+
 function getUuid() {
     if (typeof crypto.randomUUID === "function") {
         return crypto.randomUUID();
@@ -804,7 +862,9 @@ function getUuid() {
     crypto.getRandomValues(buf);
     return bytesToString(buf);
 }
+
 const AnnotationPrefix = "pdfjs_internal_id_";
+
 function _isValidExplicitDest(validRef, validName, dest) {
     if (!Array.isArray(dest) || dest.length < 2) {
         return false;
@@ -852,27 +912,32 @@ function _isValidExplicitDest(validRef, validName, dest) {
     }
     return true;
 }
+
 function MathClamp(v, min, max) {
     return Math.min(Math.max(v, min), max);
 }
+
 function toHexUtil(arr) {
     if (Uint8Array.prototype.toHex) {
         return arr.toHex();
     }
     return Array.from(arr, num => hexNumbers[num]).join("");
 }
+
 function toBase64Util(arr) {
     if (Uint8Array.prototype.toBase64) {
         return arr.toBase64();
     }
     return btoa(bytesToString(arr));
 }
+
 function fromBase64Util(str) {
     if (Uint8Array.fromBase64) {
         return Uint8Array.fromBase64(str);
     }
     return stringToBytes(atob(str));
 }
+
 if (typeof Promise.try !== "function") {
     Promise.try = function (fn, ...args) {
         return new Promise(resolve => {
@@ -886,37 +951,44 @@ if (typeof Math.sumPrecise !== "function") {
     };
 }
 
-;// ./src/core/primitives.js
+// ./src/core/primitives.js
 
 const CIRCULAR_REF = Symbol("CIRCULAR_REF");
 const EOF = Symbol("EOF");
 let CmdCache = Object.create(null);
 let NameCache = Object.create(null);
 let RefCache = Object.create(null);
+
 function clearPrimitiveCaches() {
     CmdCache = Object.create(null);
     NameCache = Object.create(null);
     RefCache = Object.create(null);
 }
+
 class Name {
     constructor(name) {
         this.name = name;
     }
+
     static get(name) {
         return NameCache[name] ||= new Name(name);
     }
 }
+
 class Cmd {
     constructor(cmd) {
         this.cmd = cmd;
     }
+
     static get(cmd) {
         return CmdCache[cmd] ||= new Cmd(cmd);
     }
 }
+
 const nonSerializable = function nonSerializableClosure() {
     return nonSerializable;
 };
+
 class Dict {
     constructor(xref = null) {
         this._map = new Map();
@@ -925,12 +997,15 @@ class Dict {
         this.suppressEncryption = false;
         this.__nonSerializable__ = nonSerializable;
     }
+
     assignXref(newXref) {
         this.xref = newXref;
     }
+
     get size() {
         return this._map.size;
     }
+
     get(key1, key2, key3) {
         let value = this._map.get(key1);
         if (value === undefined && key2 !== undefined) {
@@ -944,6 +1019,7 @@ class Dict {
         }
         return value;
     }
+
     async getAsync(key1, key2, key3) {
         let value = this._map.get(key1);
         if (value === undefined && key2 !== undefined) {
@@ -957,6 +1033,7 @@ class Dict {
         }
         return value;
     }
+
     getArray(key1, key2, key3) {
         let value = this._map.get(key1);
         if (value === undefined && key2 !== undefined) {
@@ -978,38 +1055,47 @@ class Dict {
         }
         return value;
     }
+
     getRaw(key) {
         return this._map.get(key);
     }
+
     getKeys() {
         return [...this._map.keys()];
     }
+
     getRawValues() {
         return [...this._map.values()];
     }
+
     set(key, value) {
         this._map.set(key, value);
     }
+
     setIfNotExists(key, value) {
         if (!this.has(key)) {
             this.set(key, value);
         }
     }
+
     setIfNumber(key, value) {
         if (typeof value === "number") {
             this.set(key, value);
         }
     }
+
     setIfArray(key, value) {
         if (Array.isArray(value) || ArrayBuffer.isView(value)) {
             this.set(key, value);
         }
     }
+
     setIfDefined(key, value) {
         if (value !== undefined && value !== null) {
             this.set(key, value);
         }
     }
+
     setIfName(key, value) {
         if (typeof value === "string") {
             this.set(key, Name.get(value));
@@ -1017,14 +1103,17 @@ class Dict {
             this.set(key, value);
         }
     }
+
     has(key) {
         return this._map.has(key);
     }
-    *[Symbol.iterator]() {
+
+    * [Symbol.iterator]() {
         for (const [key, value] of this._map) {
             yield [key, value instanceof Ref && this.xref ? this.xref.fetch(value, this.suppressEncryption) : value];
         }
     }
+
     static get empty() {
         const emptyDict = new Dict(null);
         emptyDict.set = (key, value) => {
@@ -1032,6 +1121,7 @@ class Dict {
         };
         return shadow(this, "empty", emptyDict);
     }
+
     static merge({
                      xref,
                      dictArray,
@@ -1074,6 +1164,7 @@ class Dict {
         properties.clear();
         return mergedDict.size > 0 ? mergedDict : Dict.empty;
     }
+
     clone() {
         const dict = new Dict(this.xref);
         for (const key of this.getKeys()) {
@@ -1081,21 +1172,25 @@ class Dict {
         }
         return dict;
     }
+
     delete(key) {
         delete this._map[key];
     }
 }
+
 class Ref {
     constructor(num, gen) {
         this.num = num;
         this.gen = gen;
     }
+
     toString() {
         if (this.gen === 0) {
             return `${this.num}R`;
         }
         return `${this.num}R${this.gen}`;
     }
+
     static fromString(str) {
         const ref = RefCache[str];
         if (ref) {
@@ -1107,114 +1202,146 @@ class Ref {
         }
         return RefCache[str] = new Ref(parseInt(m[1]), !m[2] ? 0 : parseInt(m[2]));
     }
+
     static get(num, gen) {
         const key = gen === 0 ? `${num}R` : `${num}R${gen}`;
         return RefCache[key] ||= new Ref(num, gen);
     }
 }
+
 class RefSet {
     constructor(parent = null) {
         this._set = new Set(parent?._set);
     }
+
     has(ref) {
         return this._set.has(ref.toString());
     }
+
     put(ref) {
         this._set.add(ref.toString());
     }
+
     remove(ref) {
         this._set.delete(ref.toString());
     }
+
     [Symbol.iterator]() {
         return this._set.values();
     }
+
     clear() {
         this._set.clear();
     }
 }
+
 class RefSetCache {
     constructor() {
         this._map = new Map();
     }
+
     get size() {
         return this._map.size;
     }
+
     get(ref) {
         return this._map.get(ref.toString());
     }
+
     has(ref) {
         return this._map.has(ref.toString());
     }
+
     put(ref, obj) {
         this._map.set(ref.toString(), obj);
     }
+
     putAlias(ref, aliasRef) {
         this._map.set(ref.toString(), this.get(aliasRef));
     }
+
     [Symbol.iterator]() {
         return this._map.values();
     }
+
     clear() {
         this._map.clear();
     }
-    *values() {
+
+    * values() {
         yield* this._map.values();
     }
-    *items() {
+
+    * items() {
         for (const [ref, value] of this._map) {
             yield [Ref.fromString(ref), value];
         }
     }
 }
+
 function isName(v, name) {
     return v instanceof Name && (name === undefined || v.name === name);
 }
+
 function isCmd(v, cmd) {
     return v instanceof Cmd && (cmd === undefined || v.cmd === cmd);
 }
+
 function isDict(v, type) {
     return v instanceof Dict && (type === undefined || isName(v.get("Type"), type));
 }
+
 function isRefsEqual(v1, v2) {
     return v1.num === v2.num && v1.gen === v2.gen;
 }
 
-;// ./src/core/base_stream.js
+// ./src/core/base_stream.js
 
 class BaseStream {
     get length() {
         unreachable("Abstract getter `length` accessed");
     }
+
     get isEmpty() {
         unreachable("Abstract getter `isEmpty` accessed");
     }
+
     get isDataLoaded() {
         return shadow(this, "isDataLoaded", true);
     }
+
     getByte() {
         unreachable("Abstract method `getByte` called");
     }
+
     getBytes(length) {
         unreachable("Abstract method `getBytes` called");
     }
+
     async getImageData(length, decoderOptions) {
         return this.getBytes(length, decoderOptions);
     }
+
     async asyncGetBytes() {
         unreachable("Abstract method `asyncGetBytes` called");
     }
+
     get isAsync() {
         return false;
     }
+
     get isAsyncDecoder() {
         return false;
     }
+
     get canAsyncDecodeImageFromBuffer() {
         return false;
     }
+
     async getTransferableImage() {
         return null;
     }
+
     peekByte() {
         const peekedByte = this.getByte();
         if (peekedByte !== -1) {
@@ -1222,11 +1349,13 @@ class BaseStream {
         }
         return peekedByte;
     }
+
     peekBytes(length) {
         const bytes = this.getBytes(length);
         this.pos -= bytes.length;
         return bytes;
     }
+
     getUint16() {
         const b0 = this.getByte();
         const b1 = this.getByte();
@@ -1235,6 +1364,7 @@ class BaseStream {
         }
         return (b0 << 8) + b1;
     }
+
     getInt32() {
         const b0 = this.getByte();
         const b1 = this.getByte();
@@ -1242,31 +1372,37 @@ class BaseStream {
         const b3 = this.getByte();
         return (b0 << 24) + (b1 << 16) + (b2 << 8) + b3;
     }
+
     getByteRange(begin, end) {
         unreachable("Abstract method `getByteRange` called");
     }
+
     getString(length) {
         return bytesToString(this.getBytes(length));
     }
+
     skip(n) {
         this.pos += n || 1;
     }
+
     reset() {
         unreachable("Abstract method `reset` called");
     }
+
     moveStart() {
         unreachable("Abstract method `moveStart` called");
     }
+
     makeSubStream(start, length, dict = null) {
         unreachable("Abstract method `makeSubStream` called");
     }
+
     getBaseStreams() {
         return null;
     }
 }
 
-;// ./src/core/core_utils.js
-
+// ./src/core/core_utils.js
 
 
 const PDF_VERSION_REGEXP = /^[1-9]\.\d$/;
@@ -1275,6 +1411,7 @@ const MIN_INT_32 = -(2 ** 31);
 const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
 const RESOURCES_KEYS_OPERATOR_LIST = ["ColorSpace", "ExtGState", "Font", "Pattern", "Properties", "Shading", "XObject"];
 const RESOURCES_KEYS_TEXT_CONTENT = ["ExtGState", "Font", "Properties", "XObject"];
+
 function getLookupTableFactory(initializer) {
     let lookup;
     return function () {
@@ -1286,6 +1423,7 @@ function getLookupTableFactory(initializer) {
         return lookup;
     };
 }
+
 class MissingDataException extends BaseException {
     constructor(begin, end) {
         super(`Missing data [${begin}, ${end})`, "MissingDataException");
@@ -1293,21 +1431,25 @@ class MissingDataException extends BaseException {
         this.end = end;
     }
 }
+
 class ParserEOFException extends BaseException {
     constructor(msg) {
         super(msg, "ParserEOFException");
     }
 }
+
 class XRefEntryException extends BaseException {
     constructor(msg) {
         super(msg, "XRefEntryException");
     }
 }
+
 class XRefParseException extends BaseException {
     constructor(msg) {
         super(msg, "XRefParseException");
     }
 }
+
 function arrayBuffersToBytes(arr) {
     const length = arr.length;
     if (length === 0) {
@@ -1329,6 +1471,7 @@ function arrayBuffersToBytes(arr) {
     }
     return data;
 }
+
 async function fetchBinaryData(url) {
     const response = await fetch(url);
     if (!response.ok) {
@@ -1336,6 +1479,7 @@ async function fetchBinaryData(url) {
     }
     return new Uint8Array(await response.arrayBuffer());
 }
+
 function getInheritableProperty({
                                     dict,
                                     key,
@@ -1359,6 +1503,7 @@ function getInheritableProperty({
     }
     return values;
 }
+
 function getParentToUpdate(dict, ref, xref) {
     const visited = new RefSet();
     const firstDict = dict;
@@ -1383,48 +1528,62 @@ function getParentToUpdate(dict, ref, xref) {
     }
     return result;
 }
+
 const ROMAN_NUMBER_MAP = ["", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM", "", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC", "", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
+
 function toRomanNumerals(number, lowerCase = false) {
     assert(Number.isInteger(number) && number > 0, "The number should be a positive integer.");
     const roman = "M".repeat(number / 1000 | 0) + ROMAN_NUMBER_MAP[number % 1000 / 100 | 0] + ROMAN_NUMBER_MAP[10 + (number % 100 / 10 | 0)] + ROMAN_NUMBER_MAP[20 + number % 10];
     return lowerCase ? roman.toLowerCase() : roman;
 }
+
 function log2(x) {
     return x > 0 ? Math.ceil(Math.log2(x)) : 0;
 }
+
 function readInt8(data, offset) {
     return data[offset] << 24 >> 24;
 }
+
 function readInt16(data, offset) {
     return (data[offset] << 24 | data[offset + 1] << 16) >> 16;
 }
+
 function readUint16(data, offset) {
     return data[offset] << 8 | data[offset + 1];
 }
+
 function readUint32(data, offset) {
     return (data[offset] << 24 | data[offset + 1] << 16 | data[offset + 2] << 8 | data[offset + 3]) >>> 0;
 }
+
 function isWhiteSpace(ch) {
     return ch === 0x20 || ch === 0x09 || ch === 0x0d || ch === 0x0a;
 }
+
 function isBooleanArray(arr, len) {
     return Array.isArray(arr) && (len === null || arr.length === len) && arr.every(x => typeof x === "boolean");
 }
+
 function isNumberArray(arr, len) {
     if (Array.isArray(arr)) {
         return (len === null || arr.length === len) && arr.every(x => typeof x === "number");
     }
     return ArrayBuffer.isView(arr) && !(arr instanceof BigInt64Array || arr instanceof BigUint64Array) && (len === null || arr.length === len);
 }
+
 function lookupMatrix(arr, fallback) {
     return isNumberArray(arr, 6) ? arr : fallback;
 }
+
 function lookupRect(arr, fallback) {
     return isNumberArray(arr, 4) ? arr : fallback;
 }
+
 function lookupNormalRect(arr, fallback) {
     return isNumberArray(arr, 4) ? Util.normalizeRect(arr) : fallback;
 }
+
 function parseXFAPath(path) {
     const positionPattern = /(.+)\[(\d+)\]$/;
     return path.split(".").map(component => {
@@ -1441,6 +1600,7 @@ function parseXFAPath(path) {
         };
     });
 }
+
 function escapePDFName(str) {
     const buffer = [];
     let start = 0;
@@ -1462,6 +1622,7 @@ function escapePDFName(str) {
     }
     return buffer.join("");
 }
+
 function escapeString(str) {
     return str.replaceAll(/([()\\\n\r])/g, match => {
         if (match === "\n") {
@@ -1472,6 +1633,7 @@ function escapeString(str) {
         return `\\${match}`;
     });
 }
+
 function _collectJS(entry, xref, list, parents) {
     if (!entry) {
         return;
@@ -1509,6 +1671,7 @@ function _collectJS(entry, xref, list, parents) {
         parents.remove(parent);
     }
 }
+
 function collectActions(xref, dict, eventType) {
     const actions = Object.create(null);
     const additionalActionsDicts = getInheritableProperty({
@@ -1548,6 +1711,7 @@ function collectActions(xref, dict, eventType) {
     }
     return objectSize(actions) > 0 ? actions : null;
 }
+
 const XMLEntities = {
     0x3c: "&lt;",
     0x3e: "&gt;",
@@ -1555,6 +1719,7 @@ const XMLEntities = {
     0x22: "&quot;",
     0x27: "&apos;"
 };
+
 function* codePointIter(str) {
     for (let i = 0, ii = str.length; i < ii; i++) {
         const char = str.codePointAt(i);
@@ -1564,6 +1729,7 @@ function* codePointIter(str) {
         yield char;
     }
 }
+
 function encodeToXmlString(str) {
     const buffer = [];
     let start = 0;
@@ -1597,6 +1763,7 @@ function encodeToXmlString(str) {
     }
     return buffer.join("");
 }
+
 function validateFontName(fontFamily, mustWarn = false) {
     const m = /^("|').*("|')$/.exec(fontFamily);
     if (m && m[1] === m[2]) {
@@ -1619,6 +1786,7 @@ function validateFontName(fontFamily, mustWarn = false) {
     }
     return true;
 }
+
 function validateCSSFont(cssFontInfo) {
     const DEFAULT_CSS_FONT_OBLIQUE = "14";
     const DEFAULT_CSS_FONT_WEIGHT = "400";
@@ -1637,6 +1805,7 @@ function validateCSSFont(cssFontInfo) {
     cssFontInfo.italicAngle = isNaN(angle) || angle < -90 || angle > 90 ? DEFAULT_CSS_FONT_OBLIQUE : italicAngle.toString();
     return true;
 }
+
 function recoverJsURL(str) {
     const URL_OPEN_METHODS = ["app.launchURL", "window.open", "xfa.host.gotoURL"];
     const regex = new RegExp("^\\s*(" + URL_OPEN_METHODS.join("|").replaceAll(".", "\\.") + ")\\((?:'|\")([^'\"]*)(?:'|\")(?:,\\s*(\\w+)\\)|\\))", "i");
@@ -1649,6 +1818,7 @@ function recoverJsURL(str) {
     }
     return null;
 }
+
 function numberToString(value) {
     if (Number.isInteger(value)) {
         return value.toString();
@@ -1662,6 +1832,7 @@ function numberToString(value) {
     }
     return value.toFixed(2);
 }
+
 function getNewAnnotationsMap(annotationStorage) {
     if (!annotationStorage) {
         return null;
@@ -1680,18 +1851,21 @@ function getNewAnnotationsMap(annotationStorage) {
     }
     return newAnnotationsByPage.size > 0 ? newAnnotationsByPage : null;
 }
+
 function stringToAsciiOrUTF16BE(str) {
     if (str === null || str === undefined) {
         return str;
     }
     return isAscii(str) ? str : stringToUTF16String(str, true);
 }
+
 function isAscii(str) {
     if (typeof str !== "string") {
         return false;
     }
     return !str || /^[\x00-\x7F]*$/.test(str);
 }
+
 function stringToUTF16HexString(str) {
     const buf = [];
     for (let i = 0, ii = str.length; i < ii; i++) {
@@ -1700,6 +1874,7 @@ function stringToUTF16HexString(str) {
     }
     return buf.join("");
 }
+
 function stringToUTF16String(str, bigEndian = false) {
     const buf = [];
     if (bigEndian) {
@@ -1711,6 +1886,7 @@ function stringToUTF16String(str, bigEndian = false) {
     }
     return buf.join("");
 }
+
 function getRotationMatrix(rotation, width, height) {
     switch (rotation) {
         case 90:
@@ -1723,11 +1899,12 @@ function getRotationMatrix(rotation, width, height) {
             throw new Error("Invalid rotation");
     }
 }
+
 function getSizeInBytes(x) {
     return Math.ceil(Math.ceil(Math.log2(1 + x)) / 8);
 }
 
-;// ./external/qcms/qcms_utils.js
+// ./external/qcms/qcms_utils.js
 class QCMS {
     static #memoryArray = null;
     static _memory = null;
@@ -1737,6 +1914,7 @@ class QCMS {
     static _destLength = 0;
     static _cssColor = "";
     static _makeHexColor = null;
+
     static get _memoryArray() {
         const array = this.#memoryArray;
         if (array?.byteLength) {
@@ -1745,6 +1923,7 @@ class QCMS {
         return this.#memoryArray = new Uint8Array(this._memory.buffer);
     }
 }
+
 function copy_result(ptr, len) {
     const {
         _mustAddAlpha,
@@ -1772,6 +1951,7 @@ function copy_result(ptr, len) {
         }
     }
 }
+
 function copy_rgb(ptr) {
     const {
         _destBuffer,
@@ -1782,6 +1962,7 @@ function copy_rgb(ptr) {
     _destBuffer[_destOffset + 1] = _memoryArray[ptr + 1];
     _destBuffer[_destOffset + 2] = _memoryArray[ptr + 2];
 }
+
 function make_cssRGB(ptr) {
     const {
         _memoryArray
@@ -1789,7 +1970,7 @@ function make_cssRGB(ptr) {
     QCMS._cssColor = QCMS._makeHexColor(_memoryArray[ptr], _memoryArray[ptr + 1], _memoryArray[ptr + 2]);
 }
 
-;// ./external/qcms/qcms.js
+// ./external/qcms/qcms.js
 
 let wasm;
 const cachedTextDecoder = typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8', {
@@ -1803,48 +1984,59 @@ const cachedTextDecoder = typeof TextDecoder !== 'undefined' ? new TextDecoder('
 if (typeof TextDecoder !== 'undefined') {
     cachedTextDecoder.decode();
 }
-;
+
 let cachedUint8ArrayMemory0 = null;
+
 function getUint8ArrayMemory0() {
     if (cachedUint8ArrayMemory0 === null || cachedUint8ArrayMemory0.byteLength === 0) {
         cachedUint8ArrayMemory0 = new Uint8Array(wasm.memory.buffer);
     }
     return cachedUint8ArrayMemory0;
 }
+
 function getStringFromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len));
 }
+
 let WASM_VECTOR_LEN = 0;
+
 function passArray8ToWasm0(arg, malloc) {
     const ptr = malloc(arg.length * 1, 1) >>> 0;
     getUint8ArrayMemory0().set(arg, ptr / 1);
     WASM_VECTOR_LEN = arg.length;
     return ptr;
 }
+
 function qcms_convert_array(transformer, src) {
     const ptr0 = passArray8ToWasm0(src, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
     wasm.qcms_convert_array(transformer, ptr0, len0);
 }
+
 function qcms_convert_one(transformer, src, css) {
     wasm.qcms_convert_one(transformer, src, css);
 }
+
 function qcms_convert_three(transformer, src1, src2, src3, css) {
     wasm.qcms_convert_three(transformer, src1, src2, src3, css);
 }
+
 function qcms_convert_four(transformer, src1, src2, src3, src4, css) {
     wasm.qcms_convert_four(transformer, src1, src2, src3, src4, css);
 }
+
 function qcms_transformer_from_memory(mem, in_type, intent) {
     const ptr0 = passArray8ToWasm0(mem, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.qcms_transformer_from_memory(ptr0, len0, in_type, intent);
     return ret >>> 0;
 }
+
 function qcms_drop_transformer(transformer) {
     wasm.qcms_drop_transformer(transformer);
 }
+
 const DataType = Object.freeze({
     RGB8: 0,
     "0": "RGB8",
@@ -1869,6 +2061,7 @@ const Intent = Object.freeze({
     AbsoluteColorimetric: 3,
     "3": "AbsoluteColorimetric"
 });
+
 async function __wbg_load(module, imports) {
     if (typeof Response === 'function' && module instanceof Response) {
         if (typeof WebAssembly.instantiateStreaming === 'function') {
@@ -1896,6 +2089,7 @@ async function __wbg_load(module, imports) {
         }
     }
 }
+
 function __wbg_get_imports() {
     const imports = {};
     imports.wbg = {};
@@ -1922,7 +2116,10 @@ function __wbg_get_imports() {
     };
     return imports;
 }
-function __wbg_init_memory(imports, memory) {}
+
+function __wbg_init_memory(imports, memory) {
+}
+
 function __wbg_finalize_init(instance, module) {
     wasm = instance.exports;
     __wbg_init.__wbindgen_wasm_module = module;
@@ -1930,6 +2127,7 @@ function __wbg_finalize_init(instance, module) {
     wasm.__wbindgen_start();
     return wasm;
 }
+
 function initSync(module) {
     if (wasm !== undefined) return wasm;
     if (typeof module !== 'undefined') {
@@ -1949,6 +2147,7 @@ function initSync(module) {
     const instance = new WebAssembly.Instance(module, imports);
     return __wbg_finalize_init(instance, module);
 }
+
 async function __wbg_init(module_or_path) {
     if (wasm !== undefined) return wasm;
     if (typeof module_or_path !== 'undefined') {
@@ -1972,8 +2171,10 @@ async function __wbg_init(module_or_path) {
     return __wbg_finalize_init(instance, module);
 }
 
-/* harmony default export */ const qcms = ((/* unused pure expression or super */ null && (__wbg_init)));
-;// ./src/core/colorspace.js
+/* harmony default export */
+const qcms = ((/* unused pure expression or super */ null && (__wbg_init)));
+
+// ./src/core/colorspace.js
 
 
 function resizeRgbImage(src, dest, w1, h1, w2, h2, alpha01) {
@@ -1999,6 +2200,7 @@ function resizeRgbImage(src, dest, w1, h1, w2, h2, alpha01) {
         }
     }
 }
+
 function resizeRgbaImage(src, dest, w1, h1, w2, h2, alpha01) {
     const xRatio = w1 / w2;
     const yRatio = h1 / h2;
@@ -2034,6 +2236,7 @@ function resizeRgbaImage(src, dest, w1, h1, w2, h2, alpha01) {
         }
     }
 }
+
 function copyRgbaImage(src, dest, alpha01) {
     if (alpha01 === 1) {
         const src32 = new Uint32Array(src.buffer);
@@ -2051,35 +2254,45 @@ function copyRgbaImage(src, dest, alpha01) {
         }
     }
 }
+
 class ColorSpace {
     static #rgbBuf = new Uint8ClampedArray(3);
+
     constructor(name, numComps) {
         this.name = name;
         this.numComps = numComps;
     }
+
     getRgb(src, srcOffset, output = new Uint8ClampedArray(3)) {
         this.getRgbItem(src, srcOffset, output, 0);
         return output;
     }
+
     getRgbHex(src, srcOffset) {
         const buffer = this.getRgb(src, srcOffset, ColorSpace.#rgbBuf);
         return Util.makeHexColor(buffer[0], buffer[1], buffer[2]);
     }
+
     getRgbItem(src, srcOffset, dest, destOffset) {
         unreachable("Should not call ColorSpace.getRgbItem");
     }
+
     getRgbBuffer(src, srcOffset, count, dest, destOffset, bits, alpha01) {
         unreachable("Should not call ColorSpace.getRgbBuffer");
     }
+
     getOutputLength(inputLength, alpha01) {
         unreachable("Should not call ColorSpace.getOutputLength");
     }
+
     isPassthrough(bits) {
         return false;
     }
+
     isDefaultDecode(decodeMap, bpc) {
         return ColorSpace.isDefaultDecode(decodeMap, this.numComps);
     }
+
     fillRgb(dest, originalWidth, originalHeight, width, height, actualHeight, bpc, comps, alpha01) {
         const count = originalWidth * originalHeight;
         let rgbBuf = null;
@@ -2134,9 +2347,11 @@ class ColorSpace {
             }
         }
     }
+
     get usesZeroToOneRange() {
         return shadow(this, "usesZeroToOneRange", true);
     }
+
     static isDefaultDecode(decode, numComps) {
         if (!Array.isArray(decode)) {
             return true;
@@ -2153,6 +2368,7 @@ class ColorSpace {
         return true;
     }
 }
+
 class AlternateCS extends ColorSpace {
     constructor(numComps, base, tintFn) {
         super("Alternate", numComps);
@@ -2160,11 +2376,13 @@ class AlternateCS extends ColorSpace {
         this.tintFn = tintFn;
         this.tmpBuf = new Float32Array(base.numComps);
     }
+
     getRgbItem(src, srcOffset, dest, destOffset) {
         const tmpBuf = this.tmpBuf;
         this.tintFn(src, srcOffset, tmpBuf, 0);
         this.base.getRgbItem(tmpBuf, 0, dest, destOffset);
     }
+
     getRgbBuffer(src, srcOffset, count, dest, destOffset, bits, alpha01) {
         const tintFn = this.tintFn;
         const base = this.base;
@@ -2196,19 +2414,23 @@ class AlternateCS extends ColorSpace {
             base.getRgbBuffer(baseBuf, 0, count, dest, destOffset, 8, alpha01);
         }
     }
+
     getOutputLength(inputLength, alpha01) {
         return this.base.getOutputLength(inputLength * this.base.numComps / this.numComps, alpha01);
     }
 }
+
 class PatternCS extends ColorSpace {
     constructor(baseCS) {
         super("Pattern", null);
         this.base = baseCS;
     }
+
     isDefaultDecode(decodeMap, bpc) {
         unreachable("Should not call PatternCS.isDefaultDecode");
     }
 }
+
 class IndexedCS extends ColorSpace {
     constructor(base, highVal, lookup) {
         super("Indexed", 1);
@@ -2227,6 +2449,7 @@ class IndexedCS extends ColorSpace {
             throw new FormatError(`IndexedCS - unrecognized lookup table: ${lookup}`);
         }
     }
+
     getRgbItem(src, srcOffset, dest, destOffset) {
         const {
             base,
@@ -2236,6 +2459,7 @@ class IndexedCS extends ColorSpace {
         const start = MathClamp(Math.round(src[srcOffset]), 0, highVal) * base.numComps;
         base.getRgbBuffer(lookup, start, 1, dest, destOffset, 8, 0);
     }
+
     getRgbBuffer(src, srcOffset, count, dest, destOffset, bits, alpha01) {
         const {
             base,
@@ -2252,9 +2476,11 @@ class IndexedCS extends ColorSpace {
             destOffset += outputDelta;
         }
     }
+
     getOutputLength(inputLength, alpha01) {
         return this.base.getOutputLength(inputLength * this.base.numComps, alpha01);
     }
+
     isDefaultDecode(decodeMap, bpc) {
         if (!Array.isArray(decodeMap)) {
             return true;
@@ -2270,14 +2496,17 @@ class IndexedCS extends ColorSpace {
         return decodeMap[0] === 0 && decodeMap[1] === (1 << bpc) - 1;
     }
 }
+
 class DeviceGrayCS extends ColorSpace {
     constructor() {
         super("DeviceGray", 1);
     }
+
     getRgbItem(src, srcOffset, dest, destOffset) {
         const c = src[srcOffset] * 255;
         dest[destOffset] = dest[destOffset + 1] = dest[destOffset + 2] = c;
     }
+
     getRgbBuffer(src, srcOffset, count, dest, destOffset, bits, alpha01) {
         const scale = 255 / ((1 << bits) - 1);
         let j = srcOffset,
@@ -2290,19 +2519,23 @@ class DeviceGrayCS extends ColorSpace {
             q += alpha01;
         }
     }
+
     getOutputLength(inputLength, alpha01) {
         return inputLength * (3 + alpha01);
     }
 }
+
 class DeviceRgbCS extends ColorSpace {
     constructor() {
         super("DeviceRGB", 3);
     }
+
     getRgbItem(src, srcOffset, dest, destOffset) {
         dest[destOffset] = src[srcOffset] * 255;
         dest[destOffset + 1] = src[srcOffset + 1] * 255;
         dest[destOffset + 2] = src[srcOffset + 2] * 255;
     }
+
     getRgbBuffer(src, srcOffset, count, dest, destOffset, bits, alpha01) {
         if (bits === 8 && alpha01 === 0) {
             dest.set(src.subarray(srcOffset, srcOffset + count * 3), destOffset);
@@ -2318,23 +2551,29 @@ class DeviceRgbCS extends ColorSpace {
             q += alpha01;
         }
     }
+
     getOutputLength(inputLength, alpha01) {
         return inputLength * (3 + alpha01) / 3 | 0;
     }
+
     isPassthrough(bits) {
         return bits === 8;
     }
 }
+
 class DeviceRgbaCS extends ColorSpace {
     constructor() {
         super("DeviceRGBA", 4);
     }
+
     getOutputLength(inputLength, _alpha01) {
         return inputLength * 4;
     }
+
     isPassthrough(bits) {
         return bits === 8;
     }
+
     fillRgb(dest, originalWidth, originalHeight, width, height, actualHeight, bpc, comps, alpha01) {
         if (originalHeight !== height || originalWidth !== width) {
             resizeRgbaImage(comps, dest, originalWidth, originalHeight, width, height, alpha01);
@@ -2343,10 +2582,12 @@ class DeviceRgbaCS extends ColorSpace {
         }
     }
 }
+
 class DeviceCmykCS extends ColorSpace {
     constructor() {
         super("DeviceCMYK", 4);
     }
+
     #toRgb(src, srcOffset, srcScale, dest, destOffset) {
         const c = src[srcOffset] * srcScale;
         const m = src[srcOffset + 1] * srcScale;
@@ -2356,9 +2597,11 @@ class DeviceCmykCS extends ColorSpace {
         dest[destOffset + 1] = 255 + c * (8.841041422036149 * c + 60.118027045597366 * m + 6.871425592049007 * y + 31.159100130055922 * k + -79.2970844816548) + m * (-15.310361306967817 * m + 17.575251261109482 * y + 131.35250912493976 * k - 190.9453302588951) + y * (4.444339102852739 * y + 9.8632861493405 * k - 24.86741582555878) + k * (-20.737325471181034 * k - 187.80453709719578);
         dest[destOffset + 2] = 255 + c * (0.8842522430003296 * c + 8.078677503112928 * m + 30.89978309703729 * y - 0.23883238689178934 * k + -14.183576799673286) + m * (10.49593273432072 * m + 63.02378494754052 * y + 50.606957656360734 * k - 112.23884253719248) + y * (0.03296041114873217 * y + 115.60384449646641 * k + -193.58209356861505) + k * (-22.33816807309886 * k - 180.12613974708367);
     }
+
     getRgbItem(src, srcOffset, dest, destOffset) {
         this.#toRgb(src, srcOffset, 1, dest, destOffset);
     }
+
     getRgbBuffer(src, srcOffset, count, dest, destOffset, bits, alpha01) {
         const scale = 1 / ((1 << bits) - 1);
         for (let i = 0; i < count; i++) {
@@ -2367,10 +2610,12 @@ class DeviceCmykCS extends ColorSpace {
             destOffset += 3 + alpha01;
         }
     }
+
     getOutputLength(inputLength, alpha01) {
         return inputLength / 4 * (3 + alpha01) | 0;
     }
 }
+
 class CalGrayCS extends ColorSpace {
     constructor(whitePoint, blackPoint, gamma) {
         super("CalGray", 1);
@@ -2395,6 +2640,7 @@ class CalGrayCS extends ColorSpace {
             this.G = 1;
         }
     }
+
     #toRgb(src, srcOffset, dest, destOffset, scale) {
         const A = src[srcOffset] * scale;
         const AG = A ** this.G;
@@ -2404,9 +2650,11 @@ class CalGrayCS extends ColorSpace {
         dest[destOffset + 1] = val;
         dest[destOffset + 2] = val;
     }
+
     getRgbItem(src, srcOffset, dest, destOffset) {
         this.#toRgb(src, srcOffset, dest, destOffset, 1);
     }
+
     getRgbBuffer(src, srcOffset, count, dest, destOffset, bits, alpha01) {
         const scale = 1 / ((1 << bits) - 1);
         for (let i = 0; i < count; ++i) {
@@ -2415,10 +2663,12 @@ class CalGrayCS extends ColorSpace {
             destOffset += 3 + alpha01;
         }
     }
+
     getOutputLength(inputLength, alpha01) {
         return inputLength * (3 + alpha01);
     }
 }
+
 class CalRGBCS extends ColorSpace {
     static #BRADFORD_SCALE_MATRIX = new Float32Array([0.8951, 0.2664, -0.1614, -0.7502, 1.7135, 0.0367, 0.0389, -0.0685, 1.0296]);
     static #BRADFORD_SCALE_INVERSE_MATRIX = new Float32Array([0.9869929, -0.1470543, 0.1599627, 0.4323053, 0.5183603, 0.0492912, -0.0085287, 0.0400428, 0.9684867]);
@@ -2428,6 +2678,7 @@ class CalRGBCS extends ColorSpace {
     static #tempConvertMatrix1 = new Float32Array(3);
     static #tempConvertMatrix2 = new Float32Array(3);
     static #DECODE_L_CONSTANT = ((8 + 16) / 116) ** 3 / 8.0;
+
     constructor(whitePoint, blackPoint, gamma, matrix) {
         super("CalRGB", 3);
         if (!whitePoint) {
@@ -2449,16 +2700,19 @@ class CalRGBCS extends ColorSpace {
             this.GR = this.GG = this.GB = 1;
         }
     }
+
     #matrixProduct(a, b, result) {
         result[0] = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
         result[1] = a[3] * b[0] + a[4] * b[1] + a[5] * b[2];
         result[2] = a[6] * b[0] + a[7] * b[1] + a[8] * b[2];
     }
+
     #toFlat(sourceWhitePoint, LMS, result) {
         result[0] = LMS[0] * 1 / sourceWhitePoint[0];
         result[1] = LMS[1] * 1 / sourceWhitePoint[1];
         result[2] = LMS[2] * 1 / sourceWhitePoint[2];
     }
+
     #toD65(sourceWhitePoint, LMS, result) {
         const D65X = 0.95047;
         const D65Y = 1;
@@ -2467,6 +2721,7 @@ class CalRGBCS extends ColorSpace {
         result[1] = LMS[1] * D65Y / sourceWhitePoint[1];
         result[2] = LMS[2] * D65Z / sourceWhitePoint[2];
     }
+
     #sRGBTransferFunction(color) {
         if (color <= 0.0031308) {
             return MathClamp(12.92 * color, 0, 1);
@@ -2476,6 +2731,7 @@ class CalRGBCS extends ColorSpace {
         }
         return MathClamp((1 + 0.055) * color ** (1 / 2.4) - 0.055, 0, 1);
     }
+
     #decodeL(L) {
         if (L < 0) {
             return -this.#decodeL(-L);
@@ -2485,6 +2741,7 @@ class CalRGBCS extends ColorSpace {
         }
         return L * CalRGBCS.#DECODE_L_CONSTANT;
     }
+
     #compensateBlackPoint(sourceBlackPoint, XYZ_Flat, result) {
         if (sourceBlackPoint[0] === 0 && sourceBlackPoint[1] === 0 && sourceBlackPoint[2] === 0) {
             result[0] = XYZ_Flat[0];
@@ -2509,6 +2766,7 @@ class CalRGBCS extends ColorSpace {
         result[1] = XYZ_Flat[1] * Y_Scale + Y_Offset;
         result[2] = XYZ_Flat[2] * Z_Scale + Z_Offset;
     }
+
     #normalizeWhitePointToFlat(sourceWhitePoint, XYZ_In, result) {
         if (sourceWhitePoint[0] === 1 && sourceWhitePoint[2] === 1) {
             result[0] = XYZ_In[0];
@@ -2522,6 +2780,7 @@ class CalRGBCS extends ColorSpace {
         this.#toFlat(sourceWhitePoint, LMS, LMS_Flat);
         this.#matrixProduct(CalRGBCS.#BRADFORD_SCALE_INVERSE_MATRIX, LMS_Flat, result);
     }
+
     #normalizeWhitePointToD65(sourceWhitePoint, XYZ_In, result) {
         const LMS = result;
         this.#matrixProduct(CalRGBCS.#BRADFORD_SCALE_MATRIX, XYZ_In, LMS);
@@ -2529,6 +2788,7 @@ class CalRGBCS extends ColorSpace {
         this.#toD65(sourceWhitePoint, LMS, LMS_D65);
         this.#matrixProduct(CalRGBCS.#BRADFORD_SCALE_INVERSE_MATRIX, LMS_D65, result);
     }
+
     #toRgb(src, srcOffset, dest, destOffset, scale) {
         const A = MathClamp(src[srcOffset] * scale, 0, 1);
         const B = MathClamp(src[srcOffset + 1] * scale, 0, 1);
@@ -2555,9 +2815,11 @@ class CalRGBCS extends ColorSpace {
         dest[destOffset + 1] = this.#sRGBTransferFunction(SRGB[1]) * 255;
         dest[destOffset + 2] = this.#sRGBTransferFunction(SRGB[2]) * 255;
     }
+
     getRgbItem(src, srcOffset, dest, destOffset) {
         this.#toRgb(src, srcOffset, dest, destOffset, 1);
     }
+
     getRgbBuffer(src, srcOffset, count, dest, destOffset, bits, alpha01) {
         const scale = 1 / ((1 << bits) - 1);
         for (let i = 0; i < count; ++i) {
@@ -2566,10 +2828,12 @@ class CalRGBCS extends ColorSpace {
             destOffset += 3 + alpha01;
         }
     }
+
     getOutputLength(inputLength, alpha01) {
         return inputLength * (3 + alpha01) / 3 | 0;
     }
 }
+
 class LabCS extends ColorSpace {
     constructor(whitePoint, blackPoint, range) {
         super("Lab", 3);
@@ -2594,12 +2858,15 @@ class LabCS extends ColorSpace {
             this.bmax = 100;
         }
     }
+
     #fn_g(x) {
         return x >= 6 / 29 ? x ** 3 : 108 / 841 * (x - 4 / 29);
     }
+
     #decode(value, high1, low2, high2) {
         return low2 + value * (high2 - low2) / high1;
     }
+
     #toRgb(src, srcOffset, maxVal, dest, destOffset) {
         let Ls = src[srcOffset];
         let as = src[srcOffset + 1];
@@ -2639,9 +2906,11 @@ class LabCS extends ColorSpace {
         dest[destOffset + 1] = Math.sqrt(g) * 255;
         dest[destOffset + 2] = Math.sqrt(b) * 255;
     }
+
     getRgbItem(src, srcOffset, dest, destOffset) {
         this.#toRgb(src, srcOffset, false, dest, destOffset);
     }
+
     getRgbBuffer(src, srcOffset, count, dest, destOffset, bits, alpha01) {
         const maxVal = (1 << bits) - 1;
         for (let i = 0; i < count; i++) {
@@ -2650,20 +2919,21 @@ class LabCS extends ColorSpace {
             destOffset += 3 + alpha01;
         }
     }
+
     getOutputLength(inputLength, alpha01) {
         return inputLength * (3 + alpha01) / 3 | 0;
     }
+
     isDefaultDecode(decodeMap, bpc) {
         return true;
     }
+
     get usesZeroToOneRange() {
         return shadow(this, "usesZeroToOneRange", false);
     }
 }
 
-;// ./src/core/icc_colorspace.js
-
-
+// ./src/core/icc_colorspace.js
 
 
 function fetchSync(url) {
@@ -2673,12 +2943,14 @@ function fetchSync(url) {
     xhr.send(null);
     return xhr.response;
 }
+
 class IccColorSpace extends ColorSpace {
     #transformer;
     #convertPixel;
     static #useWasm = true;
     static #wasmUrl = null;
     static #finalizer = null;
+
     constructor(iccProfile, name, numComps) {
         if (!IccColorSpace.isUsable) {
             throw new Error("No ICC color space support");
@@ -2710,10 +2982,12 @@ class IccColorSpace extends ColorSpace {
         });
         IccColorSpace.#finalizer.register(this, this.#transformer);
     }
+
     getRgbHex(src, srcOffset) {
         this.#convertPixel(src, srcOffset, true);
         return QCMS._cssColor;
     }
+
     getRgbItem(src, srcOffset, dest, destOffset) {
         QCMS._destBuffer = dest;
         QCMS._destOffset = destOffset;
@@ -2721,6 +2995,7 @@ class IccColorSpace extends ColorSpace {
         this.#convertPixel(src, srcOffset, false);
         QCMS._destBuffer = null;
     }
+
     getRgbBuffer(src, srcOffset, count, dest, destOffset, bits, alpha01) {
         src = src.subarray(srcOffset, srcOffset + count * this.numComps);
         if (bits !== 8) {
@@ -2737,9 +3012,11 @@ class IccColorSpace extends ColorSpace {
         QCMS._mustAddAlpha = false;
         QCMS._destBuffer = null;
     }
+
     getOutputLength(inputLength, alpha01) {
         return inputLength / this.numComps * (3 + alpha01) | 0;
     }
+
     static setOptions({
                           useWasm,
                           useWorkerFetch,
@@ -2752,6 +3029,7 @@ class IccColorSpace extends ColorSpace {
         this.#useWasm = useWasm;
         this.#wasmUrl = wasmUrl;
     }
+
     static get isUsable() {
         let isUsable = false;
         if (this.#useWasm) {
@@ -2773,17 +3051,21 @@ class IccColorSpace extends ColorSpace {
         return shadow(this, "isUsable", isUsable);
     }
 }
+
 class CmykICCBasedCS extends IccColorSpace {
     static #iccUrl;
+
     constructor() {
         const iccProfile = new Uint8Array(fetchSync(`${CmykICCBasedCS.#iccUrl}CGATS001Compat-v2-micro.icc`));
         super(iccProfile, "DeviceCMYK", 4);
     }
+
     static setOptions({
                           iccUrl
                       }) {
         this.#iccUrl = iccUrl;
     }
+
     static get isUsable() {
         let isUsable = false;
         if (IccColorSpace.isUsable) {
@@ -2797,7 +3079,7 @@ class CmykICCBasedCS extends IccColorSpace {
     }
 }
 
-;// ./src/core/stream.js
+// ./src/core/stream.js
 
 
 class Stream extends BaseStream {
@@ -2809,18 +3091,22 @@ class Stream extends BaseStream {
         this.end = start + length || this.bytes.length;
         this.dict = dict;
     }
+
     get length() {
         return this.end - this.start;
     }
+
     get isEmpty() {
         return this.length === 0;
     }
+
     getByte() {
         if (this.pos >= this.end) {
             return -1;
         }
         return this.bytes[this.pos++];
     }
+
     getBytes(length) {
         const bytes = this.bytes;
         const pos = this.pos;
@@ -2835,6 +3121,7 @@ class Stream extends BaseStream {
         this.pos = end;
         return bytes.subarray(pos, end);
     }
+
     getByteRange(begin, end) {
         if (begin < 0) {
             begin = 0;
@@ -2844,29 +3131,33 @@ class Stream extends BaseStream {
         }
         return this.bytes.subarray(begin, end);
     }
+
     reset() {
         this.pos = this.start;
     }
+
     moveStart() {
         this.start = this.pos;
     }
+
     makeSubStream(start, length, dict = null) {
         return new Stream(this.bytes.buffer, start, length, dict);
     }
 }
+
 class StringStream extends Stream {
     constructor(str) {
         super(stringToBytes(str));
     }
 }
+
 class NullStream extends Stream {
     constructor() {
         super(new Uint8Array(0));
     }
 }
 
-;// ./src/core/chunked_stream.js
-
+// ./src/core/chunked_stream.js
 
 
 class ChunkedStream extends Stream {
@@ -2879,6 +3170,7 @@ class ChunkedStream extends Stream {
         this.progressiveDataLength = 0;
         this.lastSuccessfulEnsureByteChunk = -1;
     }
+
     getMissingChunks() {
         const chunks = [];
         for (let chunk = 0, n = this.numChunks; chunk < n; ++chunk) {
@@ -2888,12 +3180,15 @@ class ChunkedStream extends Stream {
         }
         return chunks;
     }
+
     get numChunksLoaded() {
         return this._loadedChunks.size;
     }
+
     get isDataLoaded() {
         return this.numChunksLoaded === this.numChunks;
     }
+
     onReceiveData(begin, chunk) {
         const chunkSize = this.chunkSize;
         if (begin % chunkSize !== 0) {
@@ -2910,6 +3205,7 @@ class ChunkedStream extends Stream {
             this._loadedChunks.add(curChunk);
         }
     }
+
     onReceiveProgressiveData(data) {
         let position = this.progressiveDataLength;
         const beginChunk = Math.floor(position / this.chunkSize);
@@ -2921,6 +3217,7 @@ class ChunkedStream extends Stream {
             this._loadedChunks.add(curChunk);
         }
     }
+
     ensureByte(pos) {
         if (pos < this.progressiveDataLength) {
             return;
@@ -2937,6 +3234,7 @@ class ChunkedStream extends Stream {
         }
         this.lastSuccessfulEnsureByteChunk = chunk;
     }
+
     ensureRange(begin, end) {
         if (begin >= end) {
             return;
@@ -2955,6 +3253,7 @@ class ChunkedStream extends Stream {
             }
         }
     }
+
     nextEmptyChunk(beginChunk) {
         const numChunks = this.numChunks;
         for (let i = 0; i < numChunks; ++i) {
@@ -2965,9 +3264,11 @@ class ChunkedStream extends Stream {
         }
         return null;
     }
+
     hasChunk(chunk) {
         return this._loadedChunks.has(chunk);
     }
+
     getByte() {
         const pos = this.pos;
         if (pos >= this.end) {
@@ -2978,6 +3279,7 @@ class ChunkedStream extends Stream {
         }
         return this.bytes[this.pos++];
     }
+
     getBytes(length) {
         const bytes = this.bytes;
         const pos = this.pos;
@@ -2998,6 +3300,7 @@ class ChunkedStream extends Stream {
         this.pos = end;
         return bytes.subarray(pos, end);
     }
+
     getByteRange(begin, end) {
         if (begin < 0) {
             begin = 0;
@@ -3010,6 +3313,7 @@ class ChunkedStream extends Stream {
         }
         return this.bytes.subarray(begin, end);
     }
+
     makeSubStream(start, length, dict = null) {
         if (length) {
             if (start + length > this.progressiveDataLength) {
@@ -3018,7 +3322,10 @@ class ChunkedStream extends Stream {
         } else if (start >= this.progressiveDataLength) {
             this.ensureByte(start);
         }
-        function ChunkedStreamSubstream() {}
+
+        function ChunkedStreamSubstream() {
+        }
+
         ChunkedStreamSubstream.prototype = Object.create(this);
         ChunkedStreamSubstream.prototype.getMissingChunks = function () {
             const chunkSize = this.chunkSize;
@@ -3047,10 +3354,12 @@ class ChunkedStream extends Stream {
         subStream.dict = dict;
         return subStream;
     }
+
     getBaseStreams() {
         return [this];
     }
 }
+
 class ChunkedStreamManager {
     constructor(pdfNetworkStream, args) {
         this.length = args.length;
@@ -3067,6 +3376,7 @@ class ChunkedStreamManager {
         this.aborted = false;
         this._loadedStreamCapability = Promise.withResolvers();
     }
+
     sendRequest(begin, end) {
         const rangeReader = this.pdfNetworkStream.getRangeReader(begin, end);
         if (!rangeReader.isStreamingSupported) {
@@ -3109,6 +3419,7 @@ class ChunkedStreamManager {
             });
         });
     }
+
     requestAllChunks(noFetch = false) {
         if (!noFetch) {
             const missingChunks = this.stream.getMissingChunks();
@@ -3116,6 +3427,7 @@ class ChunkedStreamManager {
         }
         return this._loadedStreamCapability.promise;
     }
+
     _requestChunks(chunks) {
         const requestId = this.currRequestId++;
         const chunksNeeded = new Set();
@@ -3155,9 +3467,11 @@ class ChunkedStreamManager {
             throw reason;
         });
     }
+
     getStream() {
         return this.stream;
     }
+
     requestRange(begin, end) {
         end = Math.min(end, this.length);
         const beginChunk = this.getBeginChunk(begin);
@@ -3168,6 +3482,7 @@ class ChunkedStreamManager {
         }
         return this._requestChunks(chunks);
     }
+
     requestRanges(ranges = []) {
         const chunksToRequest = [];
         for (const range of ranges) {
@@ -3182,6 +3497,7 @@ class ChunkedStreamManager {
         chunksToRequest.sort((a, b) => a - b);
         return this._requestChunks(chunksToRequest);
     }
+
     groupChunks(chunks) {
         const groupedChunks = [];
         let beginChunk = -1;
@@ -3208,12 +3524,14 @@ class ChunkedStreamManager {
         }
         return groupedChunks;
     }
+
     onProgress(args) {
         this.msgHandler.send("DocProgress", {
             loaded: this.stream.numChunksLoaded * this.chunkSize + args.loaded,
             total: this.length
         });
     }
+
     onReceiveData(args) {
         const chunk = args.chunk;
         const isProgressive = args.begin === undefined;
@@ -3272,15 +3590,19 @@ class ChunkedStreamManager {
             total: this.length
         });
     }
+
     onError(err) {
         this._loadedStreamCapability.reject(err);
     }
+
     getBeginChunk(begin) {
         return Math.floor(begin / this.chunkSize);
     }
+
     getEndChunk(end) {
         return Math.floor((end - 1) / this.chunkSize) + 1;
     }
+
     abort(reason) {
         this.aborted = true;
         this.pdfNetworkStream?.cancelAllRequests(reason);
@@ -3290,7 +3612,7 @@ class ChunkedStreamManager {
     }
 }
 
-;// ./src/shared/image_utils.js
+// ./src/shared/image_utils.js
 
 function convertToRGBA(params) {
     switch (params.kind) {
@@ -3301,6 +3623,7 @@ function convertToRGBA(params) {
     }
     return null;
 }
+
 function convertBlackAndWhiteToRGBA({
                                         src,
                                         srcPos = 0,
@@ -3342,6 +3665,7 @@ function convertBlackAndWhiteToRGBA({
         destPos
     };
 }
+
 function convertRGBToRGBA({
                               src,
                               srcPos = 0,
@@ -3386,6 +3710,7 @@ function convertRGBToRGBA({
         destPos
     };
 }
+
 function grayToRGBA(src, dest) {
     if (FeatureTest.isLittleEndian) {
         for (let i = 0, ii = src.length; i < ii; i++) {
@@ -3398,23 +3723,26 @@ function grayToRGBA(src, dest) {
     }
 }
 
-;// ./src/core/image_resizer.js
-
+// ./src/core/image_resizer.js
 
 
 const MIN_IMAGE_DIM = 2048;
 const MAX_IMAGE_DIM = 65537;
 const MAX_ERROR = 128;
+
 class ImageResizer {
     static #goodSquareLength = MIN_IMAGE_DIM;
     static #isImageDecoderSupported = FeatureTest.isImageDecoderSupported;
+
     constructor(imgData, isMask) {
         this._imgData = imgData;
         this._isMask = isMask;
     }
+
     static get canUseImageDecoder() {
         return shadow(this, "canUseImageDecoder", this.#isImageDecoderSupported ? ImageDecoder.isTypeSupported("image/bmp") : Promise.resolve(false));
     }
+
     static needsToBeResized(width, height) {
         if (width <= this.#goodSquareLength && height <= this.#goodSquareLength) {
             return false;
@@ -3440,6 +3768,7 @@ class ImageResizer {
         const maxArea = this.MAX_AREA = this.#goodSquareLength ** 2;
         return area > maxArea;
     }
+
     static getReducePowerForJPX(width, height, componentsCount) {
         const area = width * height;
         const maxJPXArea = 2 ** 30 / (componentsCount * 4);
@@ -3456,19 +3785,23 @@ class ImageResizer {
         const minFactor = Math.max(width / MAX_DIM, height / MAX_DIM, Math.sqrt(area / Math.min(maxJPXArea, MAX_AREA)));
         return Math.ceil(Math.log2(minFactor));
     }
+
     static get MAX_DIM() {
         return shadow(this, "MAX_DIM", this._guessMax(MIN_IMAGE_DIM, MAX_IMAGE_DIM, 0, 1));
     }
+
     static get MAX_AREA() {
         this._hasMaxArea = true;
         return shadow(this, "MAX_AREA", this._guessMax(this.#goodSquareLength, this.MAX_DIM, MAX_ERROR, 0) ** 2);
     }
+
     static set MAX_AREA(area) {
         if (area >= 0) {
             this._hasMaxArea = true;
             shadow(this, "MAX_AREA", area);
         }
     }
+
     static setOptions({
                           canvasMaxAreaInBytes = -1,
                           isImageDecoderSupported = false
@@ -3478,6 +3811,7 @@ class ImageResizer {
         }
         this.#isImageDecoderSupported = isImageDecoderSupported;
     }
+
     static _areGoodDims(width, height) {
         try {
             const canvas = new OffscreenCanvas(width, height);
@@ -3490,6 +3824,7 @@ class ImageResizer {
             return false;
         }
     }
+
     static _guessMax(start, end, tolerance, defaultHeight) {
         while (start + tolerance + 1 < end) {
             const middle = Math.floor((start + end) / 2);
@@ -3502,9 +3837,11 @@ class ImageResizer {
         }
         return start;
     }
+
     static async createImage(imgData, isMask = false) {
         return new ImageResizer(imgData, isMask)._createImage();
     }
+
     async _createImage() {
         const {
             _imgData: imgData
@@ -3573,6 +3910,7 @@ class ImageResizer {
         imgData.height = newHeight;
         return imgData;
     }
+
     #rescaleImageData() {
         const {
             _imgData: imgData
@@ -3651,6 +3989,7 @@ class ImageResizer {
         imgData.height = newHeight;
         return imgData;
     }
+
     _encodeBMP() {
         const {
             width,
@@ -3663,8 +4002,7 @@ class ImageResizer {
         let maskTable = colorTable;
         let compression = 0;
         switch (kind) {
-            case ImageKind.GRAYSCALE_1BPP:
-            {
+            case ImageKind.GRAYSCALE_1BPP: {
                 bitPerPixel = 1;
                 colorTable = new Uint8Array(this._isMask ? [255, 255, 255, 255, 0, 0, 0, 0] : [0, 0, 0, 0, 255, 255, 255, 255]);
                 const rowLen = width + 7 >> 3;
@@ -3679,8 +4017,7 @@ class ImageResizer {
                 }
                 break;
             }
-            case ImageKind.RGB_24BPP:
-            {
+            case ImageKind.RGB_24BPP: {
                 bitPerPixel = 24;
                 if (width & 3) {
                     const rowLen = 3 * width;
@@ -3771,10 +4108,11 @@ class ImageResizer {
     }
 }
 
-;// ./src/core/decode_stream.js
+// ./src/core/decode_stream.js
 
 
 const emptyBuffer = new Uint8Array(0);
+
 class DecodeStream extends BaseStream {
     constructor(maybeMinBufferLength) {
         super();
@@ -3790,12 +4128,14 @@ class DecodeStream extends BaseStream {
             }
         }
     }
+
     get isEmpty() {
         while (!this.eof && this.bufferLength === 0) {
             this.readBlock();
         }
         return this.bufferLength === 0;
     }
+
     ensureBuffer(requested) {
         const buffer = this.buffer;
         if (requested <= buffer.byteLength) {
@@ -3809,6 +4149,7 @@ class DecodeStream extends BaseStream {
         buffer2.set(buffer);
         return this.buffer = buffer2;
     }
+
     getByte() {
         const pos = this.pos;
         while (this.bufferLength <= pos) {
@@ -3819,6 +4160,7 @@ class DecodeStream extends BaseStream {
         }
         return this.buffer[this.pos++];
     }
+
     getBytes(length, decoderOptions = null) {
         const pos = this.pos;
         let end;
@@ -3841,6 +4183,7 @@ class DecodeStream extends BaseStream {
         this.pos = end;
         return this.buffer.subarray(pos, end);
     }
+
     async getImageData(length, decoderOptions) {
         if (!this.canAsyncDecodeImageFromBuffer) {
             if (this.isAsyncDecoder) {
@@ -3851,9 +4194,11 @@ class DecodeStream extends BaseStream {
         const data = await this.stream.asyncGetBytes();
         return this.decodeImage(data, decoderOptions);
     }
+
     reset() {
         this.pos = 0;
     }
+
     makeSubStream(start, length, dict = null) {
         if (length === undefined) {
             while (!this.eof) {
@@ -3867,10 +4212,12 @@ class DecodeStream extends BaseStream {
         }
         return new Stream(this.buffer, start, length, dict);
     }
+
     getBaseStreams() {
         return this.str ? this.str.getBaseStreams() : null;
     }
 }
+
 class StreamsSequenceStream extends DecodeStream {
     constructor(streams, onError = null) {
         streams = streams.filter(s => s instanceof BaseStream);
@@ -3882,6 +4229,7 @@ class StreamsSequenceStream extends DecodeStream {
         this.streams = streams;
         this._onError = onError;
     }
+
     readBlock() {
         const streams = this.streams;
         if (streams.length === 0) {
@@ -3905,6 +4253,7 @@ class StreamsSequenceStream extends DecodeStream {
         buffer.set(chunk, bufferLength);
         this.bufferLength = newLength;
     }
+
     getBaseStreams() {
         const baseStreamsBuf = [];
         for (const stream of this.streams) {
@@ -3917,10 +4266,7 @@ class StreamsSequenceStream extends DecodeStream {
     }
 }
 
-;// ./src/core/colorspace_utils.js
-
-
-
+// ./src/core/colorspace_utils.js
 
 
 class ColorSpaceUtils {
@@ -3972,6 +4318,7 @@ class ColorSpaceUtils {
         }
         return asyncIfNotCached ? Promise.resolve(parsedCS) : parsedCS;
     }
+
     static #subParse(cs, options) {
         const {
             globalColorSpaceCache
@@ -3990,6 +4337,7 @@ class ColorSpaceUtils {
         }
         return parsedCS;
     }
+
     static #parse(cs, options) {
         const {
             xref,
@@ -4131,15 +4479,19 @@ class ColorSpaceUtils {
         warn(`Unrecognized ColorSpace object: ${cs}`);
         return this.gray;
     }
+
     static get gray() {
         return shadow(this, "gray", new DeviceGrayCS());
     }
+
     static get rgb() {
         return shadow(this, "rgb", new DeviceRgbCS());
     }
+
     static get rgba() {
         return shadow(this, "rgba", new DeviceRgbaCS());
     }
+
     static get cmyk() {
         if (CmykICCBasedCS.isUsable) {
             try {
@@ -4152,10 +4504,7 @@ class ColorSpaceUtils {
     }
 }
 
-;// ./src/core/jpg.js
-
-
-
+// ./src/core/jpg.js
 
 
 class JpegError extends BaseException {
@@ -4163,17 +4512,20 @@ class JpegError extends BaseException {
         super(msg, "JpegError");
     }
 }
+
 class DNLMarkerError extends BaseException {
     constructor(message, scanLines) {
         super(message, "DNLMarkerError");
         this.scanLines = scanLines;
     }
 }
+
 class EOIMarkerError extends BaseException {
     constructor(msg) {
         super(msg, "EOIMarkerError");
     }
 }
+
 const dctZigZag = new Uint8Array([0, 1, 8, 16, 9, 2, 3, 10, 17, 24, 32, 25, 18, 11, 4, 5, 12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13, 6, 7, 14, 21, 28, 35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51, 58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63]);
 const dctCos1 = 4017;
 const dctSin1 = 799;
@@ -4183,6 +4535,7 @@ const dctCos6 = 1567;
 const dctSin6 = 3784;
 const dctSqrt2 = 5793;
 const dctSqrt1d2 = 2896;
+
 function buildHuffmanTable(codeLengths, values) {
     let k = 0,
         i,
@@ -4227,15 +4580,18 @@ function buildHuffmanTable(codeLengths, values) {
     }
     return code[0].children;
 }
+
 function getBlockBufferOffset(component, row, col) {
     return 64 * ((component.blocksPerLine + 1) * row + col);
 }
+
 function decodeScan(data, offset, frame, components, resetInterval, spectralStart, spectralEnd, successivePrev, successive, parseDNLMarker = false) {
     const mcusPerLine = frame.mcusPerLine;
     const progressive = frame.progressive;
     const startOffset = offset;
     let bitsData = 0,
         bitsCount = 0;
+
     function readBit() {
         if (bitsCount > 0) {
             bitsCount--;
@@ -4267,6 +4623,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
         bitsCount = 7;
         return bitsData >>> 7;
     }
+
     function decodeHuffman(tree) {
         let node = tree;
         while (true) {
@@ -4280,6 +4637,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
             throw new JpegError("invalid huffman sequence");
         }
     }
+
     function receive(length) {
         let n = 0;
         while (length > 0) {
@@ -4288,6 +4646,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
         }
         return n;
     }
+
     function receiveAndExtend(length) {
         if (length === 1) {
             return readBit() === 1 ? 1 : -1;
@@ -4298,6 +4657,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
         }
         return n + (-1 << length) + 1;
     }
+
     function decodeBaseline(component, blockOffset) {
         const t = decodeHuffman(component.huffmanTableDC);
         const diff = t === 0 ? 0 : receiveAndExtend(t);
@@ -4320,15 +4680,19 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
             k++;
         }
     }
+
     function decodeDCFirst(component, blockOffset) {
         const t = decodeHuffman(component.huffmanTableDC);
         const diff = t === 0 ? 0 : receiveAndExtend(t) << successive;
         component.blockData[blockOffset] = component.pred += diff;
     }
+
     function decodeDCSuccessive(component, blockOffset) {
         component.blockData[blockOffset] |= readBit() << successive;
     }
+
     let eobrun = 0;
+
     function decodeACFirst(component, blockOffset) {
         if (eobrun > 0) {
             eobrun--;
@@ -4354,8 +4718,10 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
             k++;
         }
     }
+
     let successiveACState = 0,
         successiveACNextValue;
+
     function decodeACSuccessive(component, blockOffset) {
         let k = spectralStart;
         const e = spectralEnd;
@@ -4420,7 +4786,9 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
             }
         }
     }
+
     let blockRow = 0;
+
     function decodeMcu(component, decode, mcu, row, col) {
         const mcuRow = mcu / mcusPerLine | 0;
         const mcuCol = mcu % mcusPerLine;
@@ -4429,12 +4797,14 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
         const blockOffset = getBlockBufferOffset(component, blockRow, blockCol);
         decode(component, blockOffset);
     }
+
     function decodeBlock(component, decode, mcu) {
         blockRow = mcu / component.blocksPerLine | 0;
         const blockCol = mcu % component.blocksPerLine;
         const blockOffset = getBlockBufferOffset(component, blockRow, blockCol);
         decode(component, blockOffset);
     }
+
     const componentsLength = components.length;
     let component, i, j, k, n;
     let decodeFn;
@@ -4498,6 +4868,7 @@ function decodeScan(data, offset, frame, components, resetInterval, spectralStar
     }
     return offset - startOffset;
 }
+
 function quantizeAndInverse(component, blockBufferOffset, p) {
     const qt = component.quantizationTable,
         blockData = component.blockData;
@@ -4701,6 +5072,7 @@ function quantizeAndInverse(component, blockBufferOffset, p) {
         blockData[blockBufferOffset + col + 56] = p7;
     }
 }
+
 function buildComponentData(frame, component) {
     const blocksPerLine = component.blocksPerLine;
     const blocksPerColumn = component.blocksPerColumn;
@@ -4713,6 +5085,7 @@ function buildComponentData(frame, component) {
     }
     return component.blockData;
 }
+
 function findNextFileMarker(data, currentPos, startPos = currentPos) {
     const maxPos = data.length - 1;
     let newPos = startPos < currentPos ? startPos : currentPos;
@@ -4740,6 +5113,7 @@ function findNextFileMarker(data, currentPos, startPos = currentPos) {
         offset: newPos
     };
 }
+
 function prepareComponents(frame) {
     const mcusPerLine = Math.ceil(frame.samplesPerLine / 8 / frame.maxH);
     const mcusPerColumn = Math.ceil(frame.scanLines / 8 / frame.maxV);
@@ -4756,6 +5130,7 @@ function prepareComponents(frame) {
     frame.mcusPerLine = mcusPerLine;
     frame.mcusPerColumn = mcusPerColumn;
 }
+
 function readDataBlock(data, offset) {
     const length = readUint16(data, offset);
     offset += 2;
@@ -4772,6 +5147,7 @@ function readDataBlock(data, offset) {
         newOffset: offset + array.length
     };
 }
+
 function skipData(data, offset) {
     const length = readUint16(data, offset);
     offset += 2;
@@ -4782,6 +5158,7 @@ function skipData(data, offset) {
     }
     return endOffset;
 }
+
 class JpegImage {
     constructor({
                     decodeTransform = null,
@@ -4790,6 +5167,7 @@ class JpegImage {
         this._decodeTransform = decodeTransform;
         this._colorTransform = colorTransform;
     }
+
     static canUseImageDecoder(data, colorTransform = -1) {
         let exifOffsets = null;
         let offset = 0;
@@ -4845,6 +5223,7 @@ class JpegImage {
         }
         return exifOffsets || {};
     }
+
     parse(data, {
         dnlScanLines = null
     } = {}) {
@@ -5091,6 +5470,7 @@ class JpegImage {
         this.numComponents = this.components.length;
         return undefined;
     }
+
     _getLinearizedBlockData(width, height, isSourcePDF = false) {
         const scaleX = this.width / width,
             scaleY = this.height / height;
@@ -5141,6 +5521,7 @@ class JpegImage {
         }
         return data;
     }
+
     get _isColorConversionNeeded() {
         if (this.adobe) {
             return !!this.adobe.transformCode;
@@ -5158,6 +5539,7 @@ class JpegImage {
         }
         return false;
     }
+
     _convertYccToRgb(data) {
         let Y, Cb, Cr;
         for (let i = 0, length = data.length; i < length; i += 3) {
@@ -5170,6 +5552,7 @@ class JpegImage {
         }
         return data;
     }
+
     _convertYccToRgba(data, out) {
         for (let i = 0, j = 0, length = data.length; i < length; i += 3, j += 4) {
             const Y = data[i];
@@ -5182,14 +5565,17 @@ class JpegImage {
         }
         return out;
     }
+
     _convertYcckToRgb(data) {
         this._convertYcckToCmyk(data);
         return this._convertCmykToRgb(data);
     }
+
     _convertYcckToRgba(data) {
         this._convertYcckToCmyk(data);
         return this._convertCmykToRgba(data);
     }
+
     _convertYcckToCmyk(data) {
         let Y, Cb, Cr;
         for (let i = 0, length = data.length; i < length; i += 4) {
@@ -5202,11 +5588,13 @@ class JpegImage {
         }
         return data;
     }
+
     _convertCmykToRgb(data) {
         const count = data.length / 4;
         ColorSpaceUtils.cmyk.getRgbBuffer(data, 0, count, data, 0, 8, 0);
         return data.subarray(0, count * 3);
     }
+
     _convertCmykToRgba(data) {
         ColorSpaceUtils.cmyk.getRgbBuffer(data, 0, data.length / 4, data, 0, 8, 1);
         if (ColorSpaceUtils.cmyk instanceof DeviceCmykCS) {
@@ -5216,6 +5604,7 @@ class JpegImage {
         }
         return data;
     }
+
     getData({
                 width,
                 height,
@@ -5266,13 +5655,12 @@ class JpegImage {
     }
 }
 
-;// ./src/core/jpeg_stream.js
-
-
+// ./src/core/jpeg_stream.js
 
 
 class JpegStream extends DecodeStream {
     static #isImageDecoderSupported = FeatureTest.isImageDecoderSupported;
+
     constructor(stream, maybeLength, params) {
         super(maybeLength);
         this.stream = stream;
@@ -5280,21 +5668,28 @@ class JpegStream extends DecodeStream {
         this.maybeLength = maybeLength;
         this.params = params;
     }
+
     static get canUseImageDecoder() {
         return shadow(this, "canUseImageDecoder", this.#isImageDecoderSupported ? ImageDecoder.isTypeSupported("image/jpeg") : Promise.resolve(false));
     }
+
     static setOptions({
                           isImageDecoderSupported = false
                       }) {
         this.#isImageDecoderSupported = isImageDecoderSupported;
     }
+
     get bytes() {
         return shadow(this, "bytes", this.stream.getBytes(this.maybeLength));
     }
-    ensureBuffer(requested) {}
+
+    ensureBuffer(requested) {
+    }
+
     readBlock() {
         this.decodeImage();
     }
+
     get jpegOptions() {
         const jpegOptions = {
             decodeTransform: undefined,
@@ -5326,6 +5721,7 @@ class JpegStream extends DecodeStream {
         }
         return shadow(this, "jpegOptions", jpegOptions);
     }
+
     #skipUselessBytes(data) {
         for (let i = 0, ii = data.length - 1; i < ii; i++) {
             if (data[i] === 0xff && data[i + 1] === 0xd8) {
@@ -5337,6 +5733,7 @@ class JpegStream extends DecodeStream {
         }
         return data;
     }
+
     decodeImage(bytes) {
         if (this.eof) {
             return this.buffer;
@@ -5356,9 +5753,11 @@ class JpegStream extends DecodeStream {
         this.eof = true;
         return this.buffer;
     }
+
     get canAsyncDecodeImageFromBuffer() {
         return this.stream.isAsync;
     }
+
     async getTransferableImage() {
         if (!(await JpegStream.canUseImageDecoder)) {
             return null;
@@ -5397,7 +5796,7 @@ class JpegStream extends DecodeStream {
     }
 }
 
-;// ./external/openjpeg/openjpeg.js
+// ./external/openjpeg/openjpeg.js
 var OpenJPEG = (() => {
     return async function (moduleArg = {}) {
         var moduleRtn;
@@ -5420,7 +5819,8 @@ var OpenJPEG = (() => {
         if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
             try {
                 scriptDirectory = new URL(".", _scriptName).href;
-            } catch {}
+            } catch {
+            }
             readAsync = async url => {
                 var response = await fetch(url, {
                     credentials: "same-origin"
@@ -5430,7 +5830,8 @@ var OpenJPEG = (() => {
                 }
                 throw new Error(response.status + " : " + response.url);
             };
-        } else {}
+        } else {
+        }
         var out = console.log.bind(console);
         var err = console.error.bind(console);
         var wasmBinary;
@@ -5439,6 +5840,7 @@ var OpenJPEG = (() => {
         var EXITSTATUS;
         var HEAP8, HEAPU8, HEAP16, HEAPU16, HEAP32, HEAPU32, HEAPF32, HEAP64, HEAPU64, HEAPF64;
         var runtimeInitialized = false;
+
         function updateMemoryViews() {
             var b = wasmMemory.buffer;
             HEAP8 = new Int8Array(b);
@@ -5452,6 +5854,7 @@ var OpenJPEG = (() => {
             HEAP64 = new BigInt64Array(b);
             HEAPU64 = new BigUint64Array(b);
         }
+
         function preRun() {
             if (Module["preRun"]) {
                 if (typeof Module["preRun"] == "function") Module["preRun"] = [Module["preRun"]];
@@ -5461,10 +5864,12 @@ var OpenJPEG = (() => {
             }
             callRuntimeCallbacks(onPreRuns);
         }
+
         function initRuntime() {
             runtimeInitialized = true;
             wasmExports["t"]();
         }
+
         function postRun() {
             if (Module["postRun"]) {
                 if (typeof Module["postRun"] == "function") Module["postRun"] = [Module["postRun"]];
@@ -5474,12 +5879,15 @@ var OpenJPEG = (() => {
             }
             callRuntimeCallbacks(onPostRuns);
         }
+
         var runDependencies = 0;
         var dependenciesFulfilled = null;
+
         function addRunDependency(id) {
             runDependencies++;
             Module["monitorRunDependencies"]?.(runDependencies);
         }
+
         function removeRunDependency(id) {
             runDependencies--;
             Module["monitorRunDependencies"]?.(runDependencies);
@@ -5491,6 +5899,7 @@ var OpenJPEG = (() => {
                 }
             }
         }
+
         function abort(what) {
             Module["onAbort"]?.(what);
             what = "Aborted(" + what + ")";
@@ -5501,12 +5910,15 @@ var OpenJPEG = (() => {
             readyPromiseReject(e);
             throw e;
         }
+
         var wasmBinaryFile;
+
         function getWasmImports() {
             return {
                 a: wasmImports
             };
         }
+
         async function createWasm() {
             function receiveInstance(instance, module) {
                 wasmExports = instance.exports;
@@ -5515,6 +5927,7 @@ var OpenJPEG = (() => {
                 removeRunDependency("wasm-instantiate");
                 return wasmExports;
             }
+
             addRunDependency("wasm-instantiate");
             var info = getWasmImports();
             return new Promise((resolve, reject) => {
@@ -5523,13 +5936,16 @@ var OpenJPEG = (() => {
                 });
             });
         }
+
         class ExitStatus {
             name = "ExitStatus";
+
             constructor(status) {
                 this.message = `Program terminated with exit(${status})`;
                 this.status = status;
             }
         }
+
         var callRuntimeCallbacks = callbacks => {
             while (callbacks.length > 0) {
                 callbacks.shift()(Module);
@@ -5604,12 +6020,14 @@ var OpenJPEG = (() => {
             };
             return 0;
         };
+
         function _copy_pixels_1(compG_ptr, nb_pixels) {
             compG_ptr >>= 2;
             const imageData = Module.imageData = new Uint8ClampedArray(nb_pixels);
             const compG = HEAP32.subarray(compG_ptr, compG_ptr + nb_pixels);
             imageData.set(compG);
         }
+
         function _copy_pixels_3(compR_ptr, compG_ptr, compB_ptr, nb_pixels) {
             compR_ptr >>= 2;
             compG_ptr >>= 2;
@@ -5624,6 +6042,7 @@ var OpenJPEG = (() => {
                 imageData[3 * i + 2] = compB[i];
             }
         }
+
         function _copy_pixels_4(compR_ptr, compG_ptr, compB_ptr, compA_ptr, nb_pixels) {
             compR_ptr >>= 2;
             compG_ptr >>= 2;
@@ -5641,6 +6060,7 @@ var OpenJPEG = (() => {
                 imageData[4 * i + 3] = compA[i];
             }
         }
+
         var getHeapMax = () => 2147483648;
         var alignMemory = (size, alignment) => Math.ceil(size / alignment) * alignment;
         var growMemory = size => {
@@ -5650,7 +6070,8 @@ var OpenJPEG = (() => {
                 wasmMemory.grow(pages);
                 updateMemoryViews();
                 return 1;
-            } catch (e) {}
+            } catch (e) {
+            }
         };
         var _emscripten_resize_heap = requestedSize => {
             var oldSize = HEAPU8.length;
@@ -5685,7 +6106,7 @@ var OpenJPEG = (() => {
                     _: getExecutableName()
                 };
                 for (var x in ENV) {
-                    if (ENV[x] === undefined) delete env[x];else env[x] = ENV[x];
+                    if (ENV[x] === undefined) delete env[x]; else env[x] = ENV[x];
                 }
                 var strings = [];
                 for (var x in env) {
@@ -5771,10 +6192,12 @@ var OpenJPEG = (() => {
         var INT53_MAX = 9007199254740992;
         var INT53_MIN = -9007199254740992;
         var bigintToI53Checked = num => num < INT53_MIN || num > INT53_MAX ? NaN : Number(num);
+
         function _fd_seek(fd, offset, whence, newOffset) {
             offset = bigintToI53Checked(offset);
             return 70;
         }
+
         var printCharBuffers = [null, [], []];
         var UTF8Decoder = typeof TextDecoder != "undefined" ? new TextDecoder() : undefined;
         var UTF8ArrayToString = (heapOrArray, idx = 0, maxBytesToRead = NaN) => {
@@ -5835,6 +6258,7 @@ var OpenJPEG = (() => {
             HEAPU32[pnum >> 2] = num;
             return 0;
         };
+
         function _gray_to_rgba(compG_ptr, nb_pixels) {
             compG_ptr >>= 2;
             const imageData = Module.imageData = new Uint8ClampedArray(nb_pixels * 4);
@@ -5844,6 +6268,7 @@ var OpenJPEG = (() => {
                 imageData[4 * i + 3] = 255;
             }
         }
+
         function _graya_to_rgba(compG_ptr, compA_ptr, nb_pixels) {
             compG_ptr >>= 2;
             compA_ptr >>= 2;
@@ -5855,10 +6280,12 @@ var OpenJPEG = (() => {
                 imageData[4 * i + 3] = compA[i];
             }
         }
+
         function _jsPrintWarning(message_ptr) {
             const message = UTF8ToString(message_ptr);
             (Module.warn || console.warn)(`OpenJPEG: ${message}`);
         }
+
         function _rgb_to_rgba(compR_ptr, compG_ptr, compB_ptr, nb_pixels) {
             compR_ptr >>= 2;
             compG_ptr >>= 2;
@@ -5874,6 +6301,7 @@ var OpenJPEG = (() => {
                 imageData[4 * i + 3] = 255;
             }
         }
+
         function _storeErrorMessage(message_ptr) {
             const message = UTF8ToString(message_ptr);
             if (!Module.errorMessages) {
@@ -5882,6 +6310,7 @@ var OpenJPEG = (() => {
                 Module.errorMessages += "\n" + message;
             }
         }
+
         var writeArrayToMemory = (array, buffer) => {
             HEAP8.set(array, buffer);
         };
@@ -5918,6 +6347,7 @@ var OpenJPEG = (() => {
         var _free = Module["_free"] = wasmExports["v"];
         var _jp2_decode = Module["_jp2_decode"] = wasmExports["w"];
         var __emscripten_timeout = wasmExports["x"];
+
         function run() {
             if (runDependencies > 0) {
                 dependenciesFulfilled = run;
@@ -5928,6 +6358,7 @@ var OpenJPEG = (() => {
                 dependenciesFulfilled = run;
                 return;
             }
+
             function doRun() {
                 Module["calledRun"] = true;
                 if (ABORT) return;
@@ -5936,6 +6367,7 @@ var OpenJPEG = (() => {
                 Module["onRuntimeInitialized"]?.();
                 postRun();
             }
+
             if (Module["setStatus"]) {
                 Module["setStatus"]("Running...");
                 setTimeout(() => {
@@ -5946,6 +6378,7 @@ var OpenJPEG = (() => {
                 doRun();
             }
         }
+
         function preInit() {
             if (Module["preInit"]) {
                 if (typeof Module["preInit"] == "function") Module["preInit"] = [Module["preInit"]];
@@ -5954,16 +6387,17 @@ var OpenJPEG = (() => {
                 }
             }
         }
+
         preInit();
         run();
         moduleRtn = readyPromise;
         return moduleRtn;
     };
 })();
-/* harmony default export */ const openjpeg = (OpenJPEG);
-;// ./src/core/jpx.js
+/* harmony default export */
+const openjpeg = (OpenJPEG);
 
-
+// ./src/core/jpx.js
 
 
 class JpxError extends BaseException {
@@ -5971,6 +6405,7 @@ class JpxError extends BaseException {
         super(msg, "JpxError");
     }
 }
+
 class JpxImage {
     static #buffer = null;
     static #handler = null;
@@ -5978,6 +6413,7 @@ class JpxImage {
     static #useWasm = true;
     static #useWorkerFetch = true;
     static #wasmUrl = null;
+
     static setOptions({
                           handler,
                           useWasm,
@@ -5991,6 +6427,7 @@ class JpxImage {
             this.#handler = handler;
         }
     }
+
     static async #getJsModule(fallbackCallback) {
         const path = `${this.#wasmUrl}openjpeg_nowasm_fallback.js`;
         let instance = null;
@@ -6005,6 +6442,7 @@ class JpxImage {
         }
         fallbackCallback(instance);
     }
+
     static async #instantiateWasm(fallbackCallback, imports, successCallback) {
         const filename = "openjpeg.wasm";
         try {
@@ -6028,6 +6466,7 @@ class JpxImage {
             this.#handler = null;
         }
     }
+
     static async decode(bytes, {
         numComponents = 4,
         isIndexedColormap = false,
@@ -6081,9 +6520,11 @@ class JpxImage {
             }
         }
     }
+
     static cleanup() {
         this.#modulePromise = null;
     }
+
     static parseImageProperties(stream) {
         let newByte = stream.getByte();
         while (newByte >= 0) {
@@ -6110,7 +6551,7 @@ class JpxImage {
     }
 }
 
-;// ./src/core/operator_list.js
+// ./src/core/operator_list.js
 
 function addState(parentState, pattern, checkFn, iterateFn, processFn) {
     let state = parentState;
@@ -6124,6 +6565,7 @@ function addState(parentState, pattern, checkFn, iterateFn, processFn) {
         processFn
     };
 }
+
 const InitialState = [];
 addState(InitialState, [OPS.save, OPS.transform, OPS.paintInlineImageXObject, OPS.restore], null, function iterateInlineImageGroup(context, i) {
     const fnArray = context.fnArray;
@@ -6472,19 +6914,28 @@ addState(InitialState, [OPS.save, OPS.transform, OPS.constructPath, OPS.restore]
     argsArray.splice(iFirstSave, 4, args);
     return iFirstSave + 1;
 });
+
 class NullOptimizer {
     constructor(queue) {
         this.queue = queue;
     }
-    _optimize() {}
+
+    _optimize() {
+    }
+
     push(fn, args) {
         this.queue.fnArray.push(fn);
         this.queue.argsArray.push(args);
         this._optimize();
     }
-    flush() {}
-    reset() {}
+
+    flush() {
+    }
+
+    reset() {
+    }
 }
+
 class QueueOptimizer extends NullOptimizer {
     constructor(queue) {
         super(queue);
@@ -6498,6 +6949,7 @@ class QueueOptimizer extends NullOptimizer {
         this.match = null;
         this.lastProcessed = 0;
     }
+
     _optimize() {
         const fnArray = this.queue.fnArray;
         let i = this.lastProcessed,
@@ -6542,6 +6994,7 @@ class QueueOptimizer extends NullOptimizer {
         this.match = match;
         this.lastProcessed = i;
     }
+
     flush() {
         while (this.match) {
             const length = this.queue.fnArray.length;
@@ -6551,16 +7004,19 @@ class QueueOptimizer extends NullOptimizer {
             this._optimize();
         }
     }
+
     reset() {
         this.state = null;
         this.match = null;
         this.lastProcessed = 0;
     }
 }
+
 class OperatorList {
     static CHUNK_SIZE = 1000;
     static CHUNK_SIZE_ABOUT = this.CHUNK_SIZE - 5;
     static isOffscreenCanvasSupported = false;
+
     constructor(intent = 0, streamSink) {
         this._streamSink = streamSink;
         this.fnArray = [];
@@ -6571,20 +7027,25 @@ class OperatorList {
         this.weight = 0;
         this._resolved = streamSink ? null : Promise.resolve();
     }
+
     static setOptions({
                           isOffscreenCanvasSupported
                       }) {
         this.isOffscreenCanvasSupported = isOffscreenCanvasSupported;
     }
+
     get length() {
         return this.argsArray.length;
     }
+
     get ready() {
         return this._resolved || this._streamSink.ready;
     }
+
     get totalLength() {
         return this._totalLength + this.length;
     }
+
     addOp(fn, args) {
         this.optimizer.push(fn, args);
         this.weight++;
@@ -6596,6 +7057,7 @@ class OperatorList {
             }
         }
     }
+
     addImageOps(fn, args, optionalContent, hasMask = false) {
         if (hasMask) {
             this.addOp(OPS.save);
@@ -6612,6 +7074,7 @@ class OperatorList {
             this.addOp(OPS.restore);
         }
     }
+
     addDependency(dependency) {
         if (this.dependencies.has(dependency)) {
             return;
@@ -6619,11 +7082,13 @@ class OperatorList {
         this.dependencies.add(dependency);
         this.addOp(OPS.dependency, [dependency]);
     }
+
     addDependencies(dependencies) {
         for (const dependency of dependencies) {
             this.addDependency(dependency);
         }
     }
+
     addOpList(opList) {
         if (!(opList instanceof OperatorList)) {
             warn('addOpList - ignoring invalid "opList" parameter.');
@@ -6636,6 +7101,7 @@ class OperatorList {
             this.addOp(opList.fnArray[i], opList.argsArray[i]);
         }
     }
+
     getIR() {
         return {
             fnArray: this.fnArray,
@@ -6643,6 +7109,7 @@ class OperatorList {
             length: this.length
         };
     }
+
     get _transfers() {
         const transfers = [];
         const {
@@ -6654,8 +7121,7 @@ class OperatorList {
             switch (fnArray[i]) {
                 case OPS.paintInlineImageXObject:
                 case OPS.paintInlineImageXObjectGroup:
-                case OPS.paintImageMaskXObject:
-                {
+                case OPS.paintImageMaskXObject: {
                     const {
                         bitmap,
                         data
@@ -6665,8 +7131,7 @@ class OperatorList {
                     }
                     break;
                 }
-                case OPS.constructPath:
-                {
+                case OPS.constructPath: {
                     const [, [data], minMax] = argsArray[i];
                     if (data) {
                         transfers.push(data.buffer, minMax.buffer);
@@ -6689,6 +7154,7 @@ class OperatorList {
         }
         return transfers;
     }
+
     flush(lastChunk = false, separateAnnots = null) {
         this.optimizer.flush();
         const length = this.length;
@@ -6708,7 +7174,7 @@ class OperatorList {
     }
 }
 
-;// ./src/core/binary_cmap.js
+// ./src/core/binary_cmap.js
 
 function hexToInt(a, size) {
     let n = 0;
@@ -6717,6 +7183,7 @@ function hexToInt(a, size) {
     }
     return n >>> 0;
 }
+
 function hexToStr(a, size) {
     if (size === 1) {
         return String.fromCharCode(a[0], a[1]);
@@ -6726,6 +7193,7 @@ function hexToStr(a, size) {
     }
     return String.fromCharCode(...a.subarray(0, size + 1));
 }
+
 function addHex(a, b, size) {
     let c = 0;
     for (let i = size; i >= 0; i--) {
@@ -6734,6 +7202,7 @@ function addHex(a, b, size) {
         c >>= 8;
     }
 }
+
 function incHex(a, size) {
     let c = 1;
     for (let i = size; i >= 0 && c > 0; i--) {
@@ -6742,8 +7211,10 @@ function incHex(a, size) {
         c >>= 8;
     }
 }
+
 const MAX_NUM_SIZE = 16;
 const MAX_ENCODED_NUM_SIZE = 19;
+
 class BinaryCMapStream {
     constructor(data) {
         this.buffer = data;
@@ -6751,12 +7222,14 @@ class BinaryCMapStream {
         this.end = data.length;
         this.tmpBuf = new Uint8Array(MAX_ENCODED_NUM_SIZE);
     }
+
     readByte() {
         if (this.pos >= this.end) {
             return -1;
         }
         return this.buffer[this.pos++];
     }
+
     readNumber() {
         let n = 0;
         let last;
@@ -6770,14 +7243,17 @@ class BinaryCMapStream {
         } while (!last);
         return n;
     }
+
     readSigned() {
         const n = this.readNumber();
         return n & 1 ? ~(n >>> 1) : n >>> 1;
     }
+
     readHex(num, size) {
         num.set(this.buffer.subarray(this.pos, this.pos + size + 1));
         this.pos += size + 1;
     }
+
     readHexNumber(num, size) {
         let last;
         const stack = this.tmpBuf;
@@ -6804,6 +7280,7 @@ class BinaryCMapStream {
             bufferSize -= 8;
         }
     }
+
     readHexSigned(num, size) {
         this.readHexNumber(num, size);
         const sign = num[size] & 1 ? 255 : 0;
@@ -6813,6 +7290,7 @@ class BinaryCMapStream {
             num[i] = c >> 1 ^ sign;
         }
     }
+
     readString() {
         const len = this.readNumber(),
             buf = new Array(len);
@@ -6822,6 +7300,7 @@ class BinaryCMapStream {
         return String.fromCharCode(...buf);
     }
 }
+
 class BinaryCMapReader {
     async process(data, cMap, extend) {
         const stream = new BinaryCMapStream(data);
@@ -6965,7 +7444,7 @@ class BinaryCMapReader {
     }
 }
 
-;// ./src/core/ascii_85_stream.js
+// ./src/core/ascii_85_stream.js
 
 
 class Ascii85Stream extends DecodeStream {
@@ -6978,6 +7457,7 @@ class Ascii85Stream extends DecodeStream {
         this.dict = str.dict;
         this.input = new Uint8Array(5);
     }
+
     readBlock() {
         const TILDA_CHAR = 0x7e;
         const Z_LOWER_CHAR = 0x7a;
@@ -7032,7 +7512,7 @@ class Ascii85Stream extends DecodeStream {
     }
 }
 
-;// ./src/core/ascii_hex_stream.js
+// ./src/core/ascii_hex_stream.js
 
 class AsciiHexStream extends DecodeStream {
     constructor(str, maybeLength) {
@@ -7044,6 +7524,7 @@ class AsciiHexStream extends DecodeStream {
         this.dict = str.dict;
         this.firstDigit = -1;
     }
+
     readBlock() {
         const UPSTREAM_BLOCK_SIZE = 8000;
         const bytes = this.str.getBytes(UPSTREAM_BLOCK_SIZE);
@@ -7083,7 +7564,7 @@ class AsciiHexStream extends DecodeStream {
     }
 }
 
-;// ./src/core/ccitt.js
+// ./src/core/ccitt.js
 
 const ccittEOL = -2;
 const ccittEOF = -1;
@@ -7102,6 +7583,7 @@ const whiteTable2 = [[-1, -1], [-1, -1], [-1, -1], [-1, -1], [8, 29], [8, 29], [
 const blackTable1 = [[-1, -1], [-1, -1], [12, ccittEOL], [12, ccittEOL], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1], [11, 1792], [11, 1792], [11, 1792], [11, 1792], [12, 1984], [12, 1984], [12, 2048], [12, 2048], [12, 2112], [12, 2112], [12, 2176], [12, 2176], [12, 2240], [12, 2240], [12, 2304], [12, 2304], [11, 1856], [11, 1856], [11, 1856], [11, 1856], [11, 1920], [11, 1920], [11, 1920], [11, 1920], [12, 2368], [12, 2368], [12, 2432], [12, 2432], [12, 2496], [12, 2496], [12, 2560], [12, 2560], [10, 18], [10, 18], [10, 18], [10, 18], [10, 18], [10, 18], [10, 18], [10, 18], [12, 52], [12, 52], [13, 640], [13, 704], [13, 768], [13, 832], [12, 55], [12, 55], [12, 56], [12, 56], [13, 1280], [13, 1344], [13, 1408], [13, 1472], [12, 59], [12, 59], [12, 60], [12, 60], [13, 1536], [13, 1600], [11, 24], [11, 24], [11, 24], [11, 24], [11, 25], [11, 25], [11, 25], [11, 25], [13, 1664], [13, 1728], [12, 320], [12, 320], [12, 384], [12, 384], [12, 448], [12, 448], [13, 512], [13, 576], [12, 53], [12, 53], [12, 54], [12, 54], [13, 896], [13, 960], [13, 1024], [13, 1088], [13, 1152], [13, 1216], [10, 64], [10, 64], [10, 64], [10, 64], [10, 64], [10, 64], [10, 64], [10, 64]];
 const blackTable2 = [[8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [8, 13], [11, 23], [11, 23], [12, 50], [12, 51], [12, 44], [12, 45], [12, 46], [12, 47], [12, 57], [12, 58], [12, 61], [12, 256], [10, 16], [10, 16], [10, 16], [10, 16], [10, 17], [10, 17], [10, 17], [10, 17], [12, 48], [12, 49], [12, 62], [12, 63], [12, 30], [12, 31], [12, 32], [12, 33], [12, 40], [12, 41], [11, 22], [11, 22], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [8, 14], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 10], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [7, 11], [9, 15], [9, 15], [9, 15], [9, 15], [9, 15], [9, 15], [9, 15], [9, 15], [12, 128], [12, 192], [12, 26], [12, 27], [12, 28], [12, 29], [11, 19], [11, 19], [11, 20], [11, 20], [12, 34], [12, 35], [12, 36], [12, 37], [12, 38], [12, 39], [11, 21], [11, 21], [12, 42], [12, 43], [10, 0], [10, 0], [10, 0], [10, 0], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12], [7, 12]];
 const blackTable3 = [[-1, -1], [-1, -1], [-1, -1], [-1, -1], [6, 9], [6, 8], [5, 7], [5, 7], [4, 6], [4, 6], [4, 6], [4, 6], [4, 5], [4, 5], [4, 5], [4, 5], [3, 1], [3, 1], [3, 1], [3, 1], [3, 1], [3, 1], [3, 1], [3, 1], [3, 4], [3, 4], [3, 4], [3, 4], [3, 4], [3, 4], [3, 4], [3, 4], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 3], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2], [2, 2]];
+
 class CCITTFaxDecoder {
     constructor(source, options = {}) {
         if (typeof source?.next !== "function") {
@@ -7138,6 +7620,7 @@ class CCITTFaxDecoder {
             this._eatBits(1);
         }
     }
+
     readNextChar() {
         if (this.eof) {
             return -1;
@@ -7428,6 +7911,7 @@ class CCITTFaxDecoder {
         }
         return c;
     }
+
     _addPixels(a1, blackPixels) {
         const codingLine = this.codingLine;
         let codingPos = this.codingPos;
@@ -7444,6 +7928,7 @@ class CCITTFaxDecoder {
         }
         this.codingPos = codingPos;
     }
+
     _addPixelsNeg(a1, blackPixels) {
         const codingLine = this.codingLine;
         let codingPos = this.codingPos;
@@ -7470,6 +7955,7 @@ class CCITTFaxDecoder {
         }
         this.codingPos = codingPos;
     }
+
     _findTableCode(start, end, table, limit) {
         const limitValue = limit || 0;
         for (let i = start; i <= end; ++i) {
@@ -7490,6 +7976,7 @@ class CCITTFaxDecoder {
         }
         return [false, 0, false];
     }
+
     _getTwoDimCode() {
         let code = 0;
         let p;
@@ -7509,6 +7996,7 @@ class CCITTFaxDecoder {
         info("Bad two dim code");
         return ccittEOF;
     }
+
     _getWhiteCode() {
         let code = 0;
         let p;
@@ -7536,6 +8024,7 @@ class CCITTFaxDecoder {
         this._eatBits(1);
         return 1;
     }
+
     _getBlackCode() {
         let code, p;
         if (this.eoblock) {
@@ -7572,6 +8061,7 @@ class CCITTFaxDecoder {
         this._eatBits(1);
         return 1;
     }
+
     _lookBits(n) {
         let c;
         while (this.inputBits < n) {
@@ -7586,6 +8076,7 @@ class CCITTFaxDecoder {
         }
         return this.inputBuf >> this.inputBits - n & 0xffff >> 16 - n;
     }
+
     _eatBits(n) {
         if ((this.inputBits -= n) < 0) {
             this.inputBits = 0;
@@ -7593,8 +8084,7 @@ class CCITTFaxDecoder {
     }
 }
 
-;// ./src/core/ccitt_stream.js
-
+// ./src/core/ccitt_stream.js
 
 
 class CCITTFaxStream extends DecodeStream {
@@ -7620,6 +8110,7 @@ class CCITTFaxStream extends DecodeStream {
             BlackIs1: params.get("BlackIs1")
         });
     }
+
     readBlock() {
         while (!this.eof) {
             const c = this.ccittFaxDecoder.readNextChar();
@@ -7633,8 +8124,7 @@ class CCITTFaxStream extends DecodeStream {
     }
 }
 
-;// ./src/core/flate_stream.js
-
+// ./src/core/flate_stream.js
 
 
 const codeLenCodeMap = new Int32Array([16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]);
@@ -7642,6 +8132,7 @@ const lengthDecode = new Int32Array([0x00003, 0x00004, 0x00005, 0x00006, 0x00007
 const distDecode = new Int32Array([0x00001, 0x00002, 0x00003, 0x00004, 0x10005, 0x10007, 0x20009, 0x2000d, 0x30011, 0x30019, 0x40021, 0x40031, 0x50041, 0x50061, 0x60081, 0x600c1, 0x70101, 0x70181, 0x80201, 0x80301, 0x90401, 0x90601, 0xa0801, 0xa0c01, 0xb1001, 0xb1801, 0xc2001, 0xc3001, 0xd4001, 0xd6001]);
 const fixedLitCodeTab = [new Int32Array([0x70100, 0x80050, 0x80010, 0x80118, 0x70110, 0x80070, 0x80030, 0x900c0, 0x70108, 0x80060, 0x80020, 0x900a0, 0x80000, 0x80080, 0x80040, 0x900e0, 0x70104, 0x80058, 0x80018, 0x90090, 0x70114, 0x80078, 0x80038, 0x900d0, 0x7010c, 0x80068, 0x80028, 0x900b0, 0x80008, 0x80088, 0x80048, 0x900f0, 0x70102, 0x80054, 0x80014, 0x8011c, 0x70112, 0x80074, 0x80034, 0x900c8, 0x7010a, 0x80064, 0x80024, 0x900a8, 0x80004, 0x80084, 0x80044, 0x900e8, 0x70106, 0x8005c, 0x8001c, 0x90098, 0x70116, 0x8007c, 0x8003c, 0x900d8, 0x7010e, 0x8006c, 0x8002c, 0x900b8, 0x8000c, 0x8008c, 0x8004c, 0x900f8, 0x70101, 0x80052, 0x80012, 0x8011a, 0x70111, 0x80072, 0x80032, 0x900c4, 0x70109, 0x80062, 0x80022, 0x900a4, 0x80002, 0x80082, 0x80042, 0x900e4, 0x70105, 0x8005a, 0x8001a, 0x90094, 0x70115, 0x8007a, 0x8003a, 0x900d4, 0x7010d, 0x8006a, 0x8002a, 0x900b4, 0x8000a, 0x8008a, 0x8004a, 0x900f4, 0x70103, 0x80056, 0x80016, 0x8011e, 0x70113, 0x80076, 0x80036, 0x900cc, 0x7010b, 0x80066, 0x80026, 0x900ac, 0x80006, 0x80086, 0x80046, 0x900ec, 0x70107, 0x8005e, 0x8001e, 0x9009c, 0x70117, 0x8007e, 0x8003e, 0x900dc, 0x7010f, 0x8006e, 0x8002e, 0x900bc, 0x8000e, 0x8008e, 0x8004e, 0x900fc, 0x70100, 0x80051, 0x80011, 0x80119, 0x70110, 0x80071, 0x80031, 0x900c2, 0x70108, 0x80061, 0x80021, 0x900a2, 0x80001, 0x80081, 0x80041, 0x900e2, 0x70104, 0x80059, 0x80019, 0x90092, 0x70114, 0x80079, 0x80039, 0x900d2, 0x7010c, 0x80069, 0x80029, 0x900b2, 0x80009, 0x80089, 0x80049, 0x900f2, 0x70102, 0x80055, 0x80015, 0x8011d, 0x70112, 0x80075, 0x80035, 0x900ca, 0x7010a, 0x80065, 0x80025, 0x900aa, 0x80005, 0x80085, 0x80045, 0x900ea, 0x70106, 0x8005d, 0x8001d, 0x9009a, 0x70116, 0x8007d, 0x8003d, 0x900da, 0x7010e, 0x8006d, 0x8002d, 0x900ba, 0x8000d, 0x8008d, 0x8004d, 0x900fa, 0x70101, 0x80053, 0x80013, 0x8011b, 0x70111, 0x80073, 0x80033, 0x900c6, 0x70109, 0x80063, 0x80023, 0x900a6, 0x80003, 0x80083, 0x80043, 0x900e6, 0x70105, 0x8005b, 0x8001b, 0x90096, 0x70115, 0x8007b, 0x8003b, 0x900d6, 0x7010d, 0x8006b, 0x8002b, 0x900b6, 0x8000b, 0x8008b, 0x8004b, 0x900f6, 0x70103, 0x80057, 0x80017, 0x8011f, 0x70113, 0x80077, 0x80037, 0x900ce, 0x7010b, 0x80067, 0x80027, 0x900ae, 0x80007, 0x80087, 0x80047, 0x900ee, 0x70107, 0x8005f, 0x8001f, 0x9009e, 0x70117, 0x8007f, 0x8003f, 0x900de, 0x7010f, 0x8006f, 0x8002f, 0x900be, 0x8000f, 0x8008f, 0x8004f, 0x900fe, 0x70100, 0x80050, 0x80010, 0x80118, 0x70110, 0x80070, 0x80030, 0x900c1, 0x70108, 0x80060, 0x80020, 0x900a1, 0x80000, 0x80080, 0x80040, 0x900e1, 0x70104, 0x80058, 0x80018, 0x90091, 0x70114, 0x80078, 0x80038, 0x900d1, 0x7010c, 0x80068, 0x80028, 0x900b1, 0x80008, 0x80088, 0x80048, 0x900f1, 0x70102, 0x80054, 0x80014, 0x8011c, 0x70112, 0x80074, 0x80034, 0x900c9, 0x7010a, 0x80064, 0x80024, 0x900a9, 0x80004, 0x80084, 0x80044, 0x900e9, 0x70106, 0x8005c, 0x8001c, 0x90099, 0x70116, 0x8007c, 0x8003c, 0x900d9, 0x7010e, 0x8006c, 0x8002c, 0x900b9, 0x8000c, 0x8008c, 0x8004c, 0x900f9, 0x70101, 0x80052, 0x80012, 0x8011a, 0x70111, 0x80072, 0x80032, 0x900c5, 0x70109, 0x80062, 0x80022, 0x900a5, 0x80002, 0x80082, 0x80042, 0x900e5, 0x70105, 0x8005a, 0x8001a, 0x90095, 0x70115, 0x8007a, 0x8003a, 0x900d5, 0x7010d, 0x8006a, 0x8002a, 0x900b5, 0x8000a, 0x8008a, 0x8004a, 0x900f5, 0x70103, 0x80056, 0x80016, 0x8011e, 0x70113, 0x80076, 0x80036, 0x900cd, 0x7010b, 0x80066, 0x80026, 0x900ad, 0x80006, 0x80086, 0x80046, 0x900ed, 0x70107, 0x8005e, 0x8001e, 0x9009d, 0x70117, 0x8007e, 0x8003e, 0x900dd, 0x7010f, 0x8006e, 0x8002e, 0x900bd, 0x8000e, 0x8008e, 0x8004e, 0x900fd, 0x70100, 0x80051, 0x80011, 0x80119, 0x70110, 0x80071, 0x80031, 0x900c3, 0x70108, 0x80061, 0x80021, 0x900a3, 0x80001, 0x80081, 0x80041, 0x900e3, 0x70104, 0x80059, 0x80019, 0x90093, 0x70114, 0x80079, 0x80039, 0x900d3, 0x7010c, 0x80069, 0x80029, 0x900b3, 0x80009, 0x80089, 0x80049, 0x900f3, 0x70102, 0x80055, 0x80015, 0x8011d, 0x70112, 0x80075, 0x80035, 0x900cb, 0x7010a, 0x80065, 0x80025, 0x900ab, 0x80005, 0x80085, 0x80045, 0x900eb, 0x70106, 0x8005d, 0x8001d, 0x9009b, 0x70116, 0x8007d, 0x8003d, 0x900db, 0x7010e, 0x8006d, 0x8002d, 0x900bb, 0x8000d, 0x8008d, 0x8004d, 0x900fb, 0x70101, 0x80053, 0x80013, 0x8011b, 0x70111, 0x80073, 0x80033, 0x900c7, 0x70109, 0x80063, 0x80023, 0x900a7, 0x80003, 0x80083, 0x80043, 0x900e7, 0x70105, 0x8005b, 0x8001b, 0x90097, 0x70115, 0x8007b, 0x8003b, 0x900d7, 0x7010d, 0x8006b, 0x8002b, 0x900b7, 0x8000b, 0x8008b, 0x8004b, 0x900f7, 0x70103, 0x80057, 0x80017, 0x8011f, 0x70113, 0x80077, 0x80037, 0x900cf, 0x7010b, 0x80067, 0x80027, 0x900af, 0x80007, 0x80087, 0x80047, 0x900ef, 0x70107, 0x8005f, 0x8001f, 0x9009f, 0x70117, 0x8007f, 0x8003f, 0x900df, 0x7010f, 0x8006f, 0x8002f, 0x900bf, 0x8000f, 0x8008f, 0x8004f, 0x900ff]), 9];
 const fixedDistCodeTab = [new Int32Array([0x50000, 0x50010, 0x50008, 0x50018, 0x50004, 0x50014, 0x5000c, 0x5001c, 0x50002, 0x50012, 0x5000a, 0x5001a, 0x50006, 0x50016, 0x5000e, 0x00000, 0x50001, 0x50011, 0x50009, 0x50019, 0x50005, 0x50015, 0x5000d, 0x5001d, 0x50003, 0x50013, 0x5000b, 0x5001b, 0x50007, 0x50017, 0x5000f, 0x00000]), 5];
+
 class FlateStream extends DecodeStream {
     constructor(str, maybeLength) {
         super(maybeLength);
@@ -7664,6 +8155,7 @@ class FlateStream extends DecodeStream {
         this.codeSize = 0;
         this.codeBuf = 0;
     }
+
     async getImageData(length, _decoderOptions) {
         const data = await this.asyncGetBytes();
         if (!data) {
@@ -7674,6 +8166,7 @@ class FlateStream extends DecodeStream {
         }
         return data.subarray(0, length);
     }
+
     async asyncGetBytes() {
         this.str.reset();
         const bytes = this.str.getBytes();
@@ -7687,7 +8180,8 @@ class FlateStream extends DecodeStream {
             writer.write(bytes).then(async () => {
                 await writer.ready;
                 await writer.close();
-            }).catch(() => {});
+            }).catch(() => {
+            });
             const chunks = [];
             let totalLength = 0;
             for await (const chunk of readable) {
@@ -7707,9 +8201,11 @@ class FlateStream extends DecodeStream {
             return null;
         }
     }
+
     get isAsync() {
         return true;
     }
+
     getBits(bits) {
         const str = this.str;
         let codeSize = this.codeSize;
@@ -7727,6 +8223,7 @@ class FlateStream extends DecodeStream {
         this.codeSize = codeSize -= bits;
         return b;
     }
+
     getCode(table) {
         const str = this.str;
         const codes = table[0];
@@ -7751,6 +8248,7 @@ class FlateStream extends DecodeStream {
         this.codeSize = codeSize - codeLen;
         return codeVal;
     }
+
     generateHuffmanTable(lengths) {
         const n = lengths.length;
         let maxLen = 0;
@@ -7780,10 +8278,12 @@ class FlateStream extends DecodeStream {
         }
         return [codes, maxLen];
     }
+
     #endsStreamOnError(err) {
         info(err);
         this.eof = true;
     }
+
     readBlock() {
         let buffer, hdr, len;
         const str = this.str;
@@ -7931,7 +8431,7 @@ class FlateStream extends DecodeStream {
     }
 }
 
-;// ./src/core/arithmetic_decoder.js
+// ./src/core/arithmetic_decoder.js
 const QeTable = [{
     qe: 0x5601,
     nmps: 1,
@@ -8168,6 +8668,7 @@ const QeTable = [{
     nlps: 46,
     switchFlag: 0
 }];
+
 class ArithmeticDecoder {
     constructor(data, start, end) {
         this.data = data;
@@ -8181,6 +8682,7 @@ class ArithmeticDecoder {
         this.ct -= 7;
         this.a = 0x8000;
     }
+
     byteIn() {
         const data = this.data;
         let bp = this.bp;
@@ -8205,6 +8707,7 @@ class ArithmeticDecoder {
             this.clow &= 0xffff;
         }
     }
+
     readBit(contexts, pos) {
         let cx_index = contexts[pos] >> 1,
             cx_mps = contexts[pos] & 1;
@@ -8257,9 +8760,7 @@ class ArithmeticDecoder {
     }
 }
 
-;// ./src/core/jbig2.js
-
-
+// ./src/core/jbig2.js
 
 
 class Jbig2Error extends BaseException {
@@ -8267,6 +8768,7 @@ class Jbig2Error extends BaseException {
         super(msg, "Jbig2Error");
     }
 }
+
 class ContextCache {
     getContexts(id) {
         if (id in this) {
@@ -8275,24 +8777,29 @@ class ContextCache {
         return this[id] = new Int8Array(1 << 16);
     }
 }
+
 class DecodingContext {
     constructor(data, start, end) {
         this.data = data;
         this.start = start;
         this.end = end;
     }
+
     get decoder() {
         const decoder = new ArithmeticDecoder(this.data, this.start, this.end);
         return shadow(this, "decoder", decoder);
     }
+
     get contextCache() {
         const cache = new ContextCache();
         return shadow(this, "contextCache", cache);
     }
 }
+
 function decodeInteger(contextCache, procedure, decoder) {
     const contexts = contextCache.getContexts(procedure);
     let prev = 1;
+
     function readBits(length) {
         let v = 0;
         for (let i = 0; i < length; i++) {
@@ -8302,6 +8809,7 @@ function decodeInteger(contextCache, procedure, decoder) {
         }
         return v >>> 0;
     }
+
     const sign = readBits(1);
     const value = readBits(1) ? readBits(1) ? readBits(1) ? readBits(1) ? readBits(1) ? readBits(32) + 4436 : readBits(12) + 340 : readBits(8) + 84 : readBits(6) + 20 : readBits(4) + 4 : readBits(2);
     let signedValue;
@@ -8315,6 +8823,7 @@ function decodeInteger(contextCache, procedure, decoder) {
     }
     return null;
 }
+
 function decodeIAID(contextCache, decoder, codeLength) {
     const contexts = contextCache.getContexts("IAID");
     let prev = 1;
@@ -8327,6 +8836,7 @@ function decodeIAID(contextCache, decoder, codeLength) {
     }
     return prev & 0x7fffffff;
 }
+
 const SegmentTypes = ["SymbolDictionary", null, null, null, "IntermediateTextRegion", null, "ImmediateTextRegion", "ImmediateLosslessTextRegion", null, null, null, null, null, null, null, null, "PatternDictionary", null, null, null, "IntermediateHalftoneRegion", null, "ImmediateHalftoneRegion", "ImmediateLosslessHalftoneRegion", null, null, null, null, null, null, null, null, null, null, null, null, "IntermediateGenericRegion", null, "ImmediateGenericRegion", "ImmediateLosslessGenericRegion", "IntermediateGenericRefinementRegion", null, "ImmediateGenericRefinementRegion", "ImmediateLosslessGenericRefinementRegion", null, null, null, null, "PageInformation", "EndOfPage", "EndOfStripe", "EndOfFile", "Profiles", "Tables", null, null, null, null, null, null, null, null, "Extension"];
 const CodingTemplates = [[{
     x: -1,
@@ -8527,6 +9037,7 @@ const RefinementTemplates = [{
 }];
 const ReusedContexts = [0x9b25, 0x0795, 0x00e5, 0x0195];
 const RefinementReusedContexts = [0x0020, 0x0008];
+
 function decodeBitmapTemplate0(width, height, decodingContext) {
     const decoder = decodingContext.decoder;
     const contexts = decodingContext.contextCache.getContexts("GB");
@@ -8545,6 +9056,7 @@ function decodeBitmapTemplate0(width, height, decodingContext) {
     }
     return bitmap;
 }
+
 function decodeBitmap(mmr, width, height, templateIndex, prediction, skip, at, decodingContext) {
     if (mmr) {
         const input = new Reader(decodingContext.data, decodingContext.start, decodingContext.end);
@@ -8651,6 +9163,7 @@ function decodeBitmap(mmr, width, height, templateIndex, prediction, skip, at, d
     }
     return bitmap;
 }
+
 function decodeRefinement(width, height, templateIndex, referenceBitmap, offsetX, offsetY, prediction, at, decodingContext) {
     let codingTemplate = RefinementTemplates[templateIndex].coding;
     if (templateIndex === 0) {
@@ -8719,6 +9232,7 @@ function decodeRefinement(width, height, templateIndex, referenceBitmap, offsetX
     }
     return bitmap;
 }
+
 function decodeSymbolDictionary(huffman, refinement, symbols, numberOfNewSymbols, numberOfExportedSymbols, huffmanTables, templateIndex, at, refinementTemplateIndex, refinementAt, decodingContext, huffmanInput) {
     if (huffman && refinement) {
         throw new Jbig2Error("symbol refinement with Huffman is not supported");
@@ -8829,6 +9343,7 @@ function decodeSymbolDictionary(huffman, refinement, symbols, numberOfNewSymbols
     }
     return exportedSymbols;
 }
+
 function decodeTextRegion(huffman, refinement, width, height, defaultPixelValue, numberOfSymbolInstances, stripSize, inputSymbols, symbolCodeLength, transposed, dsOffset, referenceCorner, combinationOperator, huffmanTables, refinementTemplateIndex, refinementAt, decodingContext, logStripSize, huffmanInput) {
     if (huffman && refinement) {
         throw new Jbig2Error("refinement with Huffman is not supported");
@@ -8944,6 +9459,7 @@ function decodeTextRegion(huffman, refinement, width, height, defaultPixelValue,
     }
     return bitmap;
 }
+
 function decodePatternDictionary(mmr, patternWidth, patternHeight, maxPatternIndex, template, decodingContext) {
     const at = [];
     if (!mmr) {
@@ -8978,6 +9494,7 @@ function decodePatternDictionary(mmr, patternWidth, patternHeight, maxPatternInd
     }
     return patterns;
 }
+
 function decodeHalftoneRegion(mmr, patterns, template, regionWidth, regionHeight, defaultPixelValue, enableSkip, combinationOperator, gridWidth, gridHeight, gridOffsetX, gridOffsetY, gridVectorX, gridVectorY, decodingContext) {
     const skip = null;
     if (enableSkip) {
@@ -9073,6 +9590,7 @@ function decodeHalftoneRegion(mmr, patterns, template, regionWidth, regionHeight
     }
     return regionBitmap;
 }
+
 function readSegmentHeader(data, start) {
     const segmentHeader = {};
     segmentHeader.number = readUint32(data, start);
@@ -9165,6 +9683,7 @@ function readSegmentHeader(data, start) {
     segmentHeader.headerEnd = position;
     return segmentHeader;
 }
+
 function readSegments(header, data, start, end) {
     const segments = [];
     let position = start;
@@ -9194,6 +9713,7 @@ function readSegments(header, data, start, end) {
     }
     return segments;
 }
+
 function readRegionSegmentInformation(data, start) {
     return {
         width: readUint32(data, start),
@@ -9203,7 +9723,9 @@ function readRegionSegmentInformation(data, start) {
         combinationOperator: data[start + 16] & 7
     };
 }
+
 const RegionSegmentInformationFieldLength = 17;
+
 function processSegment(segment, visitor) {
     const header = segment.header;
     const data = segment.data,
@@ -9396,11 +9918,13 @@ function processSegment(segment, visitor) {
         visitor[callbackName].apply(visitor, args);
     }
 }
+
 function processSegments(segments, visitor) {
     for (let i = 0, ii = segments.length; i < ii; i++) {
         processSegment(segments[i], visitor);
     }
 }
+
 function parseJbig2Chunks(chunks) {
     const visitor = new SimpleSegmentVisitor();
     for (let i = 0, ii = chunks.length; i < ii; i++) {
@@ -9410,6 +9934,7 @@ function parseJbig2Chunks(chunks) {
     }
     return visitor.buffer;
 }
+
 class SimpleSegmentVisitor {
     onPageInformation(info) {
         this.currentPageInfo = info;
@@ -9420,6 +9945,7 @@ class SimpleSegmentVisitor {
         }
         this.buffer = buffer;
     }
+
     drawBitmap(regionInfo, bitmap) {
         const pageInfo = this.currentPageInfo;
         const width = regionInfo.width,
@@ -9469,15 +9995,18 @@ class SimpleSegmentVisitor {
                 throw new Jbig2Error(`operator ${combinationOperator} is not supported`);
         }
     }
+
     onImmediateGenericRegion(region, data, start, end) {
         const regionInfo = region.info;
         const decodingContext = new DecodingContext(data, start, end);
         const bitmap = decodeBitmap(region.mmr, regionInfo.width, regionInfo.height, region.template, region.prediction, null, region.at, decodingContext);
         this.drawBitmap(regionInfo, bitmap);
     }
+
     onImmediateLosslessGenericRegion() {
         this.onImmediateGenericRegion(...arguments);
     }
+
     onSymbolDictionary(dictionary, currentSegment, referredSegments, data, start, end) {
         let huffmanTables, huffmanInput;
         if (dictionary.huffman) {
@@ -9498,6 +10027,7 @@ class SimpleSegmentVisitor {
         const decodingContext = new DecodingContext(data, start, end);
         symbols[currentSegment] = decodeSymbolDictionary(dictionary.huffman, dictionary.refinement, inputSymbols, dictionary.numberOfNewSymbols, dictionary.numberOfExportedSymbols, huffmanTables, dictionary.template, dictionary.at, dictionary.refinementTemplate, dictionary.refinementAt, decodingContext, huffmanInput);
     }
+
     onImmediateTextRegion(region, referredSegments, data, start, end) {
         const regionInfo = region.info;
         let huffmanTables, huffmanInput;
@@ -9518,9 +10048,11 @@ class SimpleSegmentVisitor {
         const bitmap = decodeTextRegion(region.huffman, region.refinement, regionInfo.width, regionInfo.height, region.defaultPixelValue, region.numberOfSymbolInstances, region.stripSize, inputSymbols, symbolCodeLength, region.transposed, region.dsOffset, region.referenceCorner, region.combinationOperator, huffmanTables, region.refinementTemplate, region.refinementAt, decodingContext, region.logStripSize, huffmanInput);
         this.drawBitmap(regionInfo, bitmap);
     }
+
     onImmediateLosslessTextRegion() {
         this.onImmediateTextRegion(...arguments);
     }
+
     onPatternDictionary(dictionary, currentSegment, data, start, end) {
         let patterns = this.patterns;
         if (!patterns) {
@@ -9529,6 +10061,7 @@ class SimpleSegmentVisitor {
         const decodingContext = new DecodingContext(data, start, end);
         patterns[currentSegment] = decodePatternDictionary(dictionary.mmr, dictionary.patternWidth, dictionary.patternHeight, dictionary.maxPatternIndex, dictionary.template, decodingContext);
     }
+
     onImmediateHalftoneRegion(region, referredSegments, data, start, end) {
         const patterns = this.patterns[referredSegments[0]];
         const regionInfo = region.info;
@@ -9536,9 +10069,11 @@ class SimpleSegmentVisitor {
         const bitmap = decodeHalftoneRegion(region.mmr, patterns, region.template, regionInfo.width, regionInfo.height, region.defaultPixelValue, region.enableSkip, region.combinationOperator, region.gridWidth, region.gridHeight, region.gridOffsetX, region.gridOffsetY, region.gridVectorX, region.gridVectorY, decodingContext);
         this.drawBitmap(regionInfo, bitmap);
     }
+
     onImmediateLosslessHalftoneRegion() {
         this.onImmediateHalftoneRegion(...arguments);
     }
+
     onTables(currentSegment, data, start, end) {
         let customTables = this.customTables;
         if (!customTables) {
@@ -9547,6 +10082,7 @@ class SimpleSegmentVisitor {
         customTables[currentSegment] = decodeTablesSegment(data, start, end);
     }
 }
+
 class HuffmanLine {
     constructor(lineData) {
         if (lineData.length === 2) {
@@ -9566,6 +10102,7 @@ class HuffmanLine {
         }
     }
 }
+
 class HuffmanTreeNode {
     constructor(line) {
         this.children = [];
@@ -9579,6 +10116,7 @@ class HuffmanTreeNode {
             this.isLeaf = false;
         }
     }
+
     buildTree(line, shift) {
         const bit = line.prefixCode >> shift & 1;
         if (shift <= 0) {
@@ -9591,6 +10129,7 @@ class HuffmanTreeNode {
             node.buildTree(line, shift - 1);
         }
     }
+
     decodeNode(reader) {
         if (this.isLeaf) {
             if (this.isOOB) {
@@ -9606,6 +10145,7 @@ class HuffmanTreeNode {
         return node.decodeNode(reader);
     }
 }
+
 class HuffmanTable {
     constructor(lines, prefixCodesDone) {
         if (!prefixCodesDone) {
@@ -9619,9 +10159,11 @@ class HuffmanTable {
             }
         }
     }
+
     decode(reader) {
         return this.rootNode.decodeNode(reader);
     }
+
     assignPrefixCodes(lines) {
         const linesLength = lines.length;
         let prefixLengthMax = 0;
@@ -9654,6 +10196,7 @@ class HuffmanTable {
         }
     }
 }
+
 function decodeTablesSegment(data, start, end) {
     const flags = data[start];
     const lowestValue = readUint32(data, start + 1) & 0xffffffff;
@@ -9681,7 +10224,9 @@ function decodeTablesSegment(data, start, end) {
     }
     return new HuffmanTable(lines, false);
 }
+
 const standardTablesCache = {};
+
 function getStandardTable(number) {
     let table = standardTablesCache[number];
     if (table) {
@@ -9744,6 +10289,7 @@ function getStandardTable(number) {
     standardTablesCache[number] = table;
     return table;
 }
+
 class Reader {
     constructor(data, start, end) {
         this.data = data;
@@ -9753,6 +10299,7 @@ class Reader {
         this.shift = -1;
         this.currentByte = 0;
     }
+
     readBit() {
         if (this.shift < 0) {
             if (this.position >= this.end) {
@@ -9765,6 +10312,7 @@ class Reader {
         this.shift--;
         return bit;
     }
+
     readBits(numBits) {
         let result = 0,
             i;
@@ -9773,9 +10321,11 @@ class Reader {
         }
         return result;
     }
+
     byteAlign() {
         this.shift = -1;
     }
+
     next() {
         if (this.position >= this.end) {
             return -1;
@@ -9783,6 +10333,7 @@ class Reader {
         return this.data[this.position++];
     }
 }
+
 function getCustomHuffmanTable(index, referredTo, customTables) {
     let currentIndex = 0;
     for (let i = 0, ii = referredTo.length; i < ii; i++) {
@@ -9796,6 +10347,7 @@ function getCustomHuffmanTable(index, referredTo, customTables) {
     }
     throw new Jbig2Error("can't find custom Huffman table");
 }
+
 function getTextRegionHuffmanTables(textRegion, referredTo, customTables, numberOfSymbols, reader) {
     const codes = [];
     for (let i = 0; i <= 34; i++) {
@@ -9890,6 +10442,7 @@ function getTextRegionHuffmanTables(textRegion, referredTo, customTables, number
         tableDeltaT
     };
 }
+
 function getSymbolDictionaryHuffmanTables(dictionary, referredTo, customTables) {
     let customIndex = 0,
         tableDeltaHeight,
@@ -9937,6 +10490,7 @@ function getSymbolDictionaryHuffmanTables(dictionary, referredTo, customTables) 
         tableAggregateInstances
     };
 }
+
 function readUncompressedBitmap(reader, width, height) {
     const bitmap = [];
     for (let y = 0; y < height; y++) {
@@ -9949,6 +10503,7 @@ function readUncompressedBitmap(reader, width, height) {
     }
     return bitmap;
 }
+
 function decodeMMRBitmap(input, width, height, endOfBlock) {
     const params = {
         K: -1,
@@ -9988,19 +10543,18 @@ function decodeMMRBitmap(input, width, height, endOfBlock) {
     }
     return bitmap;
 }
+
 class Jbig2Image {
     parseChunks(chunks) {
         return parseJbig2Chunks(chunks);
     }
+
     parse(data) {
         throw new Error("Not implemented: Jbig2Image.parse");
     }
 }
 
-;// ./src/core/jbig2_stream.js
-
-
-
+// ./src/core/jbig2_stream.js
 
 
 class Jbig2Stream extends DecodeStream {
@@ -10011,13 +10565,18 @@ class Jbig2Stream extends DecodeStream {
         this.maybeLength = maybeLength;
         this.params = params;
     }
+
     get bytes() {
         return shadow(this, "bytes", this.stream.getBytes(this.maybeLength));
     }
-    ensureBuffer(requested) {}
+
+    ensureBuffer(requested) {
+    }
+
     readBlock() {
         this.decodeImage();
     }
+
     decodeImage(bytes) {
         if (this.eof) {
             return this.buffer;
@@ -10051,13 +10610,13 @@ class Jbig2Stream extends DecodeStream {
         this.eof = true;
         return this.buffer;
     }
+
     get canAsyncDecodeImageFromBuffer() {
         return this.stream.isAsync;
     }
 }
 
-;// ./src/core/jpx_stream.js
-
+// ./src/core/jpx_stream.js
 
 
 class JpxStream extends DecodeStream {
@@ -10068,16 +10627,22 @@ class JpxStream extends DecodeStream {
         this.maybeLength = maybeLength;
         this.params = params;
     }
+
     get bytes() {
         return shadow(this, "bytes", this.stream.getBytes(this.maybeLength));
     }
-    ensureBuffer(requested) {}
+
+    ensureBuffer(requested) {
+    }
+
     readBlock(decoderOptions) {
         unreachable("JpxStream.readBlock");
     }
+
     get isAsyncDecoder() {
         return true;
     }
+
     async decodeImage(bytes, decoderOptions) {
         if (this.eof) {
             return this.buffer;
@@ -10088,12 +10653,13 @@ class JpxStream extends DecodeStream {
         this.eof = true;
         return this.buffer;
     }
+
     get canAsyncDecodeImageFromBuffer() {
         return this.stream.isAsync;
     }
 }
 
-;// ./src/core/lzw_stream.js
+// ./src/core/lzw_stream.js
 
 class LZWStream extends DecodeStream {
     constructor(str, maybeLength, earlyChange) {
@@ -10119,6 +10685,7 @@ class LZWStream extends DecodeStream {
         }
         this.lzwState = lzwState;
     }
+
     readBits(n) {
         let bitsCached = this.bitsCached;
         let cachedData = this.cachedData;
@@ -10136,6 +10703,7 @@ class LZWStream extends DecodeStream {
         this.lastCode = null;
         return cachedData >>> bitsCached & (1 << n) - 1;
     }
+
     readBlock() {
         const blockSize = 512,
             decodedSizeDelta = blockSize;
@@ -10210,8 +10778,7 @@ class LZWStream extends DecodeStream {
     }
 }
 
-;// ./src/core/predictor_stream.js
-
+// ./src/core/predictor_stream.js
 
 
 class PredictorStream extends DecodeStream {
@@ -10237,6 +10804,7 @@ class PredictorStream extends DecodeStream {
         this.rowBytes = columns * colors * bits + 7 >> 3;
         return this;
     }
+
     readBlockTiff() {
         const rowBytes = this.rowBytes;
         const bufferLength = this.bufferLength;
@@ -10309,6 +10877,7 @@ class PredictorStream extends DecodeStream {
         }
         this.bufferLength += rowBytes;
     }
+
     readBlockPng() {
         const rowBytes = this.rowBytes;
         const pixBytes = this.pixBytes;
@@ -10397,7 +10966,7 @@ class PredictorStream extends DecodeStream {
     }
 }
 
-;// ./src/core/run_length_stream.js
+// ./src/core/run_length_stream.js
 
 class RunLengthStream extends DecodeStream {
     constructor(str, maybeLength) {
@@ -10405,6 +10974,7 @@ class RunLengthStream extends DecodeStream {
         this.str = str;
         this.dict = str.dict;
     }
+
     readBlock() {
         const repeatHeader = this.str.getBytes(2);
         if (!repeatHeader || repeatHeader.length < 2 || repeatHeader[0] === 128) {
@@ -10432,22 +11002,11 @@ class RunLengthStream extends DecodeStream {
     }
 }
 
-;// ./src/core/parser.js
-
-
-
-
-
-
-
-
-
-
-
-
+// ./src/core/parser.js
 
 
 const MAX_LENGTH_TO_CACHE = 1000;
+
 function getInlineImageCacheKey(bytes) {
     const strBuf = [],
         ii = bytes.length;
@@ -10460,6 +11019,7 @@ function getInlineImageCacheKey(bytes) {
     }
     return ii + "_" + String.fromCharCode.apply(null, strBuf);
 }
+
 class Parser {
     constructor({
                     lexer,
@@ -10475,10 +11035,12 @@ class Parser {
         this._imageId = 0;
         this.refill();
     }
+
     refill() {
         this.buf1 = this.lexer.getObj();
         this.buf2 = this.lexer.getObj();
     }
+
     shift() {
         if (this.buf2 instanceof Cmd && this.buf2.cmd === "ID") {
             this.buf1 = this.buf2;
@@ -10488,6 +11050,7 @@ class Parser {
             this.buf2 = this.lexer.getObj();
         }
     }
+
     tryShift() {
         try {
             this.shift();
@@ -10499,6 +11062,7 @@ class Parser {
             return false;
         }
     }
+
     getObj(cipherTransform = null) {
         const buf1 = this.buf1;
         this.shift();
@@ -10566,6 +11130,7 @@ class Parser {
         }
         return buf1;
     }
+
     findDefaultInlineStreamEnd(stream) {
         const E = 0x45,
             I = 0x49,
@@ -10612,7 +11177,8 @@ class Parser {
                         continue;
                     }
                     const tmpLexer = new Lexer(new Stream(stream.peekBytes(5 * n)), knownCommands);
-                    tmpLexer._hexStringWarn = () => {};
+                    tmpLexer._hexStringWarn = () => {
+                    };
                     let numArgs = 0;
                     while (true) {
                         const nextObj = tmpLexer.getObj();
@@ -10657,6 +11223,7 @@ class Parser {
         }
         return stream.pos - endOffset - startPos;
     }
+
     findDCTDecodeInlineStreamEnd(stream) {
         const startPos = stream.pos;
         let foundEOI = false,
@@ -10734,6 +11301,7 @@ class Parser {
         this.inlineStreamSkipEI(stream);
         return length;
     }
+
     findASCII85DecodeInlineStreamEnd(stream) {
         const TILDE = 0x7e,
             GT = 0x3e;
@@ -10768,6 +11336,7 @@ class Parser {
         this.inlineStreamSkipEI(stream);
         return length;
     }
+
     findASCIIHexDecodeInlineStreamEnd(stream) {
         const GT = 0x3e;
         const startPos = stream.pos;
@@ -10786,6 +11355,7 @@ class Parser {
         this.inlineStreamSkipEI(stream);
         return length;
     }
+
     inlineStreamSkipEI(stream) {
         const E = 0x45,
             I = 0x49;
@@ -10801,6 +11371,7 @@ class Parser {
             }
         }
     }
+
     makeInlineImage(cipherTransform) {
         const lexer = this.lexer;
         const stream = lexer.stream;
@@ -10880,6 +11451,7 @@ class Parser {
         this.shift();
         return imageStream;
     }
+
     #findStreamLength(startPos) {
         const {
             stream
@@ -10935,6 +11507,7 @@ class Parser {
         }
         return -1;
     }
+
     makeStream(dict, cipherTransform) {
         const lexer = this.lexer;
         let stream = lexer.stream;
@@ -10967,6 +11540,7 @@ class Parser {
         stream.dict = dict;
         return stream;
     }
+
     filter(stream, dict, length) {
         let filter = dict.get("F", "Filter");
         let params = dict.get("DP", "DecodeParms");
@@ -10995,6 +11569,7 @@ class Parser {
         }
         return stream;
     }
+
     makeFilter(stream, name, maybeLength, params) {
         if (maybeLength === 0) {
             warn(`Empty "${name}" stream.`);
@@ -11050,7 +11625,9 @@ class Parser {
         }
     }
 }
+
 const specialChars = [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
 function toHexDigit(ch) {
     if (ch >= 0x30 && ch <= 0x39) {
         return ch & 0x0f;
@@ -11060,6 +11637,7 @@ function toHexDigit(ch) {
     }
     return -1;
 }
+
 class Lexer {
     constructor(stream, knownCommands = null) {
         this.stream = stream;
@@ -11069,12 +11647,15 @@ class Lexer {
         this._hexStringNumWarn = 0;
         this.beginInlineImagePos = -1;
     }
+
     nextChar() {
         return this.currentChar = this.stream.getByte();
     }
+
     peekChar() {
         return this.stream.peekByte();
     }
+
     getNumber() {
         let ch = this.currentChar;
         let eNotation = false;
@@ -11149,6 +11730,7 @@ class Lexer {
         }
         return sign * baseValue;
     }
+
     getString() {
         let numParen = 1;
         let done = false;
@@ -11247,6 +11829,7 @@ class Lexer {
         }
         return strBuf.join("");
     }
+
     getName() {
         let ch, previousCh;
         const strBuf = this.strBuf;
@@ -11286,6 +11869,7 @@ class Lexer {
         }
         return Name.get(strBuf.join(""));
     }
+
     _hexStringWarn(ch) {
         const MAX_HEX_STRING_NUM_WARN = 5;
         if (this._hexStringNumWarn++ === MAX_HEX_STRING_NUM_WARN) {
@@ -11297,6 +11881,7 @@ class Lexer {
         }
         warn(`getHexString - ignoring invalid character: ${ch}`);
     }
+
     getHexString() {
         const strBuf = this.strBuf;
         strBuf.length = 0;
@@ -11313,7 +11898,7 @@ class Lexer {
                 break;
             } else if (specialChars[ch] === 1) {
                 ch = this.nextChar();
-                continue;
+
             } else {
                 digit = toHexDigit(ch);
                 if (digit === -1) {
@@ -11332,6 +11917,7 @@ class Lexer {
         }
         return strBuf.join("");
     }
+
     getObj() {
         let comment = false;
         let ch = this.currentChar;
@@ -11434,6 +12020,7 @@ class Lexer {
         }
         return Cmd.get(str);
     }
+
     skipToNextLine() {
         let ch = this.currentChar;
         while (ch >= 0) {
@@ -11451,6 +12038,7 @@ class Lexer {
         }
     }
 }
+
 class Linearization {
     static create(stream) {
         function getInt(linDict, name, allowZeroValue = false) {
@@ -11460,6 +12048,7 @@ class Linearization {
             }
             throw new Error(`The "${name}" parameter in the linearization ` + "dictionary is invalid.");
         }
+
         function getHints(linDict) {
             const hints = linDict.get("H");
             let hintsLength;
@@ -11474,6 +12063,7 @@ class Linearization {
             }
             throw new Error("Hint array in the linearization dictionary is invalid.");
         }
+
         const parser = new Parser({
             lexer: new Lexer(stream),
             xref: null
@@ -11500,16 +12090,12 @@ class Linearization {
     }
 }
 
-;// ./src/core/cmap.js
-
-
-
-
-
+// ./src/core/cmap.js
 
 
 const BUILT_IN_CMAPS = ["Adobe-GB1-UCS2", "Adobe-CNS1-UCS2", "Adobe-Japan1-UCS2", "Adobe-Korea1-UCS2", "78-EUC-H", "78-EUC-V", "78-H", "78-RKSJ-H", "78-RKSJ-V", "78-V", "78ms-RKSJ-H", "78ms-RKSJ-V", "83pv-RKSJ-H", "90ms-RKSJ-H", "90ms-RKSJ-V", "90msp-RKSJ-H", "90msp-RKSJ-V", "90pv-RKSJ-H", "90pv-RKSJ-V", "Add-H", "Add-RKSJ-H", "Add-RKSJ-V", "Add-V", "Adobe-CNS1-0", "Adobe-CNS1-1", "Adobe-CNS1-2", "Adobe-CNS1-3", "Adobe-CNS1-4", "Adobe-CNS1-5", "Adobe-CNS1-6", "Adobe-GB1-0", "Adobe-GB1-1", "Adobe-GB1-2", "Adobe-GB1-3", "Adobe-GB1-4", "Adobe-GB1-5", "Adobe-Japan1-0", "Adobe-Japan1-1", "Adobe-Japan1-2", "Adobe-Japan1-3", "Adobe-Japan1-4", "Adobe-Japan1-5", "Adobe-Japan1-6", "Adobe-Korea1-0", "Adobe-Korea1-1", "Adobe-Korea1-2", "B5-H", "B5-V", "B5pc-H", "B5pc-V", "CNS-EUC-H", "CNS-EUC-V", "CNS1-H", "CNS1-V", "CNS2-H", "CNS2-V", "ETHK-B5-H", "ETHK-B5-V", "ETen-B5-H", "ETen-B5-V", "ETenms-B5-H", "ETenms-B5-V", "EUC-H", "EUC-V", "Ext-H", "Ext-RKSJ-H", "Ext-RKSJ-V", "Ext-V", "GB-EUC-H", "GB-EUC-V", "GB-H", "GB-V", "GBK-EUC-H", "GBK-EUC-V", "GBK2K-H", "GBK2K-V", "GBKp-EUC-H", "GBKp-EUC-V", "GBT-EUC-H", "GBT-EUC-V", "GBT-H", "GBT-V", "GBTpc-EUC-H", "GBTpc-EUC-V", "GBpc-EUC-H", "GBpc-EUC-V", "H", "HKdla-B5-H", "HKdla-B5-V", "HKdlb-B5-H", "HKdlb-B5-V", "HKgccs-B5-H", "HKgccs-B5-V", "HKm314-B5-H", "HKm314-B5-V", "HKm471-B5-H", "HKm471-B5-V", "HKscs-B5-H", "HKscs-B5-V", "Hankaku", "Hiragana", "KSC-EUC-H", "KSC-EUC-V", "KSC-H", "KSC-Johab-H", "KSC-Johab-V", "KSC-V", "KSCms-UHC-H", "KSCms-UHC-HW-H", "KSCms-UHC-HW-V", "KSCms-UHC-V", "KSCpc-EUC-H", "KSCpc-EUC-V", "Katakana", "NWP-H", "NWP-V", "RKSJ-H", "RKSJ-V", "Roman", "UniCNS-UCS2-H", "UniCNS-UCS2-V", "UniCNS-UTF16-H", "UniCNS-UTF16-V", "UniCNS-UTF32-H", "UniCNS-UTF32-V", "UniCNS-UTF8-H", "UniCNS-UTF8-V", "UniGB-UCS2-H", "UniGB-UCS2-V", "UniGB-UTF16-H", "UniGB-UTF16-V", "UniGB-UTF32-H", "UniGB-UTF32-V", "UniGB-UTF8-H", "UniGB-UTF8-V", "UniJIS-UCS2-H", "UniJIS-UCS2-HW-H", "UniJIS-UCS2-HW-V", "UniJIS-UCS2-V", "UniJIS-UTF16-H", "UniJIS-UTF16-V", "UniJIS-UTF32-H", "UniJIS-UTF32-V", "UniJIS-UTF8-H", "UniJIS-UTF8-V", "UniJIS2004-UTF16-H", "UniJIS2004-UTF16-V", "UniJIS2004-UTF32-H", "UniJIS2004-UTF32-V", "UniJIS2004-UTF8-H", "UniJIS2004-UTF8-V", "UniJISPro-UCS2-HW-V", "UniJISPro-UCS2-V", "UniJISPro-UTF8-V", "UniJISX0213-UTF32-H", "UniJISX0213-UTF32-V", "UniJISX02132004-UTF32-H", "UniJISX02132004-UTF32-V", "UniKS-UCS2-H", "UniKS-UCS2-V", "UniKS-UTF16-H", "UniKS-UTF16-V", "UniKS-UTF32-H", "UniKS-UTF32-V", "UniKS-UTF8-H", "UniKS-UTF8-V", "V", "WP-Symbol"];
 const MAX_MAP_RANGE = 2 ** 24 - 1;
+
 class CMap {
     constructor(builtInCMap = false) {
         this.codespaceRanges = [[], [], [], []];
@@ -11520,10 +12106,12 @@ class CMap {
         this.useCMap = null;
         this.builtInCMap = builtInCMap;
     }
+
     addCodespaceRange(n, low, high) {
         this.codespaceRanges[n - 1].push(low, high);
         this.numCodespaceRanges++;
     }
+
     mapCidRange(low, high, dstLow) {
         if (high - low > MAX_MAP_RANGE) {
             throw new Error("mapCidRange - ignoring data above MAX_MAP_RANGE.");
@@ -11532,6 +12120,7 @@ class CMap {
             this._map[low++] = dstLow++;
         }
     }
+
     mapBfRange(low, high, dstLow) {
         if (high - low > MAX_MAP_RANGE) {
             throw new Error("mapBfRange - ignoring data above MAX_MAP_RANGE.");
@@ -11547,6 +12136,7 @@ class CMap {
             dstLow = dstLow.substring(0, lastByte) + String.fromCharCode(nextCharCode);
         }
     }
+
     mapBfRangeToArray(low, high, array) {
         if (high - low > MAX_MAP_RANGE) {
             throw new Error("mapBfRangeToArray - ignoring data above MAX_MAP_RANGE.");
@@ -11558,15 +12148,19 @@ class CMap {
             ++low;
         }
     }
+
     mapOne(src, dst) {
         this._map[src] = dst;
     }
+
     lookup(code) {
         return this._map[code];
     }
+
     contains(code) {
         return this._map[code] !== undefined;
     }
+
     forEach(callback) {
         const map = this._map;
         const length = map.length;
@@ -11582,6 +12176,7 @@ class CMap {
             }
         }
     }
+
     charCodeOf(value) {
         const map = this._map;
         if (map.length <= 0x10000) {
@@ -11594,9 +12189,11 @@ class CMap {
         }
         return -1;
     }
+
     getMap() {
         return this._map;
     }
+
     readCharCode(str, offset, out) {
         let c = 0;
         const codespaceRanges = this.codespaceRanges;
@@ -11616,6 +12213,7 @@ class CMap {
         out.charcode = 0;
         out.length = 1;
     }
+
     getCharCodeLength(charCode) {
         const codespaceRanges = this.codespaceRanges;
         for (let n = 0, nn = codespaceRanges.length; n < nn; n++) {
@@ -11630,9 +12228,11 @@ class CMap {
         }
         return 1;
     }
+
     get length() {
         return this._map.length;
     }
+
     get isIdentityCMap() {
         if (!(this.name === "Identity-H" || this.name === "Identity-V")) {
             return false;
@@ -11648,38 +12248,48 @@ class CMap {
         return true;
     }
 }
+
 class IdentityCMap extends CMap {
     constructor(vertical, n) {
         super();
         this.vertical = vertical;
         this.addCodespaceRange(n, 0, 0xffff);
     }
+
     mapCidRange(low, high, dstLow) {
         unreachable("should not call mapCidRange");
     }
+
     mapBfRange(low, high, dstLow) {
         unreachable("should not call mapBfRange");
     }
+
     mapBfRangeToArray(low, high, array) {
         unreachable("should not call mapBfRangeToArray");
     }
+
     mapOne(src, dst) {
         unreachable("should not call mapCidOne");
     }
+
     lookup(code) {
         return Number.isInteger(code) && code <= 0xffff ? code : undefined;
     }
+
     contains(code) {
         return Number.isInteger(code) && code <= 0xffff;
     }
+
     forEach(callback) {
         for (let i = 0; i <= 0xffff; i++) {
             callback(i, i);
         }
     }
+
     charCodeOf(value) {
         return Number.isInteger(value) && value <= 0xffff ? value : -1;
     }
+
     getMap() {
         const map = new Array(0x10000);
         for (let i = 0; i <= 0xffff; i++) {
@@ -11687,13 +12297,16 @@ class IdentityCMap extends CMap {
         }
         return map;
     }
+
     get length() {
         return 0x10000;
     }
+
     get isIdentityCMap() {
         unreachable("should not access .isIdentityCMap");
     }
 }
+
 function strToInt(str) {
     let a = 0;
     for (let i = 0; i < str.length; i++) {
@@ -11701,16 +12314,19 @@ function strToInt(str) {
     }
     return a >>> 0;
 }
+
 function expectString(obj) {
     if (typeof obj !== "string") {
         throw new FormatError("Malformed CMap: expected string.");
     }
 }
+
 function expectInt(obj) {
     if (!Number.isInteger(obj)) {
         throw new FormatError("Malformed CMap: expected int.");
     }
 }
+
 function parseBfChar(cMap, lexer) {
     while (true) {
         let obj = lexer.getObj();
@@ -11728,6 +12344,7 @@ function parseBfChar(cMap, lexer) {
         cMap.mapOne(src, dst);
     }
 }
+
 function parseBfRange(cMap, lexer) {
     while (true) {
         let obj = lexer.getObj();
@@ -11760,6 +12377,7 @@ function parseBfRange(cMap, lexer) {
     }
     throw new FormatError("Invalid bf range.");
 }
+
 function parseCidChar(cMap, lexer) {
     while (true) {
         let obj = lexer.getObj();
@@ -11777,6 +12395,7 @@ function parseCidChar(cMap, lexer) {
         cMap.mapOne(src, dst);
     }
 }
+
 function parseCidRange(cMap, lexer) {
     while (true) {
         let obj = lexer.getObj();
@@ -11797,6 +12416,7 @@ function parseCidRange(cMap, lexer) {
         cMap.mapCidRange(low, high, dstLow);
     }
 }
+
 function parseCodespaceRange(cMap, lexer) {
     while (true) {
         let obj = lexer.getObj();
@@ -11819,18 +12439,21 @@ function parseCodespaceRange(cMap, lexer) {
     }
     throw new FormatError("Invalid codespace range.");
 }
+
 function parseWMode(cMap, lexer) {
     const obj = lexer.getObj();
     if (Number.isInteger(obj)) {
         cMap.vertical = !!obj;
     }
 }
+
 function parseCMapName(cMap, lexer) {
     const obj = lexer.getObj();
     if (obj instanceof Name) {
         cMap.name = obj.name;
     }
 }
+
 async function parseCMap(cMap, lexer, fetchBuiltInCMap, useCMap) {
     let previous, embeddedUseCMap;
     objLoop: while (true) {
@@ -11876,7 +12499,7 @@ async function parseCMap(cMap, lexer, fetchBuiltInCMap, useCMap) {
                 throw ex;
             }
             warn("Invalid cMap data: " + ex);
-            continue;
+
         }
     }
     if (!useCMap && embeddedUseCMap) {
@@ -11887,6 +12510,7 @@ async function parseCMap(cMap, lexer, fetchBuiltInCMap, useCMap) {
     }
     return cMap;
 }
+
 async function extendCMap(cMap, fetchBuiltInCMap, useCMap) {
     cMap.useCMap = await createBuiltInCMap(useCMap, fetchBuiltInCMap);
     if (cMap.numCodespaceRanges === 0) {
@@ -11903,6 +12527,7 @@ async function extendCMap(cMap, fetchBuiltInCMap, useCMap) {
     });
     return cMap;
 }
+
 async function createBuiltInCMap(name, fetchBuiltInCMap) {
     if (name === "Identity-H") {
         return new IdentityCMap(false, 2);
@@ -11926,6 +12551,7 @@ async function createBuiltInCMap(name, fetchBuiltInCMap) {
     const lexer = new Lexer(new Stream(cMapData));
     return parseCMap(cMap, lexer, fetchBuiltInCMap, null);
 }
+
 class CMapFactory {
     static async create({
                             encoding,
@@ -11945,7 +12571,7 @@ class CMapFactory {
     }
 }
 
-;// ./src/core/encodings.js
+// ./src/core/encodings.js
 const ExpertEncoding = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "space", "exclamsmall", "Hungarumlautsmall", "", "dollaroldstyle", "dollarsuperior", "ampersandsmall", "Acutesmall", "parenleftsuperior", "parenrightsuperior", "twodotenleader", "onedotenleader", "comma", "hyphen", "period", "fraction", "zerooldstyle", "oneoldstyle", "twooldstyle", "threeoldstyle", "fouroldstyle", "fiveoldstyle", "sixoldstyle", "sevenoldstyle", "eightoldstyle", "nineoldstyle", "colon", "semicolon", "commasuperior", "threequartersemdash", "periodsuperior", "questionsmall", "", "asuperior", "bsuperior", "centsuperior", "dsuperior", "esuperior", "", "", "", "isuperior", "", "", "lsuperior", "msuperior", "nsuperior", "osuperior", "", "", "rsuperior", "ssuperior", "tsuperior", "", "ff", "fi", "fl", "ffi", "ffl", "parenleftinferior", "", "parenrightinferior", "Circumflexsmall", "hyphensuperior", "Gravesmall", "Asmall", "Bsmall", "Csmall", "Dsmall", "Esmall", "Fsmall", "Gsmall", "Hsmall", "Ismall", "Jsmall", "Ksmall", "Lsmall", "Msmall", "Nsmall", "Osmall", "Psmall", "Qsmall", "Rsmall", "Ssmall", "Tsmall", "Usmall", "Vsmall", "Wsmall", "Xsmall", "Ysmall", "Zsmall", "colonmonetary", "onefitted", "rupiah", "Tildesmall", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "exclamdownsmall", "centoldstyle", "Lslashsmall", "", "", "Scaronsmall", "Zcaronsmall", "Dieresissmall", "Brevesmall", "Caronsmall", "", "Dotaccentsmall", "", "", "Macronsmall", "", "", "figuredash", "hypheninferior", "", "", "Ogoneksmall", "Ringsmall", "Cedillasmall", "", "", "", "onequarter", "onehalf", "threequarters", "questiondownsmall", "oneeighth", "threeeighths", "fiveeighths", "seveneighths", "onethird", "twothirds", "", "", "zerosuperior", "onesuperior", "twosuperior", "threesuperior", "foursuperior", "fivesuperior", "sixsuperior", "sevensuperior", "eightsuperior", "ninesuperior", "zeroinferior", "oneinferior", "twoinferior", "threeinferior", "fourinferior", "fiveinferior", "sixinferior", "seveninferior", "eightinferior", "nineinferior", "centinferior", "dollarinferior", "periodinferior", "commainferior", "Agravesmall", "Aacutesmall", "Acircumflexsmall", "Atildesmall", "Adieresissmall", "Aringsmall", "AEsmall", "Ccedillasmall", "Egravesmall", "Eacutesmall", "Ecircumflexsmall", "Edieresissmall", "Igravesmall", "Iacutesmall", "Icircumflexsmall", "Idieresissmall", "Ethsmall", "Ntildesmall", "Ogravesmall", "Oacutesmall", "Ocircumflexsmall", "Otildesmall", "Odieresissmall", "OEsmall", "Oslashsmall", "Ugravesmall", "Uacutesmall", "Ucircumflexsmall", "Udieresissmall", "Yacutesmall", "Thornsmall", "Ydieresissmall"];
 const MacExpertEncoding = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "space", "exclamsmall", "Hungarumlautsmall", "centoldstyle", "dollaroldstyle", "dollarsuperior", "ampersandsmall", "Acutesmall", "parenleftsuperior", "parenrightsuperior", "twodotenleader", "onedotenleader", "comma", "hyphen", "period", "fraction", "zerooldstyle", "oneoldstyle", "twooldstyle", "threeoldstyle", "fouroldstyle", "fiveoldstyle", "sixoldstyle", "sevenoldstyle", "eightoldstyle", "nineoldstyle", "colon", "semicolon", "", "threequartersemdash", "", "questionsmall", "", "", "", "", "Ethsmall", "", "", "onequarter", "onehalf", "threequarters", "oneeighth", "threeeighths", "fiveeighths", "seveneighths", "onethird", "twothirds", "", "", "", "", "", "", "ff", "fi", "fl", "ffi", "ffl", "parenleftinferior", "", "parenrightinferior", "Circumflexsmall", "hypheninferior", "Gravesmall", "Asmall", "Bsmall", "Csmall", "Dsmall", "Esmall", "Fsmall", "Gsmall", "Hsmall", "Ismall", "Jsmall", "Ksmall", "Lsmall", "Msmall", "Nsmall", "Osmall", "Psmall", "Qsmall", "Rsmall", "Ssmall", "Tsmall", "Usmall", "Vsmall", "Wsmall", "Xsmall", "Ysmall", "Zsmall", "colonmonetary", "onefitted", "rupiah", "Tildesmall", "", "", "asuperior", "centsuperior", "", "", "", "", "Aacutesmall", "Agravesmall", "Acircumflexsmall", "Adieresissmall", "Atildesmall", "Aringsmall", "Ccedillasmall", "Eacutesmall", "Egravesmall", "Ecircumflexsmall", "Edieresissmall", "Iacutesmall", "Igravesmall", "Icircumflexsmall", "Idieresissmall", "Ntildesmall", "Oacutesmall", "Ogravesmall", "Ocircumflexsmall", "Odieresissmall", "Otildesmall", "Uacutesmall", "Ugravesmall", "Ucircumflexsmall", "Udieresissmall", "", "eightsuperior", "fourinferior", "threeinferior", "sixinferior", "eightinferior", "seveninferior", "Scaronsmall", "", "centinferior", "twoinferior", "", "Dieresissmall", "", "Caronsmall", "osuperior", "fiveinferior", "", "commainferior", "periodinferior", "Yacutesmall", "", "dollarinferior", "", "", "Thornsmall", "", "nineinferior", "zeroinferior", "Zcaronsmall", "AEsmall", "Oslashsmall", "questiondownsmall", "oneinferior", "Lslashsmall", "", "", "", "", "", "", "Cedillasmall", "", "", "", "", "", "OEsmall", "figuredash", "hyphensuperior", "", "", "", "", "exclamdownsmall", "", "Ydieresissmall", "", "onesuperior", "twosuperior", "threesuperior", "foursuperior", "fivesuperior", "sixsuperior", "sevensuperior", "ninesuperior", "zerosuperior", "", "esuperior", "rsuperior", "tsuperior", "", "", "isuperior", "ssuperior", "dsuperior", "", "", "", "", "", "lsuperior", "Ogoneksmall", "Brevesmall", "Macronsmall", "bsuperior", "nsuperior", "msuperior", "commasuperior", "periodsuperior", "Dotaccentsmall", "Ringsmall", "", "", "", ""];
 const MacRomanEncoding = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "space", "exclam", "quotedbl", "numbersign", "dollar", "percent", "ampersand", "quotesingle", "parenleft", "parenright", "asterisk", "plus", "comma", "hyphen", "period", "slash", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "colon", "semicolon", "less", "equal", "greater", "question", "at", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "bracketleft", "backslash", "bracketright", "asciicircum", "underscore", "grave", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "braceleft", "bar", "braceright", "asciitilde", "", "Adieresis", "Aring", "Ccedilla", "Eacute", "Ntilde", "Odieresis", "Udieresis", "aacute", "agrave", "acircumflex", "adieresis", "atilde", "aring", "ccedilla", "eacute", "egrave", "ecircumflex", "edieresis", "iacute", "igrave", "icircumflex", "idieresis", "ntilde", "oacute", "ograve", "ocircumflex", "odieresis", "otilde", "uacute", "ugrave", "ucircumflex", "udieresis", "dagger", "degree", "cent", "sterling", "section", "bullet", "paragraph", "germandbls", "registered", "copyright", "trademark", "acute", "dieresis", "notequal", "AE", "Oslash", "infinity", "plusminus", "lessequal", "greaterequal", "yen", "mu", "partialdiff", "summation", "product", "pi", "integral", "ordfeminine", "ordmasculine", "Omega", "ae", "oslash", "questiondown", "exclamdown", "logicalnot", "radical", "florin", "approxequal", "Delta", "guillemotleft", "guillemotright", "ellipsis", "space", "Agrave", "Atilde", "Otilde", "OE", "oe", "endash", "emdash", "quotedblleft", "quotedblright", "quoteleft", "quoteright", "divide", "lozenge", "ydieresis", "Ydieresis", "fraction", "currency", "guilsinglleft", "guilsinglright", "fi", "fl", "daggerdbl", "periodcentered", "quotesinglbase", "quotedblbase", "perthousand", "Acircumflex", "Ecircumflex", "Aacute", "Edieresis", "Egrave", "Iacute", "Icircumflex", "Idieresis", "Igrave", "Oacute", "Ocircumflex", "apple", "Ograve", "Uacute", "Ucircumflex", "Ugrave", "dotlessi", "circumflex", "tilde", "macron", "breve", "dotaccent", "ring", "cedilla", "hungarumlaut", "ogonek", "caron"];
@@ -11953,6 +12579,7 @@ const StandardEncoding = ["", "", "", "", "", "", "", "", "", "", "", "", "", ""
 const WinAnsiEncoding = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "space", "exclam", "quotedbl", "numbersign", "dollar", "percent", "ampersand", "quotesingle", "parenleft", "parenright", "asterisk", "plus", "comma", "hyphen", "period", "slash", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "colon", "semicolon", "less", "equal", "greater", "question", "at", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "bracketleft", "backslash", "bracketright", "asciicircum", "underscore", "grave", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "braceleft", "bar", "braceright", "asciitilde", "bullet", "Euro", "bullet", "quotesinglbase", "florin", "quotedblbase", "ellipsis", "dagger", "daggerdbl", "circumflex", "perthousand", "Scaron", "guilsinglleft", "OE", "bullet", "Zcaron", "bullet", "bullet", "quoteleft", "quoteright", "quotedblleft", "quotedblright", "bullet", "endash", "emdash", "tilde", "trademark", "scaron", "guilsinglright", "oe", "bullet", "zcaron", "Ydieresis", "space", "exclamdown", "cent", "sterling", "currency", "yen", "brokenbar", "section", "dieresis", "copyright", "ordfeminine", "guillemotleft", "logicalnot", "hyphen", "registered", "macron", "degree", "plusminus", "twosuperior", "threesuperior", "acute", "mu", "paragraph", "periodcentered", "cedilla", "onesuperior", "ordmasculine", "guillemotright", "onequarter", "onehalf", "threequarters", "questiondown", "Agrave", "Aacute", "Acircumflex", "Atilde", "Adieresis", "Aring", "AE", "Ccedilla", "Egrave", "Eacute", "Ecircumflex", "Edieresis", "Igrave", "Iacute", "Icircumflex", "Idieresis", "Eth", "Ntilde", "Ograve", "Oacute", "Ocircumflex", "Otilde", "Odieresis", "multiply", "Oslash", "Ugrave", "Uacute", "Ucircumflex", "Udieresis", "Yacute", "Thorn", "germandbls", "agrave", "aacute", "acircumflex", "atilde", "adieresis", "aring", "ae", "ccedilla", "egrave", "eacute", "ecircumflex", "edieresis", "igrave", "iacute", "icircumflex", "idieresis", "eth", "ntilde", "ograve", "oacute", "ocircumflex", "otilde", "odieresis", "divide", "oslash", "ugrave", "uacute", "ucircumflex", "udieresis", "yacute", "thorn", "ydieresis"];
 const SymbolSetEncoding = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "space", "exclam", "universal", "numbersign", "existential", "percent", "ampersand", "suchthat", "parenleft", "parenright", "asteriskmath", "plus", "comma", "minus", "period", "slash", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "colon", "semicolon", "less", "equal", "greater", "question", "congruent", "Alpha", "Beta", "Chi", "Delta", "Epsilon", "Phi", "Gamma", "Eta", "Iota", "theta1", "Kappa", "Lambda", "Mu", "Nu", "Omicron", "Pi", "Theta", "Rho", "Sigma", "Tau", "Upsilon", "sigma1", "Omega", "Xi", "Psi", "Zeta", "bracketleft", "therefore", "bracketright", "perpendicular", "underscore", "radicalex", "alpha", "beta", "chi", "delta", "epsilon", "phi", "gamma", "eta", "iota", "phi1", "kappa", "lambda", "mu", "nu", "omicron", "pi", "theta", "rho", "sigma", "tau", "upsilon", "omega1", "omega", "xi", "psi", "zeta", "braceleft", "bar", "braceright", "similar", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Euro", "Upsilon1", "minute", "lessequal", "fraction", "infinity", "florin", "club", "diamond", "heart", "spade", "arrowboth", "arrowleft", "arrowup", "arrowright", "arrowdown", "degree", "plusminus", "second", "greaterequal", "multiply", "proportional", "partialdiff", "bullet", "divide", "notequal", "equivalence", "approxequal", "ellipsis", "arrowvertex", "arrowhorizex", "carriagereturn", "aleph", "Ifraktur", "Rfraktur", "weierstrass", "circlemultiply", "circleplus", "emptyset", "intersection", "union", "propersuperset", "reflexsuperset", "notsubset", "propersubset", "reflexsubset", "element", "notelement", "angle", "gradient", "registerserif", "copyrightserif", "trademarkserif", "product", "radical", "dotmath", "logicalnot", "logicaland", "logicalor", "arrowdblboth", "arrowdblleft", "arrowdblup", "arrowdblright", "arrowdbldown", "lozenge", "angleleft", "registersans", "copyrightsans", "trademarksans", "summation", "parenlefttp", "parenleftex", "parenleftbt", "bracketlefttp", "bracketleftex", "bracketleftbt", "bracelefttp", "braceleftmid", "braceleftbt", "braceex", "", "angleright", "integral", "integraltp", "integralex", "integralbt", "parenrighttp", "parenrightex", "parenrightbt", "bracketrighttp", "bracketrightex", "bracketrightbt", "bracerighttp", "bracerightmid", "bracerightbt", ""];
 const ZapfDingbatsEncoding = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "space", "a1", "a2", "a202", "a3", "a4", "a5", "a119", "a118", "a117", "a11", "a12", "a13", "a14", "a15", "a16", "a105", "a17", "a18", "a19", "a20", "a21", "a22", "a23", "a24", "a25", "a26", "a27", "a28", "a6", "a7", "a8", "a9", "a10", "a29", "a30", "a31", "a32", "a33", "a34", "a35", "a36", "a37", "a38", "a39", "a40", "a41", "a42", "a43", "a44", "a45", "a46", "a47", "a48", "a49", "a50", "a51", "a52", "a53", "a54", "a55", "a56", "a57", "a58", "a59", "a60", "a61", "a62", "a63", "a64", "a65", "a66", "a67", "a68", "a69", "a70", "a71", "a72", "a73", "a74", "a203", "a75", "a204", "a76", "a77", "a78", "a79", "a81", "a82", "a83", "a84", "a97", "a98", "a99", "a100", "", "a89", "a90", "a93", "a94", "a91", "a92", "a205", "a85", "a206", "a86", "a87", "a88", "a95", "a96", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "a101", "a102", "a103", "a104", "a106", "a107", "a108", "a112", "a111", "a110", "a109", "a120", "a121", "a122", "a123", "a124", "a125", "a126", "a127", "a128", "a129", "a130", "a131", "a132", "a133", "a134", "a135", "a136", "a137", "a138", "a139", "a140", "a141", "a142", "a143", "a144", "a145", "a146", "a147", "a148", "a149", "a150", "a151", "a152", "a153", "a154", "a155", "a156", "a157", "a158", "a159", "a160", "a161", "a163", "a164", "a196", "a165", "a192", "a166", "a167", "a168", "a169", "a170", "a171", "a172", "a173", "a162", "a174", "a175", "a176", "a177", "a178", "a179", "a193", "a180", "a199", "a181", "a200", "a182", "", "a201", "a183", "a184", "a197", "a185", "a194", "a198", "a186", "a195", "a187", "a188", "a189", "a190", "a191", ""];
+
 function getEncoding(encodingName) {
     switch (encodingName) {
         case "WinAnsiEncoding":
@@ -11974,7 +12601,7 @@ function getEncoding(encodingName) {
     }
 }
 
-;// ./src/core/glyphlist.js
+// ./src/core/glyphlist.js
 
 const getGlyphsUnicode = getLookupTableFactory(function (t) {
     t.A = 0x0041;
@@ -16512,7 +17139,7 @@ const getDingbatsGlyphsUnicode = getLookupTableFactory(function (t) {
     t[".notdef"] = 0x0000;
 });
 
-;// ./src/core/unicode.js
+// ./src/core/unicode.js
 
 const getSpecialPUASymbols = getLookupTableFactory(function (t) {
     t[63721] = 0x00a9;
@@ -16540,6 +17167,7 @@ const getSpecialPUASymbols = getLookupTableFactory(function (t) {
     t[63735] = 0x239f;
     t[63736] = 0x23a0;
 });
+
 function mapSpecialUnicodeValues(code) {
     if (code >= 0xfff0 && code <= 0xffff) {
         return 0;
@@ -16550,6 +17178,7 @@ function mapSpecialUnicodeValues(code) {
     }
     return code;
 }
+
 function getUnicodeForGlyph(name, glyphsUnicodeMap) {
     let unicode = glyphsUnicodeMap[name];
     if (unicode !== undefined) {
@@ -16577,7 +17206,9 @@ function getUnicodeForGlyph(name, glyphsUnicodeMap) {
     }
     return -1;
 }
+
 const UnicodeRanges = [[0x0000, 0x007f], [0x0080, 0x00ff], [0x0100, 0x017f], [0x0180, 0x024f], [0x0250, 0x02af, 0x1d00, 0x1d7f, 0x1d80, 0x1dbf], [0x02b0, 0x02ff, 0xa700, 0xa71f], [0x0300, 0x036f, 0x1dc0, 0x1dff], [0x0370, 0x03ff], [0x2c80, 0x2cff], [0x0400, 0x04ff, 0x0500, 0x052f, 0x2de0, 0x2dff, 0xa640, 0xa69f], [0x0530, 0x058f], [0x0590, 0x05ff], [0xa500, 0xa63f], [0x0600, 0x06ff, 0x0750, 0x077f], [0x07c0, 0x07ff], [0x0900, 0x097f], [0x0980, 0x09ff], [0x0a00, 0x0a7f], [0x0a80, 0x0aff], [0x0b00, 0x0b7f], [0x0b80, 0x0bff], [0x0c00, 0x0c7f], [0x0c80, 0x0cff], [0x0d00, 0x0d7f], [0x0e00, 0x0e7f], [0x0e80, 0x0eff], [0x10a0, 0x10ff, 0x2d00, 0x2d2f], [0x1b00, 0x1b7f], [0x1100, 0x11ff], [0x1e00, 0x1eff, 0x2c60, 0x2c7f, 0xa720, 0xa7ff], [0x1f00, 0x1fff], [0x2000, 0x206f, 0x2e00, 0x2e7f], [0x2070, 0x209f], [0x20a0, 0x20cf], [0x20d0, 0x20ff], [0x2100, 0x214f], [0x2150, 0x218f], [0x2190, 0x21ff, 0x27f0, 0x27ff, 0x2900, 0x297f, 0x2b00, 0x2bff], [0x2200, 0x22ff, 0x2a00, 0x2aff, 0x27c0, 0x27ef, 0x2980, 0x29ff], [0x2300, 0x23ff], [0x2400, 0x243f], [0x2440, 0x245f], [0x2460, 0x24ff], [0x2500, 0x257f], [0x2580, 0x259f], [0x25a0, 0x25ff], [0x2600, 0x26ff], [0x2700, 0x27bf], [0x3000, 0x303f], [0x3040, 0x309f], [0x30a0, 0x30ff, 0x31f0, 0x31ff], [0x3100, 0x312f, 0x31a0, 0x31bf], [0x3130, 0x318f], [0xa840, 0xa87f], [0x3200, 0x32ff], [0x3300, 0x33ff], [0xac00, 0xd7af], [0xd800, 0xdfff], [0x10900, 0x1091f], [0x4e00, 0x9fff, 0x2e80, 0x2eff, 0x2f00, 0x2fdf, 0x2ff0, 0x2fff, 0x3400, 0x4dbf, 0x20000, 0x2a6df, 0x3190, 0x319f], [0xe000, 0xf8ff], [0x31c0, 0x31ef, 0xf900, 0xfaff, 0x2f800, 0x2fa1f], [0xfb00, 0xfb4f], [0xfb50, 0xfdff], [0xfe20, 0xfe2f], [0xfe10, 0xfe1f], [0xfe50, 0xfe6f], [0xfe70, 0xfeff], [0xff00, 0xffef], [0xfff0, 0xffff], [0x0f00, 0x0fff], [0x0700, 0x074f], [0x0780, 0x07bf], [0x0d80, 0x0dff], [0x1000, 0x109f], [0x1200, 0x137f, 0x1380, 0x139f, 0x2d80, 0x2ddf], [0x13a0, 0x13ff], [0x1400, 0x167f], [0x1680, 0x169f], [0x16a0, 0x16ff], [0x1780, 0x17ff], [0x1800, 0x18af], [0x2800, 0x28ff], [0xa000, 0xa48f], [0x1700, 0x171f, 0x1720, 0x173f, 0x1740, 0x175f, 0x1760, 0x177f], [0x10300, 0x1032f], [0x10330, 0x1034f], [0x10400, 0x1044f], [0x1d000, 0x1d0ff, 0x1d100, 0x1d1ff, 0x1d200, 0x1d24f], [0x1d400, 0x1d7ff], [0xff000, 0xffffd], [0xfe00, 0xfe0f, 0xe0100, 0xe01ef], [0xe0000, 0xe007f], [0x1900, 0x194f], [0x1950, 0x197f], [0x1980, 0x19df], [0x1a00, 0x1a1f], [0x2c00, 0x2c5f], [0x2d30, 0x2d7f], [0x4dc0, 0x4dff], [0xa800, 0xa82f], [0x10000, 0x1007f, 0x10080, 0x100ff, 0x10100, 0x1013f], [0x10140, 0x1018f], [0x10380, 0x1039f], [0x103a0, 0x103df], [0x10450, 0x1047f], [0x10480, 0x104af], [0x10800, 0x1083f], [0x10a00, 0x10a5f], [0x1d300, 0x1d35f], [0x12000, 0x123ff, 0x12400, 0x1247f], [0x1d360, 0x1d37f], [0x1b80, 0x1bbf], [0x1c00, 0x1c4f], [0x1c50, 0x1c7f], [0xa880, 0xa8df], [0xa900, 0xa92f], [0xa930, 0xa95f], [0xaa00, 0xaa5f], [0x10190, 0x101cf], [0x101d0, 0x101ff], [0x102a0, 0x102df, 0x10280, 0x1029f, 0x10920, 0x1093f], [0x1f030, 0x1f09f, 0x1f000, 0x1f02f]];
+
 function getUnicodeRangeFor(value, lastPosition = -1) {
     if (lastPosition !== -1) {
         const range = UnicodeRanges[lastPosition];
@@ -16597,8 +17228,10 @@ function getUnicodeRangeFor(value, lastPosition = -1) {
     }
     return -1;
 }
+
 const SpecialCharRegExp = new RegExp("^(\\s)|(\\p{Mn})|(\\p{Cf})$", "u");
 const CategoryCache = new Map();
+
 function getCharUnicodeCategory(char) {
     const cachedCategory = CategoryCache.get(char);
     if (cachedCategory) {
@@ -16613,14 +17246,12 @@ function getCharUnicodeCategory(char) {
     CategoryCache.set(char, category);
     return category;
 }
+
 function clearUnicodeCaches() {
     CategoryCache.clear();
 }
 
-;// ./src/core/fonts_utils.js
-
-
-
+// ./src/core/fonts_utils.js
 
 
 const SEAC_ANALYSIS_ENABLED = true;
@@ -16636,6 +17267,7 @@ const FontFlags = {
     ForceBold: 262144
 };
 const MacStandardGlyphOrdering = [".notdef", ".null", "nonmarkingreturn", "space", "exclam", "quotedbl", "numbersign", "dollar", "percent", "ampersand", "quotesingle", "parenleft", "parenright", "asterisk", "plus", "comma", "hyphen", "period", "slash", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "colon", "semicolon", "less", "equal", "greater", "question", "at", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "bracketleft", "backslash", "bracketright", "asciicircum", "underscore", "grave", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "braceleft", "bar", "braceright", "asciitilde", "Adieresis", "Aring", "Ccedilla", "Eacute", "Ntilde", "Odieresis", "Udieresis", "aacute", "agrave", "acircumflex", "adieresis", "atilde", "aring", "ccedilla", "eacute", "egrave", "ecircumflex", "edieresis", "iacute", "igrave", "icircumflex", "idieresis", "ntilde", "oacute", "ograve", "ocircumflex", "odieresis", "otilde", "uacute", "ugrave", "ucircumflex", "udieresis", "dagger", "degree", "cent", "sterling", "section", "bullet", "paragraph", "germandbls", "registered", "copyright", "trademark", "acute", "dieresis", "notequal", "AE", "Oslash", "infinity", "plusminus", "lessequal", "greaterequal", "yen", "mu", "partialdiff", "summation", "product", "pi", "integral", "ordfeminine", "ordmasculine", "Omega", "ae", "oslash", "questiondown", "exclamdown", "logicalnot", "radical", "florin", "approxequal", "Delta", "guillemotleft", "guillemotright", "ellipsis", "nonbreakingspace", "Agrave", "Atilde", "Otilde", "OE", "oe", "endash", "emdash", "quotedblleft", "quotedblright", "quoteleft", "quoteright", "divide", "lozenge", "ydieresis", "Ydieresis", "fraction", "currency", "guilsinglleft", "guilsinglright", "fi", "fl", "daggerdbl", "periodcentered", "quotesinglbase", "quotedblbase", "perthousand", "Acircumflex", "Ecircumflex", "Aacute", "Edieresis", "Egrave", "Iacute", "Icircumflex", "Idieresis", "Igrave", "Oacute", "Ocircumflex", "apple", "Ograve", "Uacute", "Ucircumflex", "Ugrave", "dotlessi", "circumflex", "tilde", "macron", "breve", "dotaccent", "ring", "cedilla", "hungarumlaut", "ogonek", "caron", "Lslash", "lslash", "Scaron", "scaron", "Zcaron", "zcaron", "brokenbar", "Eth", "eth", "Yacute", "yacute", "Thorn", "thorn", "minus", "multiply", "onesuperior", "twosuperior", "threesuperior", "onehalf", "onequarter", "threequarters", "franc", "Gbreve", "gbreve", "Idotaccent", "Scedilla", "scedilla", "Cacute", "cacute", "Ccaron", "ccaron", "dcroat"];
+
 function recoverGlyphName(name, glyphsUnicodeMap) {
     if (glyphsUnicodeMap[name] !== undefined) {
         return name;
@@ -16651,6 +17283,7 @@ function recoverGlyphName(name, glyphsUnicodeMap) {
     info("Unable to recover a standard glyph name for: " + name);
     return name;
 }
+
 function type1FontGlyphMapping(properties, builtInEncoding, glyphNames) {
     const charCodeToGlyphId = Object.create(null);
     let glyphId, charCode, baseEncoding;
@@ -16698,9 +17331,11 @@ function type1FontGlyphMapping(properties, builtInEncoding, glyphNames) {
     }
     return charCodeToGlyphId;
 }
+
 function normalizeFontName(name) {
     return name.replaceAll(/[,_]/g, "-").replaceAll(/\s/g, "");
 }
+
 const getVerticalPresentationForm = getLookupTableFactory(t => {
     t[0x2013] = 0xfe32;
     t[0x2014] = 0xfe31;
@@ -16737,6 +17372,7 @@ const getVerticalPresentationForm = getLookupTableFactory(t => {
     t[0xff5d] = 0xfe38;
 });
 const MAX_SIZE_TO_COMPILE = 1000;
+
 function compileType3Glyph({
                                data: img,
                                width,
@@ -16870,14 +17506,12 @@ function compileType3Glyph({
     return [OPS.rawFillPath, [new Float32Array(pathBuf)], new Float32Array([0, 0, width, height])];
 }
 
-;// ./src/core/charsets.js
+// ./src/core/charsets.js
 const ISOAdobeCharset = [".notdef", "space", "exclam", "quotedbl", "numbersign", "dollar", "percent", "ampersand", "quoteright", "parenleft", "parenright", "asterisk", "plus", "comma", "hyphen", "period", "slash", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "colon", "semicolon", "less", "equal", "greater", "question", "at", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "bracketleft", "backslash", "bracketright", "asciicircum", "underscore", "quoteleft", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "braceleft", "bar", "braceright", "asciitilde", "exclamdown", "cent", "sterling", "fraction", "yen", "florin", "section", "currency", "quotesingle", "quotedblleft", "guillemotleft", "guilsinglleft", "guilsinglright", "fi", "fl", "endash", "dagger", "daggerdbl", "periodcentered", "paragraph", "bullet", "quotesinglbase", "quotedblbase", "quotedblright", "guillemotright", "ellipsis", "perthousand", "questiondown", "grave", "acute", "circumflex", "tilde", "macron", "breve", "dotaccent", "dieresis", "ring", "cedilla", "hungarumlaut", "ogonek", "caron", "emdash", "AE", "ordfeminine", "Lslash", "Oslash", "OE", "ordmasculine", "ae", "dotlessi", "lslash", "oslash", "oe", "germandbls", "onesuperior", "logicalnot", "mu", "trademark", "Eth", "onehalf", "plusminus", "Thorn", "onequarter", "divide", "brokenbar", "degree", "thorn", "threequarters", "twosuperior", "registered", "minus", "eth", "multiply", "threesuperior", "copyright", "Aacute", "Acircumflex", "Adieresis", "Agrave", "Aring", "Atilde", "Ccedilla", "Eacute", "Ecircumflex", "Edieresis", "Egrave", "Iacute", "Icircumflex", "Idieresis", "Igrave", "Ntilde", "Oacute", "Ocircumflex", "Odieresis", "Ograve", "Otilde", "Scaron", "Uacute", "Ucircumflex", "Udieresis", "Ugrave", "Yacute", "Ydieresis", "Zcaron", "aacute", "acircumflex", "adieresis", "agrave", "aring", "atilde", "ccedilla", "eacute", "ecircumflex", "edieresis", "egrave", "iacute", "icircumflex", "idieresis", "igrave", "ntilde", "oacute", "ocircumflex", "odieresis", "ograve", "otilde", "scaron", "uacute", "ucircumflex", "udieresis", "ugrave", "yacute", "ydieresis", "zcaron"];
 const ExpertCharset = [".notdef", "space", "exclamsmall", "Hungarumlautsmall", "dollaroldstyle", "dollarsuperior", "ampersandsmall", "Acutesmall", "parenleftsuperior", "parenrightsuperior", "twodotenleader", "onedotenleader", "comma", "hyphen", "period", "fraction", "zerooldstyle", "oneoldstyle", "twooldstyle", "threeoldstyle", "fouroldstyle", "fiveoldstyle", "sixoldstyle", "sevenoldstyle", "eightoldstyle", "nineoldstyle", "colon", "semicolon", "commasuperior", "threequartersemdash", "periodsuperior", "questionsmall", "asuperior", "bsuperior", "centsuperior", "dsuperior", "esuperior", "isuperior", "lsuperior", "msuperior", "nsuperior", "osuperior", "rsuperior", "ssuperior", "tsuperior", "ff", "fi", "fl", "ffi", "ffl", "parenleftinferior", "parenrightinferior", "Circumflexsmall", "hyphensuperior", "Gravesmall", "Asmall", "Bsmall", "Csmall", "Dsmall", "Esmall", "Fsmall", "Gsmall", "Hsmall", "Ismall", "Jsmall", "Ksmall", "Lsmall", "Msmall", "Nsmall", "Osmall", "Psmall", "Qsmall", "Rsmall", "Ssmall", "Tsmall", "Usmall", "Vsmall", "Wsmall", "Xsmall", "Ysmall", "Zsmall", "colonmonetary", "onefitted", "rupiah", "Tildesmall", "exclamdownsmall", "centoldstyle", "Lslashsmall", "Scaronsmall", "Zcaronsmall", "Dieresissmall", "Brevesmall", "Caronsmall", "Dotaccentsmall", "Macronsmall", "figuredash", "hypheninferior", "Ogoneksmall", "Ringsmall", "Cedillasmall", "onequarter", "onehalf", "threequarters", "questiondownsmall", "oneeighth", "threeeighths", "fiveeighths", "seveneighths", "onethird", "twothirds", "zerosuperior", "onesuperior", "twosuperior", "threesuperior", "foursuperior", "fivesuperior", "sixsuperior", "sevensuperior", "eightsuperior", "ninesuperior", "zeroinferior", "oneinferior", "twoinferior", "threeinferior", "fourinferior", "fiveinferior", "sixinferior", "seveninferior", "eightinferior", "nineinferior", "centinferior", "dollarinferior", "periodinferior", "commainferior", "Agravesmall", "Aacutesmall", "Acircumflexsmall", "Atildesmall", "Adieresissmall", "Aringsmall", "AEsmall", "Ccedillasmall", "Egravesmall", "Eacutesmall", "Ecircumflexsmall", "Edieresissmall", "Igravesmall", "Iacutesmall", "Icircumflexsmall", "Idieresissmall", "Ethsmall", "Ntildesmall", "Ogravesmall", "Oacutesmall", "Ocircumflexsmall", "Otildesmall", "Odieresissmall", "OEsmall", "Oslashsmall", "Ugravesmall", "Uacutesmall", "Ucircumflexsmall", "Udieresissmall", "Yacutesmall", "Thornsmall", "Ydieresissmall"];
 const ExpertSubsetCharset = [".notdef", "space", "dollaroldstyle", "dollarsuperior", "parenleftsuperior", "parenrightsuperior", "twodotenleader", "onedotenleader", "comma", "hyphen", "period", "fraction", "zerooldstyle", "oneoldstyle", "twooldstyle", "threeoldstyle", "fouroldstyle", "fiveoldstyle", "sixoldstyle", "sevenoldstyle", "eightoldstyle", "nineoldstyle", "colon", "semicolon", "commasuperior", "threequartersemdash", "periodsuperior", "asuperior", "bsuperior", "centsuperior", "dsuperior", "esuperior", "isuperior", "lsuperior", "msuperior", "nsuperior", "osuperior", "rsuperior", "ssuperior", "tsuperior", "ff", "fi", "fl", "ffi", "ffl", "parenleftinferior", "parenrightinferior", "hyphensuperior", "colonmonetary", "onefitted", "rupiah", "centoldstyle", "figuredash", "hypheninferior", "onequarter", "onehalf", "threequarters", "oneeighth", "threeeighths", "fiveeighths", "seveneighths", "onethird", "twothirds", "zerosuperior", "onesuperior", "twosuperior", "threesuperior", "foursuperior", "fivesuperior", "sixsuperior", "sevensuperior", "eightsuperior", "ninesuperior", "zeroinferior", "oneinferior", "twoinferior", "threeinferior", "fourinferior", "fiveinferior", "sixinferior", "seveninferior", "eightinferior", "nineinferior", "centinferior", "dollarinferior", "periodinferior", "commainferior"];
 
-;// ./src/core/cff_parser.js
-
-
+// ./src/core/cff_parser.js
 
 
 const MAX_SUBR_NESTING = 10;
@@ -17092,12 +17726,14 @@ const CharstringValidationData12 = [null, null, null, {
     min: 11,
     resetStack: true
 }];
+
 class CFFParser {
     constructor(file, properties, seacAnalysisEnabled) {
         this.bytes = file.getBytes();
         this.properties = properties;
         this.seacAnalysisEnabled = !!seacAnalysisEnabled;
     }
+
     parse() {
         const properties = this.properties;
         const cff = new CFF();
@@ -17159,6 +17795,7 @@ class CFFParser {
         cff.widths = charStringsAndSeacs.widths;
         return cff;
     }
+
     parseHeader() {
         let bytes = this.bytes;
         const bytesLength = bytes.length;
@@ -17184,8 +17821,10 @@ class CFFParser {
             endPos: hdrSize
         };
     }
+
     parseDict(dict) {
         let pos = 0;
+
         function parseOperand() {
             let value = dict[pos++];
             if (value === 30) {
@@ -17210,6 +17849,7 @@ class CFFParser {
             warn('CFFParser_parseDict: "' + value + '" is a reserved command.');
             return NaN;
         }
+
         function parseFloatOperand() {
             let str = "";
             const eof = 15;
@@ -17230,6 +17870,7 @@ class CFFParser {
             }
             return parseFloat(str);
         }
+
         let operands = [];
         const entries = [];
         pos = 0;
@@ -17249,6 +17890,7 @@ class CFFParser {
         }
         return entries;
     }
+
     parseIndex(pos) {
         const cffIndex = new CFFIndex();
         const bytes = this.bytes;
@@ -17279,6 +17921,7 @@ class CFFParser {
             endPos: end
         };
     }
+
     parseNameIndex(index) {
         const names = [];
         for (let i = 0, ii = index.count; i < ii; ++i) {
@@ -17287,6 +17930,7 @@ class CFFParser {
         }
         return names;
     }
+
     parseStringIndex(index) {
         const strings = new CFFStrings();
         for (let i = 0, ii = index.count; i < ii; ++i) {
@@ -17295,6 +17939,7 @@ class CFFParser {
         }
         return strings;
     }
+
     createDict(Type, dict, strings) {
         const cffDict = new Type(strings);
         for (const [key, value] of dict) {
@@ -17302,6 +17947,7 @@ class CFFParser {
         }
         return cffDict;
     }
+
     parseCharString(state, data, localSubrIndex, globalSubrIndex) {
         if (!data || state.callDepth > MAX_SUBR_NESTING) {
             return false;
@@ -17453,6 +18099,7 @@ class CFFParser {
         state.stackSize = stackSize;
         return true;
     }
+
     parseCharStrings({
                          charStrings,
                          localSubrIndex,
@@ -17520,11 +18167,13 @@ class CFFParser {
             widths
         };
     }
+
     emptyPrivateDictionary(parentDict) {
         const privateDict = this.createDict(CFFPrivateDict, [], parentDict.strings);
         parentDict.setByKey(18, [0, 0]);
         parentDict.privateDict = privateDict;
     }
+
     parsePrivateDict(parentDict) {
         if (!parentDict.hasName("Private")) {
             this.emptyPrivateDictionary(parentDict);
@@ -17561,6 +18210,7 @@ class CFFParser {
         const subrsIndex = this.parseIndex(relativeOffset);
         privateDict.subrsIndex = subrsIndex.obj;
     }
+
     parseCharsets(pos, length, strings, cid) {
         if (pos === 0) {
             return new CFFCharset(true, CFFCharsetPredefinedTypes.ISO_ADOBE, ISOAdobeCharset);
@@ -17607,12 +18257,14 @@ class CFFParser {
         const raw = bytes.subarray(start, end);
         return new CFFCharset(false, format, charset, raw);
     }
+
     parseEncoding(pos, properties, strings, charset) {
         const encoding = Object.create(null);
         const bytes = this.bytes;
         let predefined = false;
         let format, i, ii;
         let raw = null;
+
         function readSupplement() {
             const supplementsCount = bytes[pos++];
             for (i = 0; i < supplementsCount; i++) {
@@ -17621,6 +18273,7 @@ class CFFParser {
                 encoding[code] = charset.indexOf(strings.get(sid));
             }
         }
+
         if (pos === 0 || pos === 1) {
             predefined = true;
             format = pos;
@@ -17665,6 +18318,7 @@ class CFFParser {
         format &= 0x7f;
         return new CFFEncoding(predefined, format, encoding, raw);
     }
+
     parseFDSelect(pos, length) {
         const bytes = this.bytes;
         const format = bytes[pos++];
@@ -17702,6 +18356,7 @@ class CFFParser {
         return new CFFFDSelect(format, fdSelect);
     }
 }
+
 class CFF {
     constructor() {
         this.header = null;
@@ -17716,6 +18371,7 @@ class CFF {
         this.fdSelect = null;
         this.isCIDFont = false;
     }
+
     duplicateFirstGlyph() {
         if (this.charStrings.count >= 65535) {
             warn("Not enough space in charstrings to duplicate first glyph.");
@@ -17727,6 +18383,7 @@ class CFF {
             this.fdSelect.fdSelect.push(this.fdSelect.fdSelect[0]);
         }
     }
+
     hasGlyphId(id) {
         if (id < 0 || id >= this.charStrings.count) {
             return false;
@@ -17735,6 +18392,7 @@ class CFF {
         return glyph.length > 0;
     }
 }
+
 class CFFHeader {
     constructor(major, minor, hdrSize, offSize) {
         this.major = major;
@@ -17743,10 +18401,12 @@ class CFFHeader {
         this.offSize = offSize;
     }
 }
+
 class CFFStrings {
     constructor() {
         this.strings = [];
     }
+
     get(index) {
         if (index >= 0 && index <= NUM_STANDARD_CFF_STRINGS - 1) {
             return CFFStandardStrings[index];
@@ -17756,6 +18416,7 @@ class CFFStrings {
         }
         return CFFStandardStrings[0];
     }
+
     getSID(str) {
         let index = CFFStandardStrings.indexOf(str);
         if (index !== -1) {
@@ -17767,33 +18428,41 @@ class CFFStrings {
         }
         return -1;
     }
+
     add(value) {
         this.strings.push(value);
     }
+
     get count() {
         return this.strings.length;
     }
 }
+
 class CFFIndex {
     constructor() {
         this.objects = [];
         this.length = 0;
     }
+
     add(data) {
         this.length += data.length;
         this.objects.push(data);
     }
+
     set(index, data) {
         this.length += data.length - this.objects[index].length;
         this.objects[index] = data;
     }
+
     get(index) {
         return this.objects[index];
     }
+
     get count() {
         return this.objects.length;
     }
 }
+
 class CFFDict {
     constructor(tables, strings) {
         this.keyToNameMap = tables.keyToNameMap;
@@ -17805,6 +18474,7 @@ class CFFDict {
         this.strings = strings;
         this.values = Object.create(null);
     }
+
     setByKey(key, value) {
         if (!(key in this.keyToNameMap)) {
             return false;
@@ -17825,15 +18495,18 @@ class CFFDict {
         this.values[key] = value;
         return true;
     }
+
     setByName(name, value) {
         if (!(name in this.nameToKeyMap)) {
             throw new FormatError(`Invalid dictionary name "${name}"`);
         }
         this.values[this.nameToKeyMap[name]] = value;
     }
+
     hasName(name) {
         return this.nameToKeyMap[name] in this.values;
     }
+
     getByName(name) {
         if (!(name in this.nameToKeyMap)) {
             throw new FormatError(`Invalid dictionary name ${name}"`);
@@ -17844,9 +18517,11 @@ class CFFDict {
         }
         return this.values[key];
     }
+
     removeByName(name) {
         delete this.values[this.nameToKeyMap[name]];
     }
+
     static createTables(layout) {
         const tables = {
             keyToNameMap: {},
@@ -17868,31 +18543,39 @@ class CFFDict {
         return tables;
     }
 }
+
 const CFFTopDictLayout = [[[12, 30], "ROS", ["sid", "sid", "num"], null], [[12, 20], "SyntheticBase", "num", null], [0, "version", "sid", null], [1, "Notice", "sid", null], [[12, 0], "Copyright", "sid", null], [2, "FullName", "sid", null], [3, "FamilyName", "sid", null], [4, "Weight", "sid", null], [[12, 1], "isFixedPitch", "num", 0], [[12, 2], "ItalicAngle", "num", 0], [[12, 3], "UnderlinePosition", "num", -100], [[12, 4], "UnderlineThickness", "num", 50], [[12, 5], "PaintType", "num", 0], [[12, 6], "CharstringType", "num", 2], [[12, 7], "FontMatrix", ["num", "num", "num", "num", "num", "num"], [0.001, 0, 0, 0.001, 0, 0]], [13, "UniqueID", "num", null], [5, "FontBBox", ["num", "num", "num", "num"], [0, 0, 0, 0]], [[12, 8], "StrokeWidth", "num", 0], [14, "XUID", "array", null], [15, "charset", "offset", 0], [16, "Encoding", "offset", 0], [17, "CharStrings", "offset", 0], [18, "Private", ["offset", "offset"], null], [[12, 21], "PostScript", "sid", null], [[12, 22], "BaseFontName", "sid", null], [[12, 23], "BaseFontBlend", "delta", null], [[12, 31], "CIDFontVersion", "num", 0], [[12, 32], "CIDFontRevision", "num", 0], [[12, 33], "CIDFontType", "num", 0], [[12, 34], "CIDCount", "num", 8720], [[12, 35], "UIDBase", "num", null], [[12, 37], "FDSelect", "offset", null], [[12, 36], "FDArray", "offset", null], [[12, 38], "FontName", "sid", null]];
+
 class CFFTopDict extends CFFDict {
     static get tables() {
         return shadow(this, "tables", this.createTables(CFFTopDictLayout));
     }
+
     constructor(strings) {
         super(CFFTopDict.tables, strings);
         this.privateDict = null;
     }
 }
+
 const CFFPrivateDictLayout = [[6, "BlueValues", "delta", null], [7, "OtherBlues", "delta", null], [8, "FamilyBlues", "delta", null], [9, "FamilyOtherBlues", "delta", null], [[12, 9], "BlueScale", "num", 0.039625], [[12, 10], "BlueShift", "num", 7], [[12, 11], "BlueFuzz", "num", 1], [10, "StdHW", "num", null], [11, "StdVW", "num", null], [[12, 12], "StemSnapH", "delta", null], [[12, 13], "StemSnapV", "delta", null], [[12, 14], "ForceBold", "num", 0], [[12, 17], "LanguageGroup", "num", 0], [[12, 18], "ExpansionFactor", "num", 0.06], [[12, 19], "initialRandomSeed", "num", 0], [20, "defaultWidthX", "num", 0], [21, "nominalWidthX", "num", 0], [19, "Subrs", "offset", null]];
+
 class CFFPrivateDict extends CFFDict {
     static get tables() {
         return shadow(this, "tables", this.createTables(CFFPrivateDictLayout));
     }
+
     constructor(strings) {
         super(CFFPrivateDict.tables, strings);
         this.subrsIndex = null;
     }
 }
+
 const CFFCharsetPredefinedTypes = {
     ISO_ADOBE: 0,
     EXPERT: 1,
     EXPERT_SUBSET: 2
 };
+
 class CFFCharset {
     constructor(predefined, format, charset, raw) {
         this.predefined = predefined;
@@ -17901,6 +18584,7 @@ class CFFCharset {
         this.raw = raw;
     }
 }
+
 class CFFEncoding {
     constructor(predefined, format, encoding, raw) {
         this.predefined = predefined;
@@ -17909,11 +18593,13 @@ class CFFEncoding {
         this.raw = raw;
     }
 }
+
 class CFFFDSelect {
     constructor(format, fdSelect) {
         this.format = format;
         this.fdSelect = fdSelect;
     }
+
     getFDIndex(glyphIndex) {
         if (glyphIndex < 0 || glyphIndex >= this.fdSelect.length) {
             return -1;
@@ -17921,24 +18607,29 @@ class CFFFDSelect {
         return this.fdSelect[glyphIndex];
     }
 }
+
 class CFFOffsetTracker {
     constructor() {
         this.offsets = Object.create(null);
     }
+
     isTracking(key) {
         return key in this.offsets;
     }
+
     track(key, location) {
         if (key in this.offsets) {
             throw new FormatError(`Already tracking location of ${key}`);
         }
         this.offsets[key] = location;
     }
+
     offset(value) {
         for (const key in this.offsets) {
             this.offsets[key] += value;
         }
     }
+
     setEntryLocation(key, values, output) {
         if (!(key in this.offsets)) {
             throw new FormatError(`Not tracking location of ${key}`);
@@ -17964,10 +18655,12 @@ class CFFOffsetTracker {
         }
     }
 }
+
 class CFFCompiler {
     constructor(cff) {
         this.cff = cff;
     }
+
     compile() {
         const cff = this.cff;
         const output = {
@@ -18040,15 +18733,18 @@ class CFFCompiler {
         output.add([0]);
         return output.data;
     }
+
     encodeNumber(value) {
         if (Number.isInteger(value)) {
             return this.encodeInteger(value);
         }
         return this.encodeFloat(value);
     }
+
     static get EncodeFloatRegExp() {
         return shadow(this, "EncodeFloatRegExp", /\.(\d*?)(?:9{5,20}|0{5,20})\d{0,2}(?:e(.+)|$)/);
     }
+
     encodeFloat(num) {
         let value = num.toString();
         const m = CFFCompiler.EncodeFloatRegExp.exec(value);
@@ -18077,6 +18773,7 @@ class CFFCompiler {
         }
         return out;
     }
+
     encodeInteger(value) {
         let code;
         if (value >= -107 && value <= 107) {
@@ -18094,9 +18791,11 @@ class CFFCompiler {
         }
         return code;
     }
+
     compileHeader(header) {
         return [header.major, header.minor, 4, header.offSize];
     }
+
     compileNameIndex(names) {
         const nameIndex = new CFFIndex();
         for (const name of names) {
@@ -18117,6 +18816,7 @@ class CFFCompiler {
         }
         return this.compileIndex(nameIndex);
     }
+
     compileTopDicts(dicts, length, removeCidKeys) {
         const fontDictTrackers = [];
         let fdArrayIndex = new CFFIndex();
@@ -18140,6 +18840,7 @@ class CFFCompiler {
             output: fdArrayIndex
         };
     }
+
     compilePrivateDicts(dicts, trackers, output) {
         for (let i = 0, ii = dicts.length; i < ii; ++i) {
             const fontDict = dicts[i];
@@ -18163,6 +18864,7 @@ class CFFCompiler {
             }
         }
     }
+
     compileDict(dict, offsetTracker) {
         const out = [];
         for (const key of dict.order) {
@@ -18210,6 +18912,7 @@ class CFFCompiler {
         }
         return out;
     }
+
     compileStringIndex(strings) {
         const stringIndex = new CFFIndex();
         for (const string of strings) {
@@ -18217,6 +18920,7 @@ class CFFCompiler {
         }
         return this.compileIndex(stringIndex);
     }
+
     compileCharStrings(charStrings) {
         const charStringsIndex = new CFFIndex();
         for (let i = 0; i < charStrings.count; i++) {
@@ -18229,6 +18933,7 @@ class CFFCompiler {
         }
         return this.compileIndex(charStringsIndex);
     }
+
     compileCharset(charset, numGlyphs, strings, isCIDFont) {
         let out;
         const numGlyphsLessNotDef = numGlyphs - 1;
@@ -18261,9 +18966,11 @@ class CFFCompiler {
         }
         return this.compileTypedArray(out);
     }
+
     compileEncoding(encoding) {
         return this.compileTypedArray(encoding.raw);
     }
+
     compileFDSelect(fdSelect) {
         const format = fdSelect.format;
         let out, i;
@@ -18295,9 +19002,11 @@ class CFFCompiler {
         }
         return this.compileTypedArray(out);
     }
+
     compileTypedArray(data) {
         return Array.from(data);
     }
+
     compileIndex(index, trackers = []) {
         const objects = index.objects;
         const count = objects.length;
@@ -18346,7 +19055,7 @@ class CFFCompiler {
     }
 }
 
-;// ./src/core/standard_fonts.js
+// ./src/core/standard_fonts.js
 
 
 const getStdFontMap = getLookupTableFactory(function (t) {
@@ -19224,36 +19933,43 @@ const getSupplementalGlyphMapForCalibri = getLookupTableFactory(function (t) {
     t[1085] = 43;
     t[1086] = 45;
 });
+
 function getStandardFontName(name) {
     const fontName = normalizeFontName(name);
     const stdFontMap = getStdFontMap();
     return stdFontMap[fontName];
 }
+
 function isKnownFontName(name) {
     const fontName = normalizeFontName(name);
     return !!(getStdFontMap()[fontName] || getNonStdFontMap()[fontName] || getSerifFonts()[fontName] || getSymbolsFonts()[fontName]);
 }
 
-;// ./src/core/to_unicode_map.js
+// ./src/core/to_unicode_map.js
 
 class ToUnicodeMap {
     constructor(cmap = []) {
         this._map = cmap;
     }
+
     get length() {
         return this._map.length;
     }
+
     forEach(callback) {
         for (const charCode in this._map) {
             callback(charCode, this._map[charCode].codePointAt(0));
         }
     }
+
     has(i) {
         return this._map[i] !== undefined;
     }
+
     get(i) {
         return this._map[i];
     }
+
     charCodeOf(value) {
         const map = this._map;
         if (map.length <= 0x10000) {
@@ -19266,44 +19982,51 @@ class ToUnicodeMap {
         }
         return -1;
     }
+
     amend(map) {
         for (const charCode in map) {
             this._map[charCode] = map[charCode];
         }
     }
 }
+
 class IdentityToUnicodeMap {
     constructor(firstChar, lastChar) {
         this.firstChar = firstChar;
         this.lastChar = lastChar;
     }
+
     get length() {
         return this.lastChar + 1 - this.firstChar;
     }
+
     forEach(callback) {
         for (let i = this.firstChar, ii = this.lastChar; i <= ii; i++) {
             callback(i, i);
         }
     }
+
     has(i) {
         return this.firstChar <= i && i <= this.lastChar;
     }
+
     get(i) {
         if (this.firstChar <= i && i <= this.lastChar) {
             return String.fromCharCode(i);
         }
         return undefined;
     }
+
     charCodeOf(v) {
         return Number.isInteger(v) && v >= this.firstChar && v <= this.lastChar ? v : -1;
     }
+
     amend(map) {
         unreachable("Should not call amend()");
     }
 }
 
-;// ./src/core/cff_font.js
-
+// ./src/core/cff_font.js
 
 
 class CFFFont {
@@ -19322,12 +20045,15 @@ class CFFFont {
         }
         this._createBuiltInEncoding();
     }
+
     get numGlyphs() {
         return this.cff.charStrings.count;
     }
+
     getCharset() {
         return this.cff.charset.charset;
     }
+
     getGlyphMapping() {
         const cff = this.cff;
         const properties = this.properties;
@@ -19375,9 +20101,11 @@ class CFFFont {
         charCodeToGlyphId = type1FontGlyphMapping(properties, encoding, charsets);
         return charCodeToGlyphId;
     }
+
     hasGlyphId(id) {
         return this.cff.hasGlyphId(id);
     }
+
     _createBuiltInEncoding() {
         const {
             charset,
@@ -19404,16 +20132,13 @@ class CFFFont {
     }
 }
 
-;// ./src/core/font_renderer.js
-
-
-
-
+// ./src/core/font_renderer.js
 
 
 function getFloat214(data, offset) {
     return readInt16(data, offset) / 16384;
 }
+
 function getSubroutineBias(subrs) {
     const numSubrs = subrs.length;
     let bias = 32768;
@@ -19424,6 +20149,7 @@ function getSubroutineBias(subrs) {
     }
     return bias;
 }
+
 function parseCmap(data, start, end) {
     const offset = readUint16(data, start + 2) === 1 ? readUint32(data, start + 8) : readUint32(data, start + 16);
     const format = readUint16(data, start + offset);
@@ -19474,6 +20200,7 @@ function parseCmap(data, start, end) {
     }
     throw new FormatError(`unsupported cmap: ${format}`);
 }
+
 function parseCff(data, start, end, seacAnalysisEnabled) {
     const properties = {};
     const parser = new CFFParser(new Stream(data, start, end - start), properties, seacAnalysisEnabled);
@@ -19487,6 +20214,7 @@ function parseCff(data, start, end, seacAnalysisEnabled) {
         fdArray: cff.fdArray
     };
 }
+
 function parseGlyfTable(glyf, loca, isGlyphLocationsLong) {
     let itemSize, itemDecode;
     if (isGlyphLocationsLong) {
@@ -19505,6 +20233,7 @@ function parseGlyfTable(glyf, loca, isGlyphLocationsLong) {
     }
     return glyphs;
 }
+
 function lookupCmap(ranges, unicode) {
     const code = unicode.codePointAt(0);
     let gid = 0,
@@ -19526,6 +20255,7 @@ function lookupCmap(ranges, unicode) {
         glyphId: gid
     };
 }
+
 function compileGlyf(code, cmds, font) {
     function moveTo(x, y) {
         if (firstPoint) {
@@ -19534,12 +20264,15 @@ function compileGlyf(code, cmds, font) {
         firstPoint = [x, y];
         cmds.add("M", [x, y]);
     }
+
     function lineTo(x, y) {
         cmds.add("L", [x, y]);
     }
+
     function quadraticCurveTo(xa, ya, x, y) {
         cmds.add("Q", [xa, ya, x, y]);
     }
+
     let i = 0;
     const numberOfContours = readInt16(code, i);
     let flags;
@@ -19598,7 +20331,8 @@ function compileGlyf(code, cmds, font) {
             if (subglyph) {
                 cmds.save();
                 cmds.transform([scaleX, scale01, scale10, scaleY, x, y]);
-                if (!(flags & 0x02)) {}
+                if (!(flags & 0x02)) {
+                }
                 compileGlyf(subglyph, cmds, font);
                 cmds.restore();
             }
@@ -19688,6 +20422,7 @@ function compileGlyf(code, cmds, font) {
         }
     }
 }
+
 function compileCharString(charStringCode, cmds, font, glyphId) {
     function moveTo(x, y) {
         if (firstPoint) {
@@ -19696,17 +20431,21 @@ function compileCharString(charStringCode, cmds, font, glyphId) {
         firstPoint = [x, y];
         cmds.add("M", [x, y]);
     }
+
     function lineTo(x, y) {
         cmds.add("L", [x, y]);
     }
+
     function bezierCurveTo(x1, y1, x2, y2, x, y) {
         cmds.add("C", [x1, y1, x2, y2, x, y]);
     }
+
     const stack = [];
     let x = 0,
         y = 0;
     let stems = 0;
     let firstPoint = null;
+
     function parse(code) {
         let i = 0;
         while (i < code.length) {
@@ -20039,13 +20778,17 @@ function compileCharString(charStringCode, cmds, font, glyphId) {
             }
         }
     }
+
     parse(charStringCode);
 }
+
 const NOOP = "";
+
 class Commands {
     cmds = [];
     transformStack = [];
     currentTransform = [1, 0, 0, 1, 0, 0];
+
     add(cmd, args) {
         if (args) {
             const {
@@ -20059,28 +20802,35 @@ class Commands {
             this.cmds.push(cmd);
         }
     }
+
     transform(transf) {
         this.currentTransform = Util.transform(this.currentTransform, transf);
     }
+
     translate(x, y) {
         this.transform([1, 0, 0, 1, x, y]);
     }
+
     save() {
         this.transformStack.push(this.currentTransform.slice());
     }
+
     restore() {
         this.currentTransform = this.transformStack.pop() || [1, 0, 0, 1, 0, 0];
     }
+
     getSVG() {
         return this.cmds.join("");
     }
 }
+
 class CompiledFont {
     constructor(fontMatrix) {
         this.fontMatrix = fontMatrix;
         this.compiledGlyphs = Object.create(null);
         this.compiledCharCodeToGlyphId = Object.create(null);
     }
+
     getPathJs(unicode) {
         const {
             charCode,
@@ -20103,6 +20853,7 @@ class CompiledFont {
         }
         return fn;
     }
+
     compileGlyph(code, glyphId) {
         if (!code?.length || code[0] === 14) {
             return NOOP;
@@ -20124,9 +20875,11 @@ class CompiledFont {
         cmds.add("Z");
         return cmds.getSVG();
     }
+
     compileGlyphImpl() {
         unreachable("Children classes should implement this.");
     }
+
     hasBuiltPath(unicode) {
         const {
             charCode,
@@ -20135,16 +20888,19 @@ class CompiledFont {
         return this.compiledGlyphs[glyphId] !== undefined && this.compiledCharCodeToGlyphId[charCode] !== undefined;
     }
 }
+
 class TrueTypeCompiled extends CompiledFont {
     constructor(glyphs, cmap, fontMatrix) {
         super(fontMatrix || [0.000488, 0, 0, 0.000488, 0, 0]);
         this.glyphs = glyphs;
         this.cmap = cmap;
     }
+
     compileGlyphImpl(code, cmds) {
         compileGlyf(code, cmds, this);
     }
 }
+
 class Type2Compiled extends CompiledFont {
     constructor(cffInfo, cmap, fontMatrix) {
         super(fontMatrix || [0.001, 0, 0, 0.001, 0, 0]);
@@ -20159,10 +20915,12 @@ class Type2Compiled extends CompiledFont {
         this.fdSelect = cffInfo.fdSelect;
         this.fdArray = cffInfo.fdArray;
     }
+
     compileGlyphImpl(code, cmds, glyphId) {
         compileCharString(code, cmds, this, glyphId);
     }
 }
+
 class FontRendererFactory {
     static create(font, seacAnalysisEnabled) {
         const data = new Uint8Array(font.data);
@@ -20199,7 +20957,7 @@ class FontRendererFactory {
     }
 }
 
-;// ./src/core/metrics.js
+// ./src/core/metrics.js
 
 const getMetrics = getLookupTableFactory(function (t) {
     t.Courier = 600;
@@ -23226,7 +23984,7 @@ const getFontBasicMetrics = getLookupTableFactory(function (t) {
     };
 });
 
-;// ./src/core/glyf.js
+// ./src/core/glyf.js
 const ON_CURVE_POINT = 1 << 0;
 const X_SHORT_VECTOR = 1 << 1;
 const Y_SHORT_VECTOR = 1 << 2;
@@ -23241,6 +23999,7 @@ const MORE_COMPONENTS = 1 << 5;
 const WE_HAVE_AN_X_AND_Y_SCALE = 1 << 6;
 const WE_HAVE_A_TWO_BY_TWO = 1 << 7;
 const WE_HAVE_INSTRUCTIONS = 1 << 8;
+
 class GlyfTable {
     constructor({
                     glyfTable,
@@ -23266,9 +24025,11 @@ class GlyfTable {
             prev = next;
         }
     }
+
     getSize() {
         return Math.sumPrecise(this.glyphs.map(g => g.getSize() + 3 & ~3));
     }
+
     write() {
         const totalSize = this.getSize();
         const glyfTable = new DataView(new ArrayBuffer(totalSize));
@@ -23298,12 +24059,14 @@ class GlyfTable {
             glyf: new Uint8Array(glyfTable.buffer)
         };
     }
+
     scale(factors) {
         for (let i = 0, ii = this.glyphs.length; i < ii; i++) {
             this.glyphs[i].scale(factors[i]);
         }
     }
 }
+
 class Glyph {
     constructor({
                     header = null,
@@ -23314,6 +24077,7 @@ class Glyph {
         this.simple = simple;
         this.composites = composites;
     }
+
     static parse(pos, glyf) {
         const [read, header] = GlyphHeader.parse(pos, glyf);
         pos += read;
@@ -23338,6 +24102,7 @@ class Glyph {
             simple
         });
     }
+
     getSize() {
         if (!this.header) {
             return 0;
@@ -23345,6 +24110,7 @@ class Glyph {
         const size = this.simple ? this.simple.getSize() : Math.sumPrecise(this.composites.map(c => c.getSize()));
         return this.header.getSize() + size;
     }
+
     write(pos, buf) {
         if (!this.header) {
             return 0;
@@ -23360,6 +24126,7 @@ class Glyph {
         }
         return pos - spos;
     }
+
     scale(factor) {
         if (!this.header) {
             return;
@@ -23375,6 +24142,7 @@ class Glyph {
         }
     }
 }
+
 class GlyphHeader {
     constructor({
                     numberOfContours,
@@ -23389,6 +24157,7 @@ class GlyphHeader {
         this.xMax = xMax;
         this.yMax = yMax;
     }
+
     static parse(pos, glyf) {
         return [10, new GlyphHeader({
             numberOfContours: glyf.getInt16(pos),
@@ -23398,9 +24167,11 @@ class GlyphHeader {
             yMax: glyf.getInt16(pos + 8)
         })];
     }
+
     getSize() {
         return 10;
     }
+
     write(pos, buf) {
         buf.setInt16(pos, this.numberOfContours);
         buf.setInt16(pos + 2, this.xMin);
@@ -23409,11 +24180,13 @@ class GlyphHeader {
         buf.setInt16(pos + 8, this.yMax);
         return 10;
     }
+
     scale(x, factor) {
         this.xMin = Math.round(x + (this.xMin - x) * factor);
         this.xMax = Math.round(x + (this.xMax - x) * factor);
     }
 }
+
 class Contour {
     constructor({
                     flags,
@@ -23425,6 +24198,7 @@ class Contour {
         this.flags = flags;
     }
 }
+
 class SimpleGlyph {
     constructor({
                     contours,
@@ -23433,6 +24207,7 @@ class SimpleGlyph {
         this.contours = contours;
         this.instructions = instructions;
     }
+
     static parse(pos, glyf, numberOfContours) {
         const endPtsOfContours = [];
         for (let i = 0; i < numberOfContours; i++) {
@@ -23517,6 +24292,7 @@ class SimpleGlyph {
             instructions
         });
     }
+
     getSize() {
         let size = this.contours.length * 2 + 2 + this.instructions.length;
         let lastX = 0;
@@ -23544,6 +24320,7 @@ class SimpleGlyph {
         }
         return size;
     }
+
     write(pos, buf) {
         const spos = pos;
         const xCoordinates = [];
@@ -23620,6 +24397,7 @@ class SimpleGlyph {
         }
         return pos - spos;
     }
+
     scale(x, factor) {
         for (const contour of this.contours) {
             if (contour.xCoordinates.length === 0) {
@@ -23631,6 +24409,7 @@ class SimpleGlyph {
         }
     }
 }
+
 class CompositeGlyph {
     constructor({
                     flags,
@@ -23647,6 +24426,7 @@ class CompositeGlyph {
         this.transf = transf;
         this.instructions = instructions;
     }
+
     static parse(pos, glyf) {
         const spos = pos;
         const transf = [];
@@ -23700,6 +24480,7 @@ class CompositeGlyph {
             instructions
         })];
     }
+
     getSize() {
         let size = 2 + 2 + this.transf.length * 2;
         if (this.flags & WE_HAVE_INSTRUCTIONS) {
@@ -23715,6 +24496,7 @@ class CompositeGlyph {
         }
         return size;
     }
+
     write(pos, buf) {
         const spos = pos;
         if (this.flags & ARGS_ARE_XY_VALUES) {
@@ -23751,22 +24533,26 @@ class CompositeGlyph {
         }
         return pos - spos;
     }
-    scale(x, factor) {}
+
+    scale(x, factor) {
+    }
 }
 
-;// ./src/core/opentype_file_builder.js
+// ./src/core/opentype_file_builder.js
 
 
 function writeInt16(dest, offset, num) {
     dest[offset] = num >> 8 & 0xff;
     dest[offset + 1] = num & 0xff;
 }
+
 function writeInt32(dest, offset, num) {
     dest[offset] = num >> 24 & 0xff;
     dest[offset + 1] = num >> 16 & 0xff;
     dest[offset + 2] = num >> 8 & 0xff;
     dest[offset + 3] = num & 0xff;
 }
+
 function writeData(dest, offset, data) {
     if (data instanceof Uint8Array) {
         dest.set(data, offset);
@@ -23780,13 +24566,16 @@ function writeData(dest, offset, data) {
         }
     }
 }
+
 const OTF_HEADER_SIZE = 12;
 const OTF_TABLE_ENTRY_SIZE = 16;
+
 class OpenTypeFileBuilder {
     constructor(sfnt) {
         this.sfnt = sfnt;
         this.tables = Object.create(null);
     }
+
     static getSearchParams(entriesCount, entrySize) {
         let maxPower2 = 1,
             log2 = 0;
@@ -23801,6 +24590,7 @@ class OpenTypeFileBuilder {
             rangeShift: entrySize * entriesCount - searchRange
         };
     }
+
     toArray() {
         let sfnt = this.sfnt;
         const tables = this.tables;
@@ -23852,6 +24642,7 @@ class OpenTypeFileBuilder {
         }
         return file;
     }
+
     addTable(tag, data) {
         if (tag in this.tables) {
             throw new Error("Table " + tag + " already exists");
@@ -23860,9 +24651,7 @@ class OpenTypeFileBuilder {
     }
 }
 
-;// ./src/core/type1_parser.js
-
-
+// ./src/core/type1_parser.js
 
 
 const HINTING_ENABLED = false;
@@ -23883,6 +24672,7 @@ const COMMAND_MAP = {
     vhcurveto: [30],
     hvcurveto: [31]
 };
+
 class Type1CharString {
     constructor() {
         this.width = 0;
@@ -23891,6 +24681,7 @@ class Type1CharString {
         this.output = [];
         this.stack = [];
     }
+
     convert(encoded, subrs, seacAnalysisEnabled) {
         const count = encoded.length;
         let error = false;
@@ -24084,6 +24875,7 @@ class Type1CharString {
         }
         return error;
     }
+
     executeCommand(howManyArgs, command, keepStack) {
         const stackLength = this.stack.length;
         if (howManyArgs > stackLength) {
@@ -24108,11 +24900,14 @@ class Type1CharString {
         return false;
     }
 }
+
 const EEXEC_ENCRYPT_KEY = 55665;
 const CHAR_STRS_ENCRYPT_KEY = 4330;
+
 function isHexDigit(code) {
     return code >= 48 && code <= 57 || code >= 65 && code <= 70 || code >= 97 && code <= 102;
 }
+
 function decrypt(data, key, discardNumber) {
     if (discardNumber >= data.length) {
         return new Uint8Array(0);
@@ -24134,6 +24929,7 @@ function decrypt(data, key, discardNumber) {
     }
     return decrypted;
 }
+
 function decryptAscii(data, key, discardNumber) {
     const c1 = 52845,
         c2 = 22719;
@@ -24160,9 +24956,11 @@ function decryptAscii(data, key, discardNumber) {
     }
     return decrypted.slice(discardNumber, j);
 }
+
 function isSpecial(c) {
     return c === 0x2f || c === 0x5b || c === 0x5d || c === 0x7b || c === 0x7d || c === 0x28 || c === 0x29;
 }
+
 class Type1Parser {
     constructor(stream, encrypted, seacAnalysisEnabled) {
         if (encrypted) {
@@ -24174,6 +24972,7 @@ class Type1Parser {
         this.stream = stream;
         this.nextChar();
     }
+
     readNumberArray() {
         this.getToken();
         const array = [];
@@ -24186,25 +24985,31 @@ class Type1Parser {
         }
         return array;
     }
+
     readNumber() {
         const token = this.getToken();
         return parseFloat(token || 0);
     }
+
     readInt() {
         const token = this.getToken();
         return parseInt(token || 0, 10) | 0;
     }
+
     readBoolean() {
         const token = this.getToken();
         return token === "true" ? 1 : 0;
     }
+
     nextChar() {
         return this.currentChar = this.stream.getByte();
     }
+
     prevChar() {
         this.stream.skip(-2);
         return this.currentChar = this.stream.getByte();
     }
+
     getToken() {
         let comment = false;
         let ch = this.currentChar;
@@ -24234,12 +25039,14 @@ class Type1Parser {
         } while (ch >= 0 && !isWhiteSpace(ch) && !isSpecial(ch));
         return token;
     }
+
     readCharStrings(bytes, lenIV) {
         if (lenIV === -1) {
             return bytes;
         }
         return decrypt(bytes, CHAR_STRS_ENCRYPT_KEY, lenIV);
     }
+
     extractFontProgram(properties) {
         const stream = this.stream;
         const subrs = [],
@@ -24373,6 +25180,7 @@ class Type1Parser {
         }
         return program;
     }
+
     extractFontHeader(properties) {
         let token;
         while ((token = this.getToken()) !== null) {
@@ -24425,11 +25233,7 @@ class Type1Parser {
     }
 }
 
-;// ./src/core/type1_font.js
-
-
-
-
+// ./src/core/type1_font.js
 
 
 function findBlock(streamBytes, signature, startIndex) {
@@ -24458,6 +25262,7 @@ function findBlock(streamBytes, signature, startIndex) {
         length: i
     };
 }
+
 function getHeaderBlock(stream, suggestedLength) {
     const EEXEC_SIGNATURE = [0x65, 0x65, 0x78, 0x65, 0x63];
     const streamStartPos = stream.pos;
@@ -24465,7 +25270,8 @@ function getHeaderBlock(stream, suggestedLength) {
     try {
         headerBytes = stream.getBytes(suggestedLength);
         headerBytesLength = headerBytes.length;
-    } catch {}
+    } catch {
+    }
     if (headerBytesLength === suggestedLength) {
         block = findBlock(headerBytes, EEXEC_SIGNATURE, suggestedLength - 2 * EEXEC_SIGNATURE.length);
         if (block.found && block.length === suggestedLength) {
@@ -24504,6 +25310,7 @@ function getHeaderBlock(stream, suggestedLength) {
         length: suggestedLength
     };
 }
+
 function getEexecBlock(stream, suggestedLength) {
     const eexecBytes = stream.getBytes();
     if (eexecBytes.length === 0) {
@@ -24514,6 +25321,7 @@ function getEexecBlock(stream, suggestedLength) {
         length: eexecBytes.length
     };
 }
+
 class Type1Font {
     constructor(name, file, properties) {
         const PFB_HEADER_SIZE = 6;
@@ -24545,9 +25353,11 @@ class Type1Font {
         this.data = this.wrap(name, type2Charstrings, this.charstrings, subrs, properties);
         this.seacs = this.getSeacs(data.charstrings);
     }
+
     get numGlyphs() {
         return this.charstrings.length + 1;
     }
+
     getCharset() {
         const charset = [".notdef"];
         for (const {
@@ -24557,6 +25367,7 @@ class Type1Font {
         }
         return charset;
     }
+
     getGlyphMapping(properties) {
         const charstrings = this.charstrings;
         if (properties.composite) {
@@ -24584,6 +25395,7 @@ class Type1Font {
         }
         return type1FontGlyphMapping(properties, builtInEncoding, glyphNames);
     }
+
     hasGlyphId(id) {
         if (id < 0 || id >= this.numGlyphs) {
             return false;
@@ -24594,6 +25406,7 @@ class Type1Font {
         const glyph = this.charstrings[id - 1];
         return glyph.charstring.length > 0;
     }
+
     getSeacs(charstrings) {
         const seacMap = [];
         for (let i = 0, ii = charstrings.length; i < ii; i++) {
@@ -24604,6 +25417,7 @@ class Type1Font {
         }
         return seacMap;
     }
+
     getType2Charstrings(type1Charstrings) {
         const type2Charstrings = [];
         for (const type1Charstring of type1Charstrings) {
@@ -24611,6 +25425,7 @@ class Type1Font {
         }
         return type2Charstrings;
     }
+
     getType2Subrs(type1Subrs) {
         let bias = 0;
         const count = type1Subrs.length;
@@ -24631,6 +25446,7 @@ class Type1Font {
         }
         return type2Subrs;
     }
+
     wrap(name, glyphs, charstrings, subrs, properties) {
         const cff = new CFF();
         cff.header = new CFFHeader(1, 0, 4, 4);
@@ -24701,28 +25517,14 @@ class Type1Font {
     }
 }
 
-;// ./src/core/fonts.js
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// ./src/core/fonts.js
 
 
 const PRIVATE_USE_AREAS = [[0xe000, 0xf8ff], [0x100000, 0x10fffd]];
 const PDF_GLYPH_SPACE_UNITS = 1000;
 const EXPORT_DATA_PROPERTIES = ["ascent", "bbox", "black", "bold", "charProcOperatorList", "cssFontInfo", "data", "defaultVMetrics", "defaultWidth", "descent", "disableFontFace", "fallbackName", "fontExtraProperties", "fontMatrix", "isInvalidPDFjsFont", "isType3Font", "italic", "loadedName", "mimetype", "missingFile", "name", "remeasure", "systemFontInfo", "vertical"];
 const EXPORT_DATA_EXTRA_PROPERTIES = ["cMap", "composite", "defaultEncoding", "differences", "isMonospace", "isSerifFont", "isSymbolicFont", "seacMap", "subtype", "toFontChar", "toUnicode", "type", "vmetrics", "widths"];
+
 function adjustWidths(properties) {
     if (!properties.fontMatrix) {
         return;
@@ -24737,6 +25539,7 @@ function adjustWidths(properties) {
     }
     properties.defaultWidth *= scale;
 }
+
 function adjustTrueTypeToUnicode(properties, isSymbolicFont, nameRecords) {
     if (properties.isInternalFont) {
         return;
@@ -24782,6 +25585,7 @@ function adjustTrueTypeToUnicode(properties, isSymbolicFont, nameRecords) {
         properties.toUnicode.amend(toUnicode);
     }
 }
+
 function adjustType1ToUnicode(properties, builtInEncoding) {
     if (properties.isInternalFont) {
         return;
@@ -24813,6 +25617,7 @@ function adjustType1ToUnicode(properties, builtInEncoding) {
         properties.toUnicode.amend(toUnicode);
     }
 }
+
 function amendFallbackToUnicode(properties) {
     if (!properties.fallbackToUnicode) {
         return;
@@ -24831,6 +25636,7 @@ function amendFallbackToUnicode(properties) {
         properties.toUnicode.amend(toUnicode);
     }
 }
+
 class fonts_Glyph {
     constructor(originalCharCode, fontChar, unicode, accent, width, vmetric, operatorListId, isSpace, isInFont) {
         this.originalCharCode = originalCharCode;
@@ -24843,33 +25649,41 @@ class fonts_Glyph {
         this.isSpace = isSpace;
         this.isInFont = isInFont;
     }
+
     get category() {
         return shadow(this, "category", getCharUnicodeCategory(this.unicode), true);
     }
 }
+
 function int16(b0, b1) {
     return (b0 << 8) + b1;
 }
+
 function writeSignedInt16(bytes, index, value) {
     bytes[index + 1] = value;
     bytes[index] = value >>> 8;
 }
+
 function signedInt16(b0, b1) {
     const value = (b0 << 8) + b1;
     return value & 1 << 15 ? value - 0x10000 : value;
 }
+
 function writeUint32(bytes, index, value) {
     bytes[index + 3] = value & 0xff;
     bytes[index + 2] = value >>> 8;
     bytes[index + 1] = value >>> 16;
     bytes[index] = value >>> 24;
 }
+
 function int32(b0, b1, b2, b3) {
     return (b0 << 24) + (b1 << 16) + (b2 << 8) + b3;
 }
+
 function string16(value) {
     return String.fromCharCode(value >> 8 & 0xff, value & 0xff);
 }
+
 function safeString16(value) {
     if (value > 0x7fff) {
         value = 0x7fff;
@@ -24878,18 +25692,22 @@ function safeString16(value) {
     }
     return String.fromCharCode(value >> 8 & 0xff, value & 0xff);
 }
+
 function isTrueTypeFile(file) {
     const header = file.peekBytes(4);
     return readUint32(header, 0) === 0x00010000 || bytesToString(header) === "true";
 }
+
 function isTrueTypeCollectionFile(file) {
     const header = file.peekBytes(4);
     return bytesToString(header) === "ttcf";
 }
+
 function isOpenTypeFile(file) {
     const header = file.peekBytes(4);
     return bytesToString(header) === "OTTO";
 }
+
 function isType1File(file) {
     const header = file.peekBytes(2);
     if (header[0] === 0x25 && header[1] === 0x21) {
@@ -24900,6 +25718,7 @@ function isType1File(file) {
     }
     return false;
 }
+
 function isCFFFile(file) {
     const header = file.peekBytes(4);
     if (header[0] >= 1 && header[3] >= 1 && header[3] <= 4) {
@@ -24907,6 +25726,7 @@ function isCFFFile(file) {
     }
     return false;
 }
+
 function getFontFileType(file, {
     type,
     subtype,
@@ -24938,11 +25758,13 @@ function getFontFileType(file, {
     }
     return [fileType, fileSubtype];
 }
+
 function applyStandardFontGlyphMap(map, glyphMap) {
     for (const charCode in glyphMap) {
         map[+charCode] = glyphMap[charCode];
     }
 }
+
 function buildToFontChar(encoding, glyphsUnicodeMap, differences) {
     const toFontChar = [];
     let unicode;
@@ -24960,12 +25782,15 @@ function buildToFontChar(encoding, glyphsUnicodeMap, differences) {
     }
     return toFontChar;
 }
+
 function isMacNameRecord(r) {
     return r.platform === 1 && r.encoding === 0 && r.language === 0;
 }
+
 function isWinNameRecord(r) {
     return r.platform === 3 && r.encoding === 1 && r.language === 0x409;
 }
+
 function convertCidString(charCode, cid, shouldThrow = false) {
     switch (cid.length) {
         case 1:
@@ -24980,6 +25805,7 @@ function convertCidString(charCode, cid, shouldThrow = false) {
     warn(msg);
     return cid;
 }
+
 function adjustMapping(charCodeToGlyphId, hasGlyph, newGlyphZeroId, toUnicode) {
     const newMap = Object.create(null);
     const toUnicodeExtraMap = new Map();
@@ -25040,6 +25866,7 @@ function adjustMapping(charCodeToGlyphId, hasGlyph, newGlyphZeroId, toUnicode) {
         nextAvailableFontCharCode
     };
 }
+
 function getRanges(glyphs, toUnicodeExtraMap, numGlyphs) {
     const codes = [];
     for (const charCode in glyphs) {
@@ -25088,6 +25915,7 @@ function getRanges(glyphs, toUnicodeExtraMap, numGlyphs) {
     }
     return ranges;
 }
+
 function createCmapTable(glyphs, toUnicodeExtraMap, numGlyphs) {
     const ranges = getRanges(glyphs, toUnicodeExtraMap, numGlyphs);
     const numTables = ranges.at(-1)[1] > 0xffff ? 2 : 1;
@@ -25171,6 +25999,7 @@ function createCmapTable(glyphs, toUnicodeExtraMap, numGlyphs) {
     }
     return cmap + "\x00\x04" + string16(format314.length + 4) + format314 + header31012 + format31012;
 }
+
 function validateOS2Table(os2, file) {
     file.pos = (file.start || 0) + os2.offset;
     const version = file.getUint16();
@@ -25192,6 +26021,7 @@ function validateOS2Table(os2, file) {
     os2.data[8] = os2.data[9] = 0;
     return true;
 }
+
 function createOS2Table(properties, charstrings, override) {
     override ||= {
         unitsPerEm: 0,
@@ -25248,13 +26078,16 @@ function createOS2Table(properties, charstrings, override) {
     const winDescent = -override.yMin || -typoDescent;
     return "\x00\x03" + "\x02\x24" + "\x01\xF4" + "\x00\x05" + "\x00\x00" + "\x02\x8A" + "\x02\xBB" + "\x00\x00" + "\x00\x8C" + "\x02\x8A" + "\x02\xBB" + "\x00\x00" + "\x01\xDF" + "\x00\x31" + "\x01\x02" + "\x00\x00" + "\x00\x00\x06" + String.fromCharCode(properties.fixedPitch ? 0x09 : 0x00) + "\x00\x00\x00\x00\x00\x00" + string32(ulUnicodeRange1) + string32(ulUnicodeRange2) + string32(ulUnicodeRange3) + string32(ulUnicodeRange4) + "\x2A\x32\x31\x2A" + string16(properties.italicAngle ? 1 : 0) + string16(firstCharIndex || properties.firstChar) + string16(lastCharIndex || properties.lastChar) + string16(typoAscent) + string16(typoDescent) + "\x00\x64" + string16(winAscent) + string16(winDescent) + "\x00\x00\x00\x00" + "\x00\x00\x00\x00" + string16(properties.xHeight) + string16(properties.capHeight) + string16(0) + string16(firstCharIndex || properties.firstChar) + "\x00\x03";
 }
+
 function createPostTable(properties) {
     const angle = Math.floor(properties.italicAngle * 2 ** 16);
     return "\x00\x03\x00\x00" + string32(angle) + "\x00\x00" + "\x00\x00" + string32(properties.fixedPitch ? 1 : 0) + "\x00\x00\x00\x00" + "\x00\x00\x00\x00" + "\x00\x00\x00\x00" + "\x00\x00\x00\x00";
 }
+
 function createPostscriptName(name) {
     return name.replaceAll(/[^\x21-\x7E]|[[\](){}<>/%]/g, "").slice(0, 63);
 }
+
 function createNameTable(name, proto) {
     if (!proto) {
         proto = [[], []];
@@ -25289,6 +26122,7 @@ function createNameTable(name, proto) {
     nameTable += strings.join("") + stringsUnicode.join("");
     return nameTable;
 }
+
 class Font {
     constructor(name, file, properties, evaluatorOptions) {
         this.name = name;
@@ -25415,10 +26249,12 @@ class Font {
         this.toUnicode = properties.toUnicode;
         this.seacMap = properties.seacMap;
     }
+
     get renderer() {
         const renderer = FontRendererFactory.create(this, SEAC_ANALYSIS_ENABLED);
         return shadow(this, "renderer", renderer);
     }
+
     exportData() {
         const exportDataProps = this.fontExtraProperties ? [...EXPORT_DATA_PROPERTIES, ...EXPORT_DATA_EXTRA_PROPERTIES] : EXPORT_DATA_PROPERTIES;
         const data = Object.create(null);
@@ -25430,6 +26266,7 @@ class Font {
         }
         return data;
     }
+
     fallbackToSystemFont(properties) {
         this.missingFile = true;
         const {
@@ -25527,8 +26364,10 @@ class Font {
         amendFallbackToUnicode(properties);
         this.loadedName = fontName.split("-", 1)[0];
     }
+
     checkAndRepair(name, font, properties) {
         const VALID_TABLES = ["OS/2", "cmap", "head", "hhea", "hmtx", "maxp", "name", "post", "loca", "glyf", "fpgm", "prep", "cvt ", "CFF "];
+
         function readTables(file, numTables) {
             const tables = Object.create(null);
             tables["OS/2"] = null;
@@ -25551,6 +26390,7 @@ class Font {
             }
             return tables;
         }
+
         function readTableEntry(file) {
             const tag = file.getString(4);
             const checksum = file.getInt32() >>> 0;
@@ -25573,6 +26413,7 @@ class Font {
                 data
             };
         }
+
         function readOpenTypeHeader(ttf) {
             return {
                 version: ttf.getString(4),
@@ -25582,6 +26423,7 @@ class Font {
                 rangeShift: ttf.getUint16()
             };
         }
+
         function readTrueTypeCollectionHeader(ttc) {
             const ttcTag = ttc.getString(4);
             assert(ttcTag === "ttcf", "Must be a TrueType Collection font.");
@@ -25610,6 +26452,7 @@ class Font {
             }
             throw new FormatError(`Invalid TrueType Collection majorVersion: ${majorVersion}.`);
         }
+
         function readTrueTypeCollectionData(ttc, fontName) {
             const {
                 numFonts,
@@ -25661,6 +26504,7 @@ class Font {
             }
             throw new FormatError(`TrueType Collection does not contain "${fontName}" font.`);
         }
+
         function readCmapTable(cmap, file, isSymbolicFont, hasEncoding) {
             if (!cmap) {
                 warn("No cmap table available.");
@@ -25899,6 +26743,7 @@ class Font {
                 hasShortCmap
             };
         }
+
         function sanitizeMetrics(file, header, metrics, headTable, numGlyphs, dupFirstEntry) {
             if (!header) {
                 if (metrics) {
@@ -25946,6 +26791,7 @@ class Font {
                 metrics.data = entries;
             }
         }
+
         function sanitizeGlyph(source, sourceStart, sourceEnd, dest, destStart, hintsValid) {
             const glyphProfile = {
                 length: 0,
@@ -26046,6 +26892,7 @@ class Font {
             glyphProfile.length = glyf.length;
             return glyphProfile;
         }
+
         function sanitizeHead(head, numGlyphs, locaLength) {
             const data = head.data;
             const version = int32(data[0], data[1], data[2], data[3]);
@@ -26071,6 +26918,7 @@ class Font {
                 }
             }
         }
+
         function sanitizeGlyphLocations(loca, glyf, numGlyphs, isGlyphLocationsLong, hintsValid, dupFirstEntry, maxSizeOfInstructions) {
             let itemSize, itemDecode, itemEncode;
             if (isGlyphLocationsLong) {
@@ -26178,6 +27026,7 @@ class Font {
                 maxSizeOfInstructions
             };
         }
+
         function readPostScriptTable(post, propertiesObj, maxpNumGlyphs) {
             const start = (font.start || 0) + post.offset;
             font.pos = start;
@@ -26243,6 +27092,7 @@ class Font {
             propertiesObj.glyphNames = glyphNames;
             return valid;
         }
+
         function readNameTable(nameTable) {
             const start = (font.start || 0) + nameTable.offset;
             font.pos = start;
@@ -26295,7 +27145,9 @@ class Font {
             }
             return [names, records];
         }
+
         const TTOpsStackDeltas = [0, 0, 0, 0, 0, 0, 0, 0, -2, -2, -2, -2, 0, 0, -2, -5, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, -1, -1, -1, -1, 1, -1, -999, 0, 1, 0, -1, -2, 0, -1, -2, -1, -1, 0, -1, -1, 0, 0, -999, -999, -1, -1, -1, -1, -2, -999, -2, -2, -999, 0, -2, -2, 0, 0, -2, 0, -2, 0, 0, 0, -2, -1, -1, 1, 1, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, -1, 0, -1, -1, 0, -999, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, -999, -999, -999, -999, -999, -1, -1, -2, -2, 0, 0, 0, 0, -1, -1, -999, -2, -2, 0, 0, -1, -2, -2, 0, 0, 0, -1, -1, -1, -2];
+
         function sanitizeTTProgram(table, ttContext) {
             let data = table.data;
             let i = 0,
@@ -26474,6 +27326,7 @@ class Font {
             }
             foldTTTable(table, content);
         }
+
         function checkInvalidFunctions(ttContext, maxFunctionDefs) {
             if (ttContext.tooComplexToFollowFunctions) {
                 return;
@@ -26496,6 +27349,7 @@ class Font {
                 }
             }
         }
+
         function foldTTTable(table, content) {
             if (content.length > 1) {
                 let newLength = 0;
@@ -26514,6 +27368,7 @@ class Font {
                 table.length = newLength;
             }
         }
+
         function sanitizeTTPrograms(fpgm, prep, cvt, maxFunctionDefs) {
             const ttContext = {
                 functionsDefined: [],
@@ -26538,6 +27393,7 @@ class Font {
             }
             return ttContext.hintsValid;
         }
+
         font = new Stream(new Uint8Array(font.getBytes()));
         let header, tables;
         if (isTrueTypeCollectionFile(font)) {
@@ -26701,9 +27557,11 @@ class Font {
             data: createPostTable(properties)
         };
         const charCodeToGlyphId = Object.create(null);
+
         function hasGlyph(glyphId) {
             return !missingGlyphs[glyphId];
         }
+
         if (properties.composite) {
             const cidToGidMap = properties.cidToGidMap || [];
             const isCidToGidMapEmpty = cidToGidMap.length === 0;
@@ -26860,6 +27718,7 @@ class Font {
         }
         return builder.toArray();
     }
+
     convert(fontName, font, properties) {
         properties.fixedPitch = false;
         if (properties.builtInEncoding) {
@@ -26880,6 +27739,7 @@ class Font {
             toUnicodeExtraMap = newMapping.toUnicodeExtraMap;
         }
         const numGlyphs = font.numGlyphs;
+
         function getCharCodes(charCodeToGlyphId, glyphId) {
             let charCodes = null;
             for (const charCode in charCodeToGlyphId) {
@@ -26889,6 +27749,7 @@ class Font {
             }
             return charCodes;
         }
+
         function createCharCode(charCodeToGlyphId, glyphId) {
             for (const charCode in charCodeToGlyphId) {
                 if (glyphId === charCodeToGlyphId[charCode]) {
@@ -26898,6 +27759,7 @@ class Font {
             newMapping.charCodeToGlyphId[newMapping.nextAvailableFontCharCode] = glyphId;
             return newMapping.nextAvailableFontCharCode++;
         }
+
         const seacs = font.seacs;
         if (newMapping && SEAC_ANALYSIS_ENABLED && seacs?.length) {
             const matrix = properties.fontMatrix || FONT_IDENTITY_MATRIX;
@@ -26962,6 +27824,7 @@ class Font {
         builder.addTable("post", createPostTable(properties));
         return builder.toArray();
     }
+
     get _spaceWidth() {
         const possibleSpaceReplacements = ["space", "minus", "one", "i", "I"];
         let width;
@@ -26992,6 +27855,7 @@ class Font {
         }
         return shadow(this, "_spaceWidth", width || this.defaultWidth);
     }
+
     _charToGlyph(charcode, isSpace = false) {
         let glyph = this._glyphCache[charcode];
         if (glyph?.isSpace === isSpace) {
@@ -27057,6 +27921,7 @@ class Font {
         glyph = new fonts_Glyph(charcode, fontChar, unicode, accent, width, vmetric, operatorListId, isSpace, isInFont);
         return this._glyphCache[charcode] = glyph;
     }
+
     charsToGlyphs(chars) {
         let glyphs = this._charsCache[chars];
         if (glyphs) {
@@ -27086,6 +27951,7 @@ class Font {
         }
         return this._charsCache[chars] = glyphs;
     }
+
     getCharPositions(chars) {
         const positions = [];
         if (this.cMap) {
@@ -27104,9 +27970,11 @@ class Font {
         }
         return positions;
     }
+
     get glyphCacheValues() {
         return Object.values(this._glyphCache);
     }
+
     encodeString(str) {
         const buffers = [];
         const currentBuf = [];
@@ -27141,18 +28009,22 @@ class Font {
         return buffers;
     }
 }
+
 class ErrorFont {
     constructor(error) {
         this.error = error;
         this.loadedName = "g_font_error";
         this.missingFile = true;
     }
+
     charsToGlyphs() {
         return [];
     }
+
     encodeString(chars) {
         return [chars];
     }
+
     exportData() {
         return {
             error: this.error
@@ -27160,9 +28032,7 @@ class ErrorFont {
     }
 }
 
-;// ./src/core/pattern.js
-
-
+// ./src/core/pattern.js
 
 
 const ShadingType = {
@@ -27174,10 +28044,12 @@ const ShadingType = {
     COONS_PATCH_MESH: 6,
     TENSOR_PATCH_MESH: 7
 };
+
 class Pattern {
     constructor() {
         unreachable("Cannot initialize Pattern.");
     }
+
     static parseShading(shading, xref, res, pdfFunctionFactory, globalColorSpaceCache, localColorSpaceCache) {
         const dict = shading instanceof BaseStream ? shading.dict : shading;
         const type = dict.get("ShadingType");
@@ -27203,12 +28075,15 @@ class Pattern {
         }
     }
 }
+
 class BaseShading {
     static SMALL_NUMBER = 1e-6;
+
     getIR() {
         unreachable("Abstract method `getIR` called.");
     }
 }
+
 class RadialAxialShading extends BaseShading {
     constructor(dict, xref, resources, pdfFunctionFactory, globalColorSpaceCache, localColorSpaceCache) {
         super();
@@ -27329,6 +28204,7 @@ class RadialAxialShading extends BaseShading {
         }
         this.colorStops = colorStops;
     }
+
     getIR() {
         const {
             coordsArr,
@@ -27353,6 +28229,7 @@ class RadialAxialShading extends BaseShading {
         return ["RadialAxial", type, this.bbox, this.colorStops, p0, p1, r0, r1];
     }
 }
+
 class MeshStreamReader {
     constructor(stream, context) {
         this.stream = stream;
@@ -27364,6 +28241,7 @@ class MeshStreamReader {
         const csNumComps = context.colorSpace.numComps;
         this.tmpCsCompsBuf = context.colorFn ? new Float32Array(csNumComps) : this.tmpCompsBuf;
     }
+
     get hasData() {
         if (this.stream.end) {
             return this.stream.pos < this.stream.end;
@@ -27379,6 +28257,7 @@ class MeshStreamReader {
         this.bufferLength = 8;
         return true;
     }
+
     readBits(n) {
         const {
             stream
@@ -27408,13 +28287,16 @@ class MeshStreamReader {
         this.buffer = buffer & (1 << bufferLength) - 1;
         return buffer >> bufferLength;
     }
+
     align() {
         this.buffer = 0;
         this.bufferLength = 0;
     }
+
     readFlag() {
         return this.readBits(this.context.bitsPerFlag);
     }
+
     readCoordinate() {
         const {
             bitsPerCoordinate,
@@ -27425,6 +28307,7 @@ class MeshStreamReader {
         const scale = bitsPerCoordinate < 32 ? 1 / ((1 << bitsPerCoordinate) - 1) : 2.3283064365386963e-10;
         return [xi * scale * (decode[1] - decode[0]) + decode[0], yi * scale * (decode[3] - decode[2]) + decode[2]];
     }
+
     readComponents() {
         const {
             bitsPerComponent,
@@ -27444,7 +28327,9 @@ class MeshStreamReader {
         return colorSpace.getRgb(color, 0);
     }
 }
+
 let bCache = Object.create(null);
+
 function buildB(count) {
     const lut = [];
     for (let i = 0; i <= count; i++) {
@@ -27454,16 +28339,20 @@ function buildB(count) {
     }
     return lut;
 }
+
 function getB(count) {
     return bCache[count] ||= buildB(count);
 }
+
 function clearPatternCaches() {
     bCache = Object.create(null);
 }
+
 class MeshShading extends BaseShading {
     static MIN_SPLIT_PATCH_CHUNKS_AMOUNT = 3;
     static MAX_SPLIT_PATCH_CHUNKS_AMOUNT = 20;
     static TRIANGLE_DENSITY = 20;
+
     constructor(stream, xref, resources, pdfFunctionFactory, globalColorSpaceCache, localColorSpaceCache) {
         super();
         if (!(stream instanceof BaseStream)) {
@@ -27529,6 +28418,7 @@ class MeshShading extends BaseShading {
         this._updateBounds();
         this._packData();
     }
+
     _decodeType4Shading(reader) {
         const coords = this.coords;
         const colors = this.colors;
@@ -27570,6 +28460,7 @@ class MeshShading extends BaseShading {
             colors: new Int32Array(ps)
         });
     }
+
     _decodeType5Shading(reader, verticesPerRow) {
         const coords = this.coords;
         const colors = this.colors;
@@ -27588,6 +28479,7 @@ class MeshShading extends BaseShading {
             verticesPerRow
         });
     }
+
     _decodeType6Shading(reader) {
         const coords = this.coords;
         const colors = this.colors;
@@ -27705,6 +28597,7 @@ class MeshShading extends BaseShading {
             });
         }
     }
+
     _decodeType7Shading(reader) {
         const coords = this.coords;
         const colors = this.colors;
@@ -27830,6 +28723,7 @@ class MeshShading extends BaseShading {
             });
         }
     }
+
     _buildFigureFromPatch(index) {
         const figure = this.figures[index];
         assert(figure.type === "patch", "Unexpected patch mesh figure");
@@ -27903,6 +28797,7 @@ class MeshShading extends BaseShading {
             verticesPerRow
         };
     }
+
     _updateBounds() {
         let minX = this.coords[0][0],
             minY = this.coords[0][1],
@@ -27918,6 +28813,7 @@ class MeshShading extends BaseShading {
         }
         this.bounds = [minX, minY, maxX, maxY];
     }
+
     _packData() {
         let i, ii, j, jj;
         const coords = this.coords;
@@ -27948,6 +28844,7 @@ class MeshShading extends BaseShading {
             }
         }
     }
+
     getIR() {
         const {
             bounds
@@ -27958,11 +28855,13 @@ class MeshShading extends BaseShading {
         return ["Mesh", this.shadingType, this.coords, this.colors, this.figures, bounds, this.bbox, this.background];
     }
 }
+
 class DummyShading extends BaseShading {
     getIR() {
         return ["Dummy"];
     }
 }
+
 function getTilingPatternIR(operatorList, dict, color) {
     const matrix = lookupMatrix(dict.getArray("Matrix"), IDENTITY_MATRIX);
     const bbox = lookupNormalRect(dict.getArray("BBox"), null);
@@ -27988,7 +28887,7 @@ function getTilingPatternIR(operatorList, dict, color) {
     return ["TilingPattern", color, operatorList, matrix, bbox, xstep, ystep, paintType, tilingType];
 }
 
-;// ./src/core/calibri_factors.js
+// ./src/core/calibri_factors.js
 const CalibriBoldFactors = [1.3877, 1, 1, 1, 0.97801, 0.92482, 0.89552, 0.91133, 0.81988, 0.97566, 0.98152, 0.93548, 0.93548, 1.2798, 0.85284, 0.92794, 1, 0.96134, 1.54657, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.91133, 0.82845, 0.82845, 0.85284, 0.85284, 0.85284, 0.75859, 0.92138, 0.83908, 0.7762, 0.73293, 0.87289, 0.73133, 0.7514, 0.81921, 0.87356, 0.95958, 0.59526, 0.75727, 0.69225, 1.04924, 0.9121, 0.86943, 0.79795, 0.88198, 0.77958, 0.70864, 0.81055, 0.90399, 0.88653, 0.96017, 0.82577, 0.77892, 0.78257, 0.97507, 1.54657, 0.97507, 0.85284, 0.89552, 0.90176, 0.88762, 0.8785, 0.75241, 0.8785, 0.90518, 0.95015, 0.77618, 0.8785, 0.88401, 0.91916, 0.86304, 0.88401, 0.91488, 0.8785, 0.8801, 0.8785, 0.8785, 0.91343, 0.7173, 1.04106, 0.8785, 0.85075, 0.95794, 0.82616, 0.85162, 0.79492, 0.88331, 1.69808, 0.88331, 0.85284, 0.97801, 0.89552, 0.91133, 0.89552, 0.91133, 1.7801, 0.89552, 1.24487, 1.13254, 1.12401, 0.96839, 0.85284, 0.68787, 0.70645, 0.85592, 0.90747, 1.01466, 1.0088, 0.90323, 1, 1.07463, 1, 0.91056, 0.75806, 1.19118, 0.96839, 0.78864, 0.82845, 0.84133, 0.75859, 0.83908, 0.83908, 0.83908, 0.83908, 0.83908, 0.83908, 0.77539, 0.73293, 0.73133, 0.73133, 0.73133, 0.73133, 0.95958, 0.95958, 0.95958, 0.95958, 0.88506, 0.9121, 0.86943, 0.86943, 0.86943, 0.86943, 0.86943, 0.85284, 0.87508, 0.90399, 0.90399, 0.90399, 0.90399, 0.77892, 0.79795, 0.90807, 0.88762, 0.88762, 0.88762, 0.88762, 0.88762, 0.88762, 0.8715, 0.75241, 0.90518, 0.90518, 0.90518, 0.90518, 0.88401, 0.88401, 0.88401, 0.88401, 0.8785, 0.8785, 0.8801, 0.8801, 0.8801, 0.8801, 0.8801, 0.90747, 0.89049, 0.8785, 0.8785, 0.8785, 0.8785, 0.85162, 0.8785, 0.85162, 0.83908, 0.88762, 0.83908, 0.88762, 0.83908, 0.88762, 0.73293, 0.75241, 0.73293, 0.75241, 0.73293, 0.75241, 0.73293, 0.75241, 0.87289, 0.83016, 0.88506, 0.93125, 0.73133, 0.90518, 0.73133, 0.90518, 0.73133, 0.90518, 0.73133, 0.90518, 0.73133, 0.90518, 0.81921, 0.77618, 0.81921, 0.77618, 0.81921, 0.77618, 1, 1, 0.87356, 0.8785, 0.91075, 0.89608, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958, 0.88401, 0.95958, 0.88401, 0.76229, 0.90167, 0.59526, 0.91916, 1, 1, 0.86304, 0.69225, 0.88401, 1, 1, 0.70424, 0.79468, 0.91926, 0.88175, 0.70823, 0.94903, 0.9121, 0.8785, 1, 1, 0.9121, 0.8785, 0.87802, 0.88656, 0.8785, 0.86943, 0.8801, 0.86943, 0.8801, 0.86943, 0.8801, 0.87402, 0.89291, 0.77958, 0.91343, 1, 1, 0.77958, 0.91343, 0.70864, 0.7173, 0.70864, 0.7173, 0.70864, 0.7173, 0.70864, 0.7173, 1, 1, 0.81055, 0.75841, 0.81055, 1.06452, 0.90399, 0.8785, 0.90399, 0.8785, 0.90399, 0.8785, 0.90399, 0.8785, 0.90399, 0.8785, 0.90399, 0.8785, 0.96017, 0.95794, 0.77892, 0.85162, 0.77892, 0.78257, 0.79492, 0.78257, 0.79492, 0.78257, 0.79492, 0.9297, 0.56892, 0.83908, 0.88762, 0.77539, 0.8715, 0.87508, 0.89049, 1, 1, 0.81055, 1.04106, 1.20528, 1.20528, 1, 1.15543, 0.70674, 0.98387, 0.94721, 1.33431, 1.45894, 0.95161, 1.06303, 0.83908, 0.80352, 0.57184, 0.6965, 0.56289, 0.82001, 0.56029, 0.81235, 1.02988, 0.83908, 0.7762, 0.68156, 0.80367, 0.73133, 0.78257, 0.87356, 0.86943, 0.95958, 0.75727, 0.89019, 1.04924, 0.9121, 0.7648, 0.86943, 0.87356, 0.79795, 0.78275, 0.81055, 0.77892, 0.9762, 0.82577, 0.99819, 0.84896, 0.95958, 0.77892, 0.96108, 1.01407, 0.89049, 1.02988, 0.94211, 0.96108, 0.8936, 0.84021, 0.87842, 0.96399, 0.79109, 0.89049, 1.00813, 1.02988, 0.86077, 0.87445, 0.92099, 0.84723, 0.86513, 0.8801, 0.75638, 0.85714, 0.78216, 0.79586, 0.87965, 0.94211, 0.97747, 0.78287, 0.97926, 0.84971, 1.02988, 0.94211, 0.8801, 0.94211, 0.84971, 0.73133, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90264, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90518, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90548, 1, 1, 1, 1, 1, 1, 0.96017, 0.95794, 0.96017, 0.95794, 0.96017, 0.95794, 0.77892, 0.85162, 1, 1, 0.89552, 0.90527, 1, 0.90363, 0.92794, 0.92794, 0.92794, 0.92794, 0.87012, 0.87012, 0.87012, 0.89552, 0.89552, 1.42259, 0.71143, 1.06152, 1, 1, 1.03372, 1.03372, 0.97171, 1.4956, 2.2807, 0.93835, 0.83406, 0.91133, 0.84107, 0.91133, 1, 1, 1, 0.72021, 1, 1.23108, 0.83489, 0.88525, 0.88525, 0.81499, 0.90527, 1.81055, 0.90527, 1.81055, 1.31006, 1.53711, 0.94434, 1.08696, 1, 0.95018, 0.77192, 0.85284, 0.90747, 1.17534, 0.69825, 0.9716, 1.37077, 0.90747, 0.90747, 0.85356, 0.90747, 0.90747, 1.44947, 0.85284, 0.8941, 0.8941, 0.70572, 0.8, 0.70572, 0.70572, 0.70572, 0.70572, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.99862, 0.99862, 1, 1, 1, 1, 1, 1.08004, 0.91027, 1, 1, 1, 0.99862, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.90727, 0.90727, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 const CalibriBoldMetrics = {
     lineHeight: 1.2207,
@@ -28010,7 +28909,7 @@ const CalibriRegularMetrics = {
     lineGap: 0.2207
 };
 
-;// ./src/core/helvetica_factors.js
+// ./src/core/helvetica_factors.js
 const HelveticaBoldFactors = [0.76116, 1, 1, 1.0006, 0.99998, 0.99974, 0.99973, 0.99973, 0.99982, 0.99977, 1.00087, 0.99998, 0.99998, 0.99959, 1.00003, 1.0006, 0.99998, 1.0006, 1.0006, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99998, 1, 1.00003, 1.00003, 1.00003, 1.00026, 0.9999, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00026, 1.00022, 0.99977, 1.0006, 0.99973, 0.99977, 1.00026, 0.99999, 0.99977, 1.00022, 1.00001, 1.00022, 0.99977, 1.00001, 1.00026, 0.99977, 1.00001, 1.00016, 1.00001, 1.00001, 1.00026, 0.99998, 1.0006, 0.99998, 1.00003, 0.99973, 0.99998, 0.99973, 1.00026, 0.99973, 1.00026, 0.99973, 0.99998, 1.00026, 1.00026, 1.0006, 1.0006, 0.99973, 1.0006, 0.99982, 1.00026, 1.00026, 1.00026, 1.00026, 0.99959, 0.99973, 0.99998, 1.00026, 0.99973, 1.00022, 0.99973, 0.99973, 1, 0.99959, 1.00077, 0.99959, 1.00003, 0.99998, 0.99973, 0.99973, 0.99973, 0.99973, 1.00077, 0.99973, 0.99998, 1.00025, 0.99968, 0.99973, 1.00003, 1.00025, 0.60299, 1.00024, 1.06409, 1, 1, 0.99998, 1, 0.99973, 1.0006, 0.99998, 1, 0.99936, 0.99973, 1.00002, 1.00002, 1.00002, 1.00026, 0.99977, 0.99977, 0.99977, 0.99977, 0.99977, 0.99977, 1, 0.99977, 1.00001, 1.00001, 1.00001, 1.00001, 1.0006, 1.0006, 1.0006, 1.0006, 0.99977, 0.99977, 1.00022, 1.00022, 1.00022, 1.00022, 1.00022, 1.00003, 1.00022, 0.99977, 0.99977, 0.99977, 0.99977, 1.00001, 1.00001, 1.00026, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 0.99982, 0.99973, 0.99973, 0.99973, 0.99973, 0.99973, 1.0006, 1.0006, 1.0006, 1.0006, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 1.06409, 1.00026, 1.00026, 1.00026, 1.00026, 1.00026, 0.99973, 1.00026, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 0.99973, 0.99977, 1.03374, 0.99977, 1.00026, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.0006, 1.00042, 0.99973, 0.99973, 1.0006, 0.99977, 0.99973, 0.99973, 1.00026, 1.0006, 1.00026, 1.0006, 1.00026, 1.03828, 1.00026, 0.99999, 1.00026, 1.0006, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.9993, 0.9998, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1.00022, 1.00026, 1, 1.00016, 0.99977, 0.99959, 0.99977, 0.99959, 0.99977, 0.99959, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00001, 0.99973, 1.00026, 0.99998, 1.00026, 0.8121, 1.00026, 0.99998, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 0.99977, 1.00026, 1.00016, 1.00022, 1.00001, 0.99973, 1.00001, 1.00026, 1, 1.00026, 1, 1.00026, 1, 1.0006, 0.99973, 0.99977, 0.99973, 1, 0.99982, 1.00022, 1.00026, 1.00001, 0.99973, 1.00026, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 0.99998, 1.00034, 0.99977, 1, 0.99997, 1.00026, 1.00078, 1.00036, 0.99973, 1.00013, 1.0006, 0.99977, 0.99977, 0.99988, 0.85148, 1.00001, 1.00026, 0.99977, 1.00022, 1.0006, 0.99977, 1.00001, 0.99999, 0.99977, 1.00069, 1.00022, 0.99977, 1.00001, 0.99984, 1.00026, 1.00001, 1.00024, 1.00001, 0.9999, 1, 1.0006, 1.00001, 1.00041, 0.99962, 1.00026, 1.0006, 0.99995, 1.00041, 0.99942, 0.99973, 0.99927, 1.00082, 0.99902, 1.00026, 1.00087, 1.0006, 1.00069, 0.99973, 0.99867, 0.99973, 0.9993, 1.00026, 1.00049, 1.00056, 1, 0.99988, 0.99935, 0.99995, 0.99954, 1.00055, 0.99945, 1.00032, 1.0006, 0.99995, 1.00026, 0.99995, 1.00032, 1.00001, 1.00008, 0.99971, 1.00019, 0.9994, 1.00001, 1.0006, 1.00044, 0.99973, 1.00023, 1.00047, 1, 0.99942, 0.99561, 0.99989, 1.00035, 0.99977, 1.00035, 0.99977, 1.00019, 0.99944, 1.00001, 1.00021, 0.99926, 1.00035, 1.00035, 0.99942, 1.00048, 0.99999, 0.99977, 1.00022, 1.00035, 1.00001, 0.99977, 1.00026, 0.99989, 1.00057, 1.00001, 0.99936, 1.00052, 1.00012, 0.99996, 1.00043, 1, 1.00035, 0.9994, 0.99976, 1.00035, 0.99973, 1.00052, 1.00041, 1.00119, 1.00037, 0.99973, 1.00002, 0.99986, 1.00041, 1.00041, 0.99902, 0.9996, 1.00034, 0.99999, 1.00026, 0.99999, 1.00026, 0.99973, 1.00052, 0.99973, 1, 0.99973, 1.00041, 1.00075, 0.9994, 1.0003, 0.99999, 1, 1.00041, 0.99955, 1, 0.99915, 0.99973, 0.99973, 1.00026, 1.00119, 0.99955, 0.99973, 1.0006, 0.99911, 1.0006, 1.00026, 0.99972, 1.00026, 0.99902, 1.00041, 0.99973, 0.99999, 1, 1, 1.00038, 1.0005, 1.00016, 1.00022, 1.00016, 1.00022, 1.00016, 1.00022, 1.00001, 0.99973, 1, 1, 0.99973, 1, 1, 0.99955, 1.0006, 1.0006, 1.0006, 1.0006, 1, 1, 1, 0.99973, 0.99973, 0.99972, 1, 1, 1.00106, 0.99999, 0.99998, 0.99998, 0.99999, 0.99998, 1.66475, 1, 0.99973, 0.99973, 1.00023, 0.99973, 0.99971, 1.00047, 1.00023, 1, 0.99991, 0.99984, 1.00002, 1.00002, 1.00002, 1.00002, 1, 1, 1, 1, 1, 1, 1, 0.99972, 1, 1.20985, 1.39713, 1.00003, 1.00031, 1.00015, 1, 0.99561, 1.00027, 1.00031, 1.00031, 0.99915, 1.00031, 1.00031, 0.99999, 1.00003, 0.99999, 0.99999, 1.41144, 1.6, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.41144, 1.40579, 1.40579, 1.36625, 0.99999, 1, 0.99861, 0.99861, 1, 1.00026, 1.00026, 1.00026, 1.00026, 0.99972, 0.99999, 0.99999, 0.99999, 0.99999, 1.40483, 1, 0.99977, 1.00054, 1, 1, 0.99953, 0.99962, 1.00042, 0.9995, 1, 1, 1, 1, 1, 1, 1, 1, 0.99998, 0.99998, 0.99998, 0.99998, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 const HelveticaBoldMetrics = {
     lineHeight: 1.2,
@@ -28032,7 +28931,7 @@ const HelveticaRegularMetrics = {
     lineGap: 0.2
 };
 
-;// ./src/core/liberationsans_widths.js
+// ./src/core/liberationsans_widths.js
 const LiberationSansBoldWidths = [365, 0, 333, 278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611, 975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333, 278, 333, 584, 556, 333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584, 333, 556, 556, 556, 556, 280, 556, 333, 737, 370, 556, 584, 737, 552, 400, 549, 333, 333, 333, 576, 556, 278, 333, 333, 365, 556, 834, 834, 834, 611, 722, 722, 722, 722, 722, 722, 1000, 722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 556, 556, 556, 556, 556, 278, 278, 278, 278, 611, 611, 611, 611, 611, 611, 611, 549, 611, 611, 611, 611, 611, 556, 611, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 719, 722, 611, 667, 556, 667, 556, 667, 556, 667, 556, 667, 556, 778, 611, 778, 611, 778, 611, 778, 611, 722, 611, 722, 611, 278, 278, 278, 278, 278, 278, 278, 278, 278, 278, 785, 556, 556, 278, 722, 556, 556, 611, 278, 611, 278, 611, 385, 611, 479, 611, 278, 722, 611, 722, 611, 722, 611, 708, 723, 611, 778, 611, 778, 611, 778, 611, 1000, 944, 722, 389, 722, 389, 722, 389, 667, 556, 667, 556, 667, 556, 667, 556, 611, 333, 611, 479, 611, 333, 722, 611, 722, 611, 722, 611, 722, 611, 722, 611, 722, 611, 944, 778, 667, 556, 667, 611, 500, 611, 500, 611, 500, 278, 556, 722, 556, 1000, 889, 778, 611, 667, 556, 611, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 465, 722, 333, 853, 906, 474, 825, 927, 838, 278, 722, 722, 601, 719, 667, 611, 722, 778, 278, 722, 667, 833, 722, 644, 778, 722, 667, 600, 611, 667, 821, 667, 809, 802, 278, 667, 615, 451, 611, 278, 582, 615, 610, 556, 606, 475, 460, 611, 541, 278, 558, 556, 612, 556, 445, 611, 766, 619, 520, 684, 446, 582, 715, 576, 753, 845, 278, 582, 611, 582, 845, 667, 669, 885, 567, 711, 667, 278, 276, 556, 1094, 1062, 875, 610, 722, 622, 719, 722, 719, 722, 567, 712, 667, 904, 626, 719, 719, 610, 702, 833, 722, 778, 719, 667, 722, 611, 622, 854, 667, 730, 703, 1005, 1019, 870, 979, 719, 711, 1031, 719, 556, 618, 615, 417, 635, 556, 709, 497, 615, 615, 500, 635, 740, 604, 611, 604, 611, 556, 490, 556, 875, 556, 615, 581, 833, 844, 729, 854, 615, 552, 854, 583, 556, 556, 611, 417, 552, 556, 278, 281, 278, 969, 906, 611, 500, 615, 556, 604, 778, 611, 487, 447, 944, 778, 944, 778, 944, 778, 667, 556, 333, 333, 556, 1000, 1000, 552, 278, 278, 278, 278, 500, 500, 500, 556, 556, 350, 1000, 1000, 240, 479, 333, 333, 604, 333, 167, 396, 556, 556, 1094, 556, 885, 489, 1115, 1000, 768, 600, 834, 834, 834, 834, 1000, 500, 1000, 500, 1000, 500, 500, 494, 612, 823, 713, 584, 549, 713, 979, 722, 274, 549, 549, 583, 549, 549, 604, 584, 604, 604, 708, 625, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 729, 604, 604, 354, 354, 1000, 990, 990, 990, 990, 494, 604, 604, 604, 604, 354, 1021, 1052, 917, 750, 750, 531, 656, 594, 510, 500, 750, 750, 611, 611, 333, 333, 333, 333, 333, 333, 333, 333, 222, 222, 333, 333, 333, 333, 333, 333, 333, 333];
 const LiberationSansBoldMapping = [-1, -1, -1, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 402, 506, 507, 508, 509, 510, 511, 536, 537, 538, 539, 710, 711, 713, 728, 729, 730, 731, 732, 733, 900, 901, 902, 903, 904, 905, 906, 908, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964, 965, 966, 967, 968, 969, 970, 971, 972, 973, 974, 1024, 1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090, 1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1138, 1139, 1168, 1169, 7808, 7809, 7810, 7811, 7812, 7813, 7922, 7923, 8208, 8209, 8211, 8212, 8213, 8215, 8216, 8217, 8218, 8219, 8220, 8221, 8222, 8224, 8225, 8226, 8230, 8240, 8242, 8243, 8249, 8250, 8252, 8254, 8260, 8319, 8355, 8356, 8359, 8364, 8453, 8467, 8470, 8482, 8486, 8494, 8539, 8540, 8541, 8542, 8592, 8593, 8594, 8595, 8596, 8597, 8616, 8706, 8710, 8719, 8721, 8722, 8730, 8734, 8735, 8745, 8747, 8776, 8800, 8801, 8804, 8805, 8962, 8976, 8992, 8993, 9472, 9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, 9552, 9553, 9554, 9555, 9556, 9557, 9558, 9559, 9560, 9561, 9562, 9563, 9564, 9565, 9566, 9567, 9568, 9569, 9570, 9571, 9572, 9573, 9574, 9575, 9576, 9577, 9578, 9579, 9580, 9600, 9604, 9608, 9612, 9616, 9617, 9618, 9619, 9632, 9633, 9642, 9643, 9644, 9650, 9658, 9660, 9668, 9674, 9675, 9679, 9688, 9689, 9702, 9786, 9787, 9788, 9792, 9794, 9824, 9827, 9829, 9830, 9834, 9835, 9836, 61441, 61442, 61445, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1];
 const LiberationSansBoldItalicWidths = [365, 0, 333, 278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611, 975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333, 278, 333, 584, 556, 333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611, 611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584, 333, 556, 556, 556, 556, 280, 556, 333, 737, 370, 556, 584, 737, 552, 400, 549, 333, 333, 333, 576, 556, 278, 333, 333, 365, 556, 834, 834, 834, 611, 722, 722, 722, 722, 722, 722, 1000, 722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 556, 556, 556, 556, 556, 278, 278, 278, 278, 611, 611, 611, 611, 611, 611, 611, 549, 611, 611, 611, 611, 611, 556, 611, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 740, 722, 611, 667, 556, 667, 556, 667, 556, 667, 556, 667, 556, 778, 611, 778, 611, 778, 611, 778, 611, 722, 611, 722, 611, 278, 278, 278, 278, 278, 278, 278, 278, 278, 278, 782, 556, 556, 278, 722, 556, 556, 611, 278, 611, 278, 611, 396, 611, 479, 611, 278, 722, 611, 722, 611, 722, 611, 708, 723, 611, 778, 611, 778, 611, 778, 611, 1000, 944, 722, 389, 722, 389, 722, 389, 667, 556, 667, 556, 667, 556, 667, 556, 611, 333, 611, 479, 611, 333, 722, 611, 722, 611, 722, 611, 722, 611, 722, 611, 722, 611, 944, 778, 667, 556, 667, 611, 500, 611, 500, 611, 500, 278, 556, 722, 556, 1000, 889, 778, 611, 667, 556, 611, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 722, 333, 854, 906, 473, 844, 930, 847, 278, 722, 722, 610, 671, 667, 611, 722, 778, 278, 722, 667, 833, 722, 657, 778, 718, 667, 590, 611, 667, 822, 667, 829, 781, 278, 667, 620, 479, 611, 278, 591, 620, 621, 556, 610, 479, 492, 611, 558, 278, 566, 556, 603, 556, 450, 611, 712, 605, 532, 664, 409, 591, 704, 578, 773, 834, 278, 591, 611, 591, 834, 667, 667, 886, 614, 719, 667, 278, 278, 556, 1094, 1042, 854, 622, 719, 677, 719, 722, 708, 722, 614, 722, 667, 927, 643, 719, 719, 615, 687, 833, 722, 778, 719, 667, 722, 611, 677, 781, 667, 729, 708, 979, 989, 854, 1000, 708, 719, 1042, 729, 556, 619, 604, 534, 618, 556, 736, 510, 611, 611, 507, 622, 740, 604, 611, 611, 611, 556, 889, 556, 885, 556, 646, 583, 889, 935, 707, 854, 594, 552, 865, 589, 556, 556, 611, 469, 563, 556, 278, 278, 278, 969, 906, 611, 507, 619, 556, 611, 778, 611, 575, 467, 944, 778, 944, 778, 944, 778, 667, 556, 333, 333, 556, 1000, 1000, 552, 278, 278, 278, 278, 500, 500, 500, 556, 556, 350, 1000, 1000, 240, 479, 333, 333, 604, 333, 167, 396, 556, 556, 1104, 556, 885, 516, 1146, 1000, 768, 600, 834, 834, 834, 834, 999, 500, 1000, 500, 1000, 500, 500, 494, 612, 823, 713, 584, 549, 713, 979, 722, 274, 549, 549, 583, 549, 549, 604, 584, 604, 604, 708, 625, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 729, 604, 604, 354, 354, 1000, 990, 990, 990, 990, 494, 604, 604, 604, 604, 354, 1021, 1052, 917, 750, 750, 531, 656, 594, 510, 500, 750, 750, 611, 611, 333, 333, 333, 333, 333, 333, 333, 333, 222, 222, 333, 333, 333, 333, 333, 333, 333, 333];
@@ -28042,7 +28941,7 @@ const LiberationSansItalicMapping = [-1, -1, -1, 32, 33, 34, 35, 36, 37, 38, 39,
 const LiberationSansRegularWidths = [365, 0, 333, 278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556, 333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584, 333, 556, 556, 556, 556, 260, 556, 333, 737, 370, 556, 584, 737, 552, 400, 549, 333, 333, 333, 576, 537, 278, 333, 333, 365, 556, 834, 834, 834, 611, 667, 667, 667, 667, 667, 667, 1000, 722, 667, 667, 667, 667, 278, 278, 278, 278, 722, 722, 778, 778, 778, 778, 778, 584, 778, 722, 722, 722, 722, 667, 667, 611, 556, 556, 556, 556, 556, 556, 889, 500, 556, 556, 556, 556, 278, 278, 278, 278, 556, 556, 556, 556, 556, 556, 556, 549, 611, 556, 556, 556, 556, 500, 556, 500, 667, 556, 667, 556, 667, 556, 722, 500, 722, 500, 722, 500, 722, 500, 722, 615, 722, 556, 667, 556, 667, 556, 667, 556, 667, 556, 667, 556, 778, 556, 778, 556, 778, 556, 778, 556, 722, 556, 722, 556, 278, 278, 278, 278, 278, 278, 278, 222, 278, 278, 735, 444, 500, 222, 667, 500, 500, 556, 222, 556, 222, 556, 292, 556, 334, 556, 222, 722, 556, 722, 556, 722, 556, 604, 723, 556, 778, 556, 778, 556, 778, 556, 1000, 944, 722, 333, 722, 333, 722, 333, 667, 500, 667, 500, 667, 500, 667, 500, 611, 278, 611, 375, 611, 278, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 722, 556, 944, 722, 667, 500, 667, 611, 500, 611, 500, 611, 500, 222, 556, 667, 556, 1000, 889, 778, 611, 667, 500, 611, 278, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 333, 667, 278, 784, 838, 384, 774, 855, 752, 222, 667, 667, 551, 668, 667, 611, 722, 778, 278, 667, 668, 833, 722, 650, 778, 722, 667, 618, 611, 667, 798, 667, 835, 748, 278, 667, 578, 446, 556, 222, 547, 578, 575, 500, 557, 446, 441, 556, 556, 222, 500, 500, 576, 500, 448, 556, 690, 569, 482, 617, 395, 547, 648, 525, 713, 781, 222, 547, 556, 547, 781, 667, 667, 865, 542, 719, 667, 278, 278, 500, 1057, 1010, 854, 583, 722, 635, 719, 667, 656, 667, 542, 677, 667, 923, 604, 719, 719, 583, 656, 833, 722, 778, 719, 667, 722, 611, 635, 760, 667, 740, 667, 917, 938, 792, 885, 656, 719, 1010, 722, 556, 573, 531, 365, 583, 556, 669, 458, 559, 559, 438, 583, 688, 552, 556, 542, 556, 500, 458, 500, 823, 500, 573, 521, 802, 823, 625, 719, 521, 510, 750, 542, 556, 556, 556, 365, 510, 500, 222, 278, 222, 906, 812, 556, 438, 559, 500, 552, 778, 556, 489, 411, 944, 722, 944, 722, 944, 722, 667, 500, 333, 333, 556, 1000, 1000, 552, 222, 222, 222, 222, 333, 333, 333, 556, 556, 350, 1000, 1000, 188, 354, 333, 333, 500, 333, 167, 365, 556, 556, 1094, 556, 885, 323, 1073, 1000, 768, 600, 834, 834, 834, 834, 1000, 500, 1000, 500, 1000, 500, 500, 494, 612, 823, 713, 584, 549, 713, 979, 719, 274, 549, 549, 583, 549, 549, 604, 584, 604, 604, 708, 625, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 708, 729, 604, 604, 354, 354, 1000, 990, 990, 990, 990, 494, 604, 604, 604, 604, 354, 1021, 1052, 917, 750, 750, 531, 656, 594, 510, 500, 750, 750, 500, 500, 333, 333, 333, 333, 333, 333, 333, 333, 222, 222, 294, 294, 324, 324, 316, 328, 398, 285];
 const LiberationSansRegularMapping = [-1, -1, -1, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 402, 506, 507, 508, 509, 510, 511, 536, 537, 538, 539, 710, 711, 713, 728, 729, 730, 731, 732, 733, 900, 901, 902, 903, 904, 905, 906, 908, 910, 911, 912, 913, 914, 915, 916, 917, 918, 919, 920, 921, 922, 923, 924, 925, 926, 927, 928, 929, 931, 932, 933, 934, 935, 936, 937, 938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 961, 962, 963, 964, 965, 966, 967, 968, 969, 970, 971, 972, 973, 974, 1024, 1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1056, 1057, 1058, 1059, 1060, 1061, 1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1087, 1088, 1089, 1090, 1091, 1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1138, 1139, 1168, 1169, 7808, 7809, 7810, 7811, 7812, 7813, 7922, 7923, 8208, 8209, 8211, 8212, 8213, 8215, 8216, 8217, 8218, 8219, 8220, 8221, 8222, 8224, 8225, 8226, 8230, 8240, 8242, 8243, 8249, 8250, 8252, 8254, 8260, 8319, 8355, 8356, 8359, 8364, 8453, 8467, 8470, 8482, 8486, 8494, 8539, 8540, 8541, 8542, 8592, 8593, 8594, 8595, 8596, 8597, 8616, 8706, 8710, 8719, 8721, 8722, 8730, 8734, 8735, 8745, 8747, 8776, 8800, 8801, 8804, 8805, 8962, 8976, 8992, 8993, 9472, 9474, 9484, 9488, 9492, 9496, 9500, 9508, 9516, 9524, 9532, 9552, 9553, 9554, 9555, 9556, 9557, 9558, 9559, 9560, 9561, 9562, 9563, 9564, 9565, 9566, 9567, 9568, 9569, 9570, 9571, 9572, 9573, 9574, 9575, 9576, 9577, 9578, 9579, 9580, 9600, 9604, 9608, 9612, 9616, 9617, 9618, 9619, 9632, 9633, 9642, 9643, 9644, 9650, 9658, 9660, 9668, 9674, 9675, 9679, 9688, 9689, 9702, 9786, 9787, 9788, 9792, 9794, 9824, 9827, 9829, 9830, 9834, 9835, 9836, 61441, 61442, 61445, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1];
 
-;// ./src/core/myriadpro_factors.js
+// ./src/core/myriadpro_factors.js
 const MyriadProBoldFactors = [1.36898, 1, 1, 0.72706, 0.80479, 0.83734, 0.98894, 0.99793, 0.9897, 0.93884, 0.86209, 0.94292, 0.94292, 1.16661, 1.02058, 0.93582, 0.96694, 0.93582, 1.19137, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.99793, 0.78076, 0.78076, 1.02058, 1.02058, 1.02058, 0.72851, 0.78966, 0.90838, 0.83637, 0.82391, 0.96376, 0.80061, 0.86275, 0.8768, 0.95407, 1.0258, 0.73901, 0.85022, 0.83655, 1.0156, 0.95546, 0.92179, 0.87107, 0.92179, 0.82114, 0.8096, 0.89713, 0.94438, 0.95353, 0.94083, 0.91905, 0.90406, 0.9446, 0.94292, 1.18777, 0.94292, 1.02058, 0.89903, 0.90088, 0.94938, 0.97898, 0.81093, 0.97571, 0.94938, 1.024, 0.9577, 0.95933, 0.98621, 1.0474, 0.97455, 0.98981, 0.9672, 0.95933, 0.9446, 0.97898, 0.97407, 0.97646, 0.78036, 1.10208, 0.95442, 0.95298, 0.97579, 0.9332, 0.94039, 0.938, 0.80687, 1.01149, 0.80687, 1.02058, 0.80479, 0.99793, 0.99793, 0.99793, 0.99793, 1.01149, 1.00872, 0.90088, 0.91882, 1.0213, 0.8361, 1.02058, 0.62295, 0.54324, 0.89022, 1.08595, 1, 1, 0.90088, 1, 0.97455, 0.93582, 0.90088, 1, 1.05686, 0.8361, 0.99642, 0.99642, 0.99642, 0.72851, 0.90838, 0.90838, 0.90838, 0.90838, 0.90838, 0.90838, 0.868, 0.82391, 0.80061, 0.80061, 0.80061, 0.80061, 1.0258, 1.0258, 1.0258, 1.0258, 0.97484, 0.95546, 0.92179, 0.92179, 0.92179, 0.92179, 0.92179, 1.02058, 0.92179, 0.94438, 0.94438, 0.94438, 0.94438, 0.90406, 0.86958, 0.98225, 0.94938, 0.94938, 0.94938, 0.94938, 0.94938, 0.94938, 0.9031, 0.81093, 0.94938, 0.94938, 0.94938, 0.94938, 0.98621, 0.98621, 0.98621, 0.98621, 0.93969, 0.95933, 0.9446, 0.9446, 0.9446, 0.9446, 0.9446, 1.08595, 0.9446, 0.95442, 0.95442, 0.95442, 0.95442, 0.94039, 0.97898, 0.94039, 0.90838, 0.94938, 0.90838, 0.94938, 0.90838, 0.94938, 0.82391, 0.81093, 0.82391, 0.81093, 0.82391, 0.81093, 0.82391, 0.81093, 0.96376, 0.84313, 0.97484, 0.97571, 0.80061, 0.94938, 0.80061, 0.94938, 0.80061, 0.94938, 0.80061, 0.94938, 0.80061, 0.94938, 0.8768, 0.9577, 0.8768, 0.9577, 0.8768, 0.9577, 1, 1, 0.95407, 0.95933, 0.97069, 0.95933, 1.0258, 0.98621, 1.0258, 0.98621, 1.0258, 0.98621, 1.0258, 0.98621, 1.0258, 0.98621, 0.887, 1.01591, 0.73901, 1.0474, 1, 1, 0.97455, 0.83655, 0.98981, 1, 1, 0.83655, 0.73977, 0.83655, 0.73903, 0.84638, 1.033, 0.95546, 0.95933, 1, 1, 0.95546, 0.95933, 0.8271, 0.95417, 0.95933, 0.92179, 0.9446, 0.92179, 0.9446, 0.92179, 0.9446, 0.936, 0.91964, 0.82114, 0.97646, 1, 1, 0.82114, 0.97646, 0.8096, 0.78036, 0.8096, 0.78036, 1, 1, 0.8096, 0.78036, 1, 1, 0.89713, 0.77452, 0.89713, 1.10208, 0.94438, 0.95442, 0.94438, 0.95442, 0.94438, 0.95442, 0.94438, 0.95442, 0.94438, 0.95442, 0.94438, 0.95442, 0.94083, 0.97579, 0.90406, 0.94039, 0.90406, 0.9446, 0.938, 0.9446, 0.938, 0.9446, 0.938, 1, 0.99793, 0.90838, 0.94938, 0.868, 0.9031, 0.92179, 0.9446, 1, 1, 0.89713, 1.10208, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90088, 0.90989, 0.9358, 0.91945, 0.83181, 0.75261, 0.87992, 0.82976, 0.96034, 0.83689, 0.97268, 1.0078, 0.90838, 0.83637, 0.8019, 0.90157, 0.80061, 0.9446, 0.95407, 0.92436, 1.0258, 0.85022, 0.97153, 1.0156, 0.95546, 0.89192, 0.92179, 0.92361, 0.87107, 0.96318, 0.89713, 0.93704, 0.95638, 0.91905, 0.91709, 0.92796, 1.0258, 0.93704, 0.94836, 1.0373, 0.95933, 1.0078, 0.95871, 0.94836, 0.96174, 0.92601, 0.9498, 0.98607, 0.95776, 0.95933, 1.05453, 1.0078, 0.98275, 0.9314, 0.95617, 0.91701, 1.05993, 0.9446, 0.78367, 0.9553, 1, 0.86832, 1.0128, 0.95871, 0.99394, 0.87548, 0.96361, 0.86774, 1.0078, 0.95871, 0.9446, 0.95871, 0.86774, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.94083, 0.97579, 0.94083, 0.97579, 0.94083, 0.97579, 0.90406, 0.94039, 0.96694, 1, 0.89903, 1, 1, 1, 0.93582, 0.93582, 0.93582, 1, 0.908, 0.908, 0.918, 0.94219, 0.94219, 0.96544, 1, 1.285, 1, 1, 0.81079, 0.81079, 1, 1, 0.74854, 1, 1, 1, 1, 0.99793, 1, 1, 1, 0.65, 1, 1.36145, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.17173, 1, 0.80535, 0.76169, 1.02058, 1.0732, 1.05486, 1, 1, 1.30692, 1.08595, 1.08595, 1, 1.08595, 1.08595, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.16161, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 const MyriadProBoldMetrics = {
     lineHeight: 1.2,
@@ -28064,7 +28963,7 @@ const MyriadProRegularMetrics = {
     lineGap: 0.2
 };
 
-;// ./src/core/segoeui_factors.js
+// ./src/core/segoeui_factors.js
 const SegoeuiBoldFactors = [1.76738, 1, 1, 0.99297, 0.9824, 1.04016, 1.06497, 1.03424, 0.97529, 1.17647, 1.23203, 1.1085, 1.1085, 1.16939, 1.2107, 0.9754, 1.21408, 0.9754, 1.59578, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 1.03424, 0.81378, 0.81378, 1.2107, 1.2107, 1.2107, 0.71703, 0.97847, 0.97363, 0.88776, 0.8641, 1.02096, 0.79795, 0.85132, 0.914, 1.06085, 1.1406, 0.8007, 0.89858, 0.83693, 1.14889, 1.09398, 0.97489, 0.92094, 0.97489, 0.90399, 0.84041, 0.95923, 1.00135, 1, 1.06467, 0.98243, 0.90996, 0.99361, 1.1085, 1.56942, 1.1085, 1.2107, 0.74627, 0.94282, 0.96752, 1.01519, 0.86304, 1.01359, 0.97278, 1.15103, 1.01359, 0.98561, 1.02285, 1.02285, 1.00527, 1.02285, 1.0302, 0.99041, 1.0008, 1.01519, 1.01359, 1.02258, 0.79104, 1.16862, 0.99041, 0.97454, 1.02511, 0.99298, 0.96752, 0.95801, 0.94856, 1.16579, 0.94856, 1.2107, 0.9824, 1.03424, 1.03424, 1, 1.03424, 1.16579, 0.8727, 1.3871, 1.18622, 1.10818, 1.04478, 1.2107, 1.18622, 0.75155, 0.94994, 1.28826, 1.21408, 1.21408, 0.91056, 1, 0.91572, 0.9754, 0.64663, 1.18328, 1.24866, 1.04478, 1.14169, 1.15749, 1.17389, 0.71703, 0.97363, 0.97363, 0.97363, 0.97363, 0.97363, 0.97363, 0.93506, 0.8641, 0.79795, 0.79795, 0.79795, 0.79795, 1.1406, 1.1406, 1.1406, 1.1406, 1.02096, 1.09398, 0.97426, 0.97426, 0.97426, 0.97426, 0.97426, 1.2107, 0.97489, 1.00135, 1.00135, 1.00135, 1.00135, 0.90996, 0.92094, 1.02798, 0.96752, 0.96752, 0.96752, 0.96752, 0.96752, 0.96752, 0.93136, 0.86304, 0.97278, 0.97278, 0.97278, 0.97278, 1.02285, 1.02285, 1.02285, 1.02285, 0.97122, 0.99041, 1, 1, 1, 1, 1, 1.28826, 1.0008, 0.99041, 0.99041, 0.99041, 0.99041, 0.96752, 1.01519, 0.96752, 0.97363, 0.96752, 0.97363, 0.96752, 0.97363, 0.96752, 0.8641, 0.86304, 0.8641, 0.86304, 0.8641, 0.86304, 0.8641, 0.86304, 1.02096, 1.03057, 1.02096, 1.03517, 0.79795, 0.97278, 0.79795, 0.97278, 0.79795, 0.97278, 0.79795, 0.97278, 0.79795, 0.97278, 0.914, 1.01359, 0.914, 1.01359, 0.914, 1.01359, 1, 1, 1.06085, 0.98561, 1.06085, 1.00879, 1.1406, 1.02285, 1.1406, 1.02285, 1.1406, 1.02285, 1.1406, 1.02285, 1.1406, 1.02285, 0.97138, 1.08692, 0.8007, 1.02285, 1, 1, 1.00527, 0.83693, 1.02285, 1, 1, 0.83693, 0.9455, 0.83693, 0.90418, 0.83693, 1.13005, 1.09398, 0.99041, 1, 1, 1.09398, 0.99041, 0.96692, 1.09251, 0.99041, 0.97489, 1.0008, 0.97489, 1.0008, 0.97489, 1.0008, 0.93994, 0.97931, 0.90399, 1.02258, 1, 1, 0.90399, 1.02258, 0.84041, 0.79104, 0.84041, 0.79104, 0.84041, 0.79104, 0.84041, 0.79104, 1, 1, 0.95923, 1.07034, 0.95923, 1.16862, 1.00135, 0.99041, 1.00135, 0.99041, 1.00135, 0.99041, 1.00135, 0.99041, 1.00135, 0.99041, 1.00135, 0.99041, 1.06467, 1.02511, 0.90996, 0.96752, 0.90996, 0.99361, 0.95801, 0.99361, 0.95801, 0.99361, 0.95801, 1.07733, 1.03424, 0.97363, 0.96752, 0.93506, 0.93136, 0.97489, 1.0008, 1, 1, 0.95923, 1.16862, 1.15103, 1.15103, 1.01173, 1.03959, 0.75953, 0.81378, 0.79912, 1.15103, 1.21994, 0.95161, 0.87815, 1.01149, 0.81525, 0.7676, 0.98167, 1.01134, 1.02546, 0.84097, 1.03089, 1.18102, 0.97363, 0.88776, 0.85134, 0.97826, 0.79795, 0.99361, 1.06085, 0.97489, 1.1406, 0.89858, 1.0388, 1.14889, 1.09398, 0.86039, 0.97489, 1.0595, 0.92094, 0.94793, 0.95923, 0.90996, 0.99346, 0.98243, 1.02112, 0.95493, 1.1406, 0.90996, 1.03574, 1.02597, 1.0008, 1.18102, 1.06628, 1.03574, 1.0192, 1.01932, 1.00886, 0.97531, 1.0106, 1.0008, 1.13189, 1.18102, 1.02277, 0.98683, 1.0016, 0.99561, 1.07237, 1.0008, 0.90434, 0.99921, 0.93803, 0.8965, 1.23085, 1.06628, 1.04983, 0.96268, 1.0499, 0.98439, 1.18102, 1.06628, 1.0008, 1.06628, 0.98439, 0.79795, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.09466, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.97278, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.02065, 1, 1, 1, 1, 1, 1, 1.06467, 1.02511, 1.06467, 1.02511, 1.06467, 1.02511, 0.90996, 0.96752, 1, 1.21408, 0.89903, 1, 1, 0.75155, 1.04394, 1.04394, 1.04394, 1.04394, 0.98633, 0.98633, 0.98633, 0.73047, 0.73047, 1.20642, 0.91211, 1.25635, 1.222, 1.02956, 1.03372, 1.03372, 0.96039, 1.24633, 1, 1.12454, 0.93503, 1.03424, 1.19687, 1.03424, 1, 1, 1, 0.771, 1, 1, 1.15749, 1.15749, 1.15749, 1.10948, 0.86279, 0.94434, 0.86279, 0.94434, 0.86182, 1, 1, 1.16897, 1, 0.96085, 0.90137, 1.2107, 1.18416, 1.13973, 0.69825, 0.9716, 2.10339, 1.29004, 1.29004, 1.21172, 1.29004, 1.29004, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.42603, 1, 0.99862, 0.99862, 1, 0.87025, 0.87025, 0.87025, 0.87025, 1.18874, 1.42603, 1, 1.42603, 1.42603, 0.99862, 1, 1, 1, 1, 1, 1.2886, 1.04315, 1.15296, 1.34163, 1, 1, 1, 1.09193, 1.09193, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 const SegoeuiBoldMetrics = {
     lineHeight: 1.33008,
@@ -28086,13 +28985,7 @@ const SegoeuiRegularMetrics = {
     lineGap: 0
 };
 
-;// ./src/core/xfa_fonts.js
-
-
-
-
-
-
+// ./src/core/xfa_fonts.js
 
 
 const getXFAFontMap = getLookupTableFactory(function (t) {
@@ -28229,11 +29122,13 @@ const getXFAFontMap = getLookupTableFactory(function (t) {
         metrics: HelveticaBoldItalicMetrics
     };
 });
+
 function getXfaFontName(name) {
     const fontName = normalizeFontName(name);
     const fontMap = getXFAFontMap();
     return fontMap[fontName];
 }
+
 function getXfaFontWidths(name) {
     const info = getXfaFontName(name);
     if (!info) {
@@ -28263,6 +29158,7 @@ function getXfaFontWidths(name) {
     }
     return newWidths;
 }
+
 function getXfaFontDict(name) {
     const widths = getXfaFontWidths(name);
     const dict = new Dict(null);
@@ -28284,8 +29180,7 @@ function getXfaFontDict(name) {
     return dict;
 }
 
-;// ./src/core/ps_parser.js
-
+// ./src/core/ps_parser.js
 
 
 class PostScriptParser {
@@ -28295,10 +29190,12 @@ class PostScriptParser {
         this.token = null;
         this.prev = null;
     }
+
     nextToken() {
         this.prev = this.token;
         this.token = this.lexer.getToken();
     }
+
     accept(type) {
         if (this.token.type === type) {
             this.nextToken();
@@ -28306,12 +29203,14 @@ class PostScriptParser {
         }
         return false;
     }
+
     expect(type) {
         if (this.accept(type)) {
             return true;
         }
         throw new FormatError(`Unexpected symbol: found ${this.token.type} expected ${type}.`);
     }
+
     parse() {
         this.nextToken();
         this.expect(PostScriptTokenTypes.LBRACE);
@@ -28319,6 +29218,7 @@ class PostScriptParser {
         this.expect(PostScriptTokenTypes.RBRACE);
         return this.operators;
     }
+
     parseBlock() {
         while (true) {
             if (this.accept(PostScriptTokenTypes.NUMBER)) {
@@ -28332,6 +29232,7 @@ class PostScriptParser {
             }
         }
     }
+
     parseCondition() {
         const conditionLocation = this.operators.length;
         this.operators.push(null, null);
@@ -28356,6 +29257,7 @@ class PostScriptParser {
         }
     }
 }
+
 const PostScriptTokenTypes = {
     LBRACE: 0,
     RBRACE: 1,
@@ -28364,39 +29266,49 @@ const PostScriptTokenTypes = {
     IF: 4,
     IFELSE: 5
 };
+
 class PostScriptToken {
     static get opCache() {
         return shadow(this, "opCache", Object.create(null));
     }
+
     constructor(type, value) {
         this.type = type;
         this.value = value;
     }
+
     static getOperator(op) {
         return PostScriptToken.opCache[op] ||= new PostScriptToken(PostScriptTokenTypes.OPERATOR, op);
     }
+
     static get LBRACE() {
         return shadow(this, "LBRACE", new PostScriptToken(PostScriptTokenTypes.LBRACE, "{"));
     }
+
     static get RBRACE() {
         return shadow(this, "RBRACE", new PostScriptToken(PostScriptTokenTypes.RBRACE, "}"));
     }
+
     static get IF() {
         return shadow(this, "IF", new PostScriptToken(PostScriptTokenTypes.IF, "IF"));
     }
+
     static get IFELSE() {
         return shadow(this, "IFELSE", new PostScriptToken(PostScriptTokenTypes.IFELSE, "IFELSE"));
     }
 }
+
 class PostScriptLexer {
     constructor(stream) {
         this.stream = stream;
         this.nextChar();
         this.strBuf = [];
     }
+
     nextChar() {
         return this.currentChar = this.stream.getByte();
     }
+
     getToken() {
         let comment = false;
         let ch = this.currentChar;
@@ -28453,6 +29365,7 @@ class PostScriptLexer {
                 return PostScriptToken.getOperator(str);
         }
     }
+
     getNumber() {
         let ch = this.currentChar;
         const strBuf = this.strBuf;
@@ -28473,7 +29386,7 @@ class PostScriptLexer {
     }
 }
 
-;// ./src/core/image_utils.js
+// ./src/core/image_utils.js
 
 
 class BaseLocalCache {
@@ -28485,6 +29398,7 @@ class BaseLocalCache {
         }
         this._imageCache = new RefSetCache();
     }
+
     getByName(name) {
         if (this._onlyRefs) {
             unreachable("Should not call `getByName` method.");
@@ -28495,13 +29409,16 @@ class BaseLocalCache {
         }
         return this._imageMap.get(name) || null;
     }
+
     getByRef(ref) {
         return this._imageCache.get(ref) || null;
     }
+
     set(name, ref, data) {
         unreachable("Abstract method `set` called.");
     }
 }
+
 class LocalImageCache extends BaseLocalCache {
     set(name, ref = null, data) {
         if (typeof name !== "string") {
@@ -28521,6 +29438,7 @@ class LocalImageCache extends BaseLocalCache {
         this._imageMap.set(name, data);
     }
 }
+
 class LocalColorSpaceCache extends BaseLocalCache {
     set(name = null, ref = null, data) {
         if (typeof name !== "string" && !ref) {
@@ -28542,12 +29460,14 @@ class LocalColorSpaceCache extends BaseLocalCache {
         this._imageMap.set(name, data);
     }
 }
+
 class LocalFunctionCache extends BaseLocalCache {
     constructor(options) {
         super({
             onlyRefs: true
         });
     }
+
     set(name = null, ref, data) {
         if (!ref) {
             throw new Error('LocalFunctionCache.set - expected "ref" argument.');
@@ -28558,6 +29478,7 @@ class LocalFunctionCache extends BaseLocalCache {
         this._imageCache.put(ref, data);
     }
 }
+
 class LocalGStateCache extends BaseLocalCache {
     set(name, ref = null, data) {
         if (typeof name !== "string") {
@@ -28577,12 +29498,14 @@ class LocalGStateCache extends BaseLocalCache {
         this._imageMap.set(name, data);
     }
 }
+
 class LocalTilingPatternCache extends BaseLocalCache {
     constructor(options) {
         super({
             onlyRefs: true
         });
     }
+
     set(name = null, ref, data) {
         if (!ref) {
             throw new Error('LocalTilingPatternCache.set - expected "ref" argument.');
@@ -28593,12 +29516,14 @@ class LocalTilingPatternCache extends BaseLocalCache {
         this._imageCache.put(ref, data);
     }
 }
+
 class RegionalImageCache extends BaseLocalCache {
     constructor(options) {
         super({
             onlyRefs: true
         });
     }
+
     set(name = null, ref, data) {
         if (!ref) {
             throw new Error('RegionalImageCache.set - expected "ref" argument.');
@@ -28609,12 +29534,14 @@ class RegionalImageCache extends BaseLocalCache {
         this._imageCache.put(ref, data);
     }
 }
+
 class GlobalColorSpaceCache extends BaseLocalCache {
     constructor(options) {
         super({
             onlyRefs: true
         });
     }
+
     set(name = null, ref, data) {
         if (!ref) {
             throw new Error('GlobalColorSpaceCache.set - expected "ref" argument.');
@@ -28624,19 +29551,23 @@ class GlobalColorSpaceCache extends BaseLocalCache {
         }
         this._imageCache.put(ref, data);
     }
+
     clear() {
         this._imageCache.clear();
     }
 }
+
 class GlobalImageCache {
     static NUM_PAGES_THRESHOLD = 2;
     static MIN_IMAGES_TO_CACHE = 10;
     static MAX_BYTE_SIZE = 5e7;
     #decodeFailedSet = new RefSet();
+
     constructor() {
         this._refCache = new RefSetCache();
         this._imageCache = new RefSetCache();
     }
+
     get #byteSize() {
         let byteSize = 0;
         for (const imageData of this._imageCache) {
@@ -28644,6 +29575,7 @@ class GlobalImageCache {
         }
         return byteSize;
     }
+
     get #cacheLimitReached() {
         if (this._imageCache.size < GlobalImageCache.MIN_IMAGES_TO_CACHE) {
             return false;
@@ -28653,6 +29585,7 @@ class GlobalImageCache {
         }
         return true;
     }
+
     shouldCache(ref, pageIndex) {
         let pageIndexSet = this._refCache.get(ref);
         if (!pageIndexSet) {
@@ -28668,12 +29601,15 @@ class GlobalImageCache {
         }
         return true;
     }
+
     addDecodeFailed(ref) {
         this.#decodeFailedSet.put(ref);
     }
+
     hasDecodeFailed(ref) {
         return this.#decodeFailedSet.has(ref);
     }
+
     addByteSize(ref, byteSize) {
         const imageData = this._imageCache.get(ref);
         if (!imageData) {
@@ -28684,6 +29620,7 @@ class GlobalImageCache {
         }
         imageData.byteSize = byteSize;
     }
+
     getData(ref, pageIndex) {
         const pageIndexSet = this._refCache.get(ref);
         if (!pageIndexSet) {
@@ -28699,6 +29636,7 @@ class GlobalImageCache {
         pageIndexSet.add(pageIndex);
         return imageData;
     }
+
     setData(ref, data) {
         if (!this._refCache.has(ref)) {
             throw new Error('GlobalImageCache.setData - expected "shouldCache" to have been called.');
@@ -28712,6 +29650,7 @@ class GlobalImageCache {
         }
         this._imageCache.put(ref, data);
     }
+
     clear(onlyData = false) {
         if (!onlyData) {
             this.#decodeFailedSet.clear();
@@ -28721,11 +29660,7 @@ class GlobalImageCache {
     }
 }
 
-;// ./src/core/function.js
-
-
-
-
+// ./src/core/function.js
 
 
 class PDFFunctionFactory {
@@ -28736,6 +29671,7 @@ class PDFFunctionFactory {
         this.xref = xref;
         this.isEvalSupported = isEvalSupported !== false;
     }
+
     create(fn, parseArray = false) {
         let fnRef, parsedFn;
         if (fn instanceof Ref) {
@@ -28765,10 +29701,12 @@ class PDFFunctionFactory {
         }
         return parsedFn;
     }
+
     get _localFunctionCache() {
         return shadow(this, "_localFunctionCache", new LocalFunctionCache());
     }
 }
+
 function toNumberArray(arr) {
     if (!Array.isArray(arr)) {
         return null;
@@ -28778,6 +29716,7 @@ function toNumberArray(arr) {
     }
     return arr;
 }
+
 class PDFFunction {
     static getSampleArray(size, outputSize, bps, stream) {
         let i, ii;
@@ -28804,6 +29743,7 @@ class PDFFunction {
         }
         return array;
     }
+
     static parse(factory, fn) {
         const dict = fn.dict || fn;
         const typeNum = dict.get("FunctionType");
@@ -28821,6 +29761,7 @@ class PDFFunction {
         }
         throw new FormatError("Unknown type of function");
     }
+
     static parseArray(factory, fnObj) {
         const {
             xref
@@ -28835,6 +29776,7 @@ class PDFFunction {
             }
         };
     }
+
     static constructSampled(factory, fn, dict) {
         function toMultiArray(arr) {
             const inputLength = arr.length;
@@ -28845,9 +29787,11 @@ class PDFFunction {
             }
             return out;
         }
+
         function interpolate(x, xmin, xmax, ymin, ymax) {
             return ymin + (x - xmin) * ((ymax - ymin) / (xmax - xmin));
         }
+
         let domain = toNumberArray(dict.getArray("Domain"));
         let range = toNumberArray(dict.getArray("Range"));
         if (!domain || !range) {
@@ -28916,6 +29860,7 @@ class PDFFunction {
             }
         };
     }
+
     static constructInterpolated(factory, dict) {
         const c0 = toNumberArray(dict.getArray("C0")) || [0];
         const c1 = toNumberArray(dict.getArray("C1")) || [1];
@@ -28932,6 +29877,7 @@ class PDFFunction {
             }
         };
     }
+
     static constructStiched(factory, dict) {
         const domain = toNumberArray(dict.getArray("Domain"));
         if (!domain) {
@@ -28974,6 +29920,7 @@ class PDFFunction {
             fns[i](tmpBuf, 0, dest, destOffset);
         };
     }
+
     static constructPostScript(factory, fn, dict) {
         const domain = toNumberArray(dict.getArray("Domain"));
         const range = toNumberArray(dict.getArray("Range"));
@@ -29038,6 +29985,7 @@ class PDFFunction {
         };
     }
 }
+
 function isPDFFunction(v) {
     let fnDict;
     if (v instanceof Dict) {
@@ -29049,23 +29997,28 @@ function isPDFFunction(v) {
     }
     return fnDict.has("FunctionType");
 }
+
 class PostScriptStack {
     static MAX_STACK_SIZE = 100;
+
     constructor(initialStack) {
         this.stack = initialStack ? Array.from(initialStack) : [];
     }
+
     push(value) {
         if (this.stack.length >= PostScriptStack.MAX_STACK_SIZE) {
             throw new Error("PostScript function stack overflow.");
         }
         this.stack.push(value);
     }
+
     pop() {
         if (this.stack.length <= 0) {
             throw new Error("PostScript function stack underflow.");
         }
         return this.stack.pop();
     }
+
     copy(n) {
         if (this.stack.length + n >= PostScriptStack.MAX_STACK_SIZE) {
             throw new Error("PostScript function stack overflow.");
@@ -29075,9 +30028,11 @@ class PostScriptStack {
             stack.push(stack[i]);
         }
     }
+
     index(n) {
         this.push(this.stack[this.stack.length - n - 1]);
     }
+
     roll(n, p) {
         const stack = this.stack;
         const l = stack.length - n;
@@ -29100,10 +30055,12 @@ class PostScriptStack {
         }
     }
 }
+
 class PostScriptEvaluator {
     constructor(operators) {
         this.operators = operators;
     }
+
     execute(initialStack) {
         const stack = new PostScriptStack(initialStack);
         let counter = 0;
@@ -29332,14 +30289,17 @@ class PostScriptEvaluator {
         return stack.stack;
     }
 }
+
 class AstNode {
     constructor(type) {
         this.type = type;
     }
+
     visit(visitor) {
         unreachable("abstract method");
     }
 }
+
 class AstArgument extends AstNode {
     constructor(index, min, max) {
         super("args");
@@ -29347,10 +30307,12 @@ class AstArgument extends AstNode {
         this.min = min;
         this.max = max;
     }
+
     visit(visitor) {
         visitor.visitArgument(this);
     }
 }
+
 class AstLiteral extends AstNode {
     constructor(number) {
         super("literal");
@@ -29358,10 +30320,12 @@ class AstLiteral extends AstNode {
         this.min = number;
         this.max = number;
     }
+
     visit(visitor) {
         visitor.visitLiteral(this);
     }
 }
+
 class AstBinaryOperation extends AstNode {
     constructor(op, arg1, arg2, min, max) {
         super("binary");
@@ -29371,10 +30335,12 @@ class AstBinaryOperation extends AstNode {
         this.min = min;
         this.max = max;
     }
+
     visit(visitor) {
         visitor.visitBinaryOperation(this);
     }
 }
+
 class AstMin extends AstNode {
     constructor(arg, max) {
         super("max");
@@ -29382,10 +30348,12 @@ class AstMin extends AstNode {
         this.min = arg.min;
         this.max = max;
     }
+
     visit(visitor) {
         visitor.visitMin(this);
     }
 }
+
 class AstVariable extends AstNode {
     constructor(index, min, max) {
         super("var");
@@ -29393,33 +30361,41 @@ class AstVariable extends AstNode {
         this.min = min;
         this.max = max;
     }
+
     visit(visitor) {
         visitor.visitVariable(this);
     }
 }
+
 class AstVariableDefinition extends AstNode {
     constructor(variable, arg) {
         super("definition");
         this.variable = variable;
         this.arg = arg;
     }
+
     visit(visitor) {
         visitor.visitVariableDefinition(this);
     }
 }
+
 class ExpressionBuilderVisitor {
     constructor() {
         this.parts = [];
     }
+
     visitArgument(arg) {
         this.parts.push("Math.max(", arg.min, ", Math.min(", arg.max, ", src[srcOffset + ", arg.index, "]))");
     }
+
     visitVariable(variable) {
         this.parts.push("v", variable.index);
     }
+
     visitLiteral(literal) {
         this.parts.push(literal.number);
     }
+
     visitBinaryOperation(operation) {
         this.parts.push("(");
         operation.arg1.visit(this);
@@ -29427,6 +30403,7 @@ class ExpressionBuilderVisitor {
         operation.arg2.visit(this);
         this.parts.push(")");
     }
+
     visitVariableDefinition(definition) {
         this.parts.push("var ");
         definition.variable.visit(this);
@@ -29434,15 +30411,18 @@ class ExpressionBuilderVisitor {
         definition.arg.visit(this);
         this.parts.push(";");
     }
+
     visitMin(max) {
         this.parts.push("Math.min(");
         max.arg.visit(this);
         this.parts.push(", ", max.max, ")");
     }
+
     toString() {
         return this.parts.join("");
     }
 }
+
 function buildAddOperation(num1, num2) {
     if (num2.type === "literal" && num2.number === 0) {
         return num1;
@@ -29455,6 +30435,7 @@ function buildAddOperation(num1, num2) {
     }
     return new AstBinaryOperation("+", num1, num2, num1.min + num2.min, num1.max + num2.max);
 }
+
 function buildMulOperation(num1, num2) {
     if (num2.type === "literal") {
         if (num2.number === 0) {
@@ -29476,6 +30457,7 @@ function buildMulOperation(num1, num2) {
     const max = Math.max(num1.min * num2.min, num1.min * num2.max, num1.max * num2.min, num1.max * num2.max);
     return new AstBinaryOperation("*", num1, num2, min, max);
 }
+
 function buildSubOperation(num1, num2) {
     if (num2.type === "literal") {
         if (num2.number === 0) {
@@ -29489,6 +30471,7 @@ function buildSubOperation(num1, num2) {
     }
     return new AstBinaryOperation("-", num1, num2, num1.min - num2.max, num1.max - num2.min);
 }
+
 function buildMinOperation(num1, max) {
     if (num1.min >= max) {
         return new AstLiteral(max);
@@ -29497,6 +30480,7 @@ function buildMinOperation(num1, max) {
     }
     return new AstMin(num1, max);
 }
+
 class PostScriptCompiler {
     compile(code, domain, range) {
         const stack = [];
@@ -29657,16 +30641,19 @@ class PostScriptCompiler {
     }
 }
 
-;// ./src/core/bidi.js
+// ./src/core/bidi.js
 
 const baseTypes = ["BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "S", "B", "S", "WS", "B", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "B", "B", "B", "S", "WS", "ON", "ON", "ET", "ET", "ET", "ON", "ON", "ON", "ON", "ON", "ES", "CS", "ES", "CS", "CS", "EN", "EN", "EN", "EN", "EN", "EN", "EN", "EN", "EN", "EN", "CS", "ON", "ON", "ON", "ON", "ON", "ON", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "ON", "ON", "ON", "ON", "ON", "ON", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "ON", "ON", "ON", "ON", "BN", "BN", "BN", "BN", "BN", "BN", "B", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "BN", "CS", "ON", "ET", "ET", "ET", "ET", "ON", "ON", "ON", "ON", "L", "ON", "ON", "BN", "ON", "ON", "ET", "ET", "EN", "EN", "ON", "L", "ON", "ON", "ON", "EN", "L", "ON", "ON", "ON", "ON", "ON", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "ON", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "L", "ON", "L", "L", "L", "L", "L", "L", "L", "L"];
 const arabicTypes = ["AN", "AN", "AN", "AN", "AN", "AN", "ON", "ON", "AL", "ET", "ET", "AL", "CS", "AL", "ON", "ON", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "AL", "AL", "", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "AN", "AN", "AN", "AN", "AN", "AN", "AN", "AN", "AN", "AN", "ET", "AN", "AN", "AL", "AL", "AL", "NSM", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "AL", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "AN", "ON", "NSM", "NSM", "NSM", "NSM", "NSM", "NSM", "AL", "AL", "NSM", "NSM", "ON", "NSM", "NSM", "NSM", "NSM", "AL", "AL", "EN", "EN", "EN", "EN", "EN", "EN", "EN", "EN", "EN", "EN", "AL", "AL", "AL", "AL", "AL", "AL"];
+
 function isOdd(i) {
     return (i & 1) !== 0;
 }
+
 function isEven(i) {
     return (i & 1) === 0;
 }
+
 function findUnequal(arr, start, value) {
     let j, jj;
     for (j = start, jj = arr.length; j < jj; ++j) {
@@ -29676,6 +30663,7 @@ function findUnequal(arr, start, value) {
     }
     return j;
 }
+
 function reverseValues(arr, start, end) {
     for (let i = start, j = end - 1; i < j; ++i, --j) {
         const temp = arr[i];
@@ -29683,6 +30671,7 @@ function reverseValues(arr, start, end) {
         arr[j] = temp;
     }
 }
+
 function createBidiText(str, isLTR, vertical = false) {
     let dir = "ltr";
     if (vertical) {
@@ -29695,8 +30684,10 @@ function createBidiText(str, isLTR, vertical = false) {
         dir
     };
 }
+
 const chars = [];
 const types = [];
+
 function bidi(str, startLevel = -1, vertical = false) {
     let isLTR = true;
     const strLength = str.length;
@@ -29888,8 +30879,7 @@ function bidi(str, startLevel = -1, vertical = false) {
     return createBidiText(chars.join(""), isLTR);
 }
 
-;// ./src/core/font_substitutions.js
-
+// ./src/core/font_substitutions.js
 
 
 const NORMAL = {
@@ -30019,6 +31009,7 @@ const substitutionMap = new Map([["Times-Roman", {
     alias: "Wingdings"
 }]]);
 const fontAliases = new Map([["Arial-Black", "ArialBlack"]]);
+
 function getStyleToAppend(style) {
     switch (style) {
         case BOLD:
@@ -30037,10 +31028,12 @@ function getStyleToAppend(style) {
     }
     return "";
 }
+
 function getFamilyName(str) {
     const keywords = new Set(["thin", "extralight", "ultralight", "demilight", "semilight", "light", "book", "regular", "normal", "medium", "demibold", "semibold", "bold", "extrabold", "ultrabold", "black", "heavy", "extrablack", "ultrablack", "roman", "italic", "oblique", "ultracondensed", "extracondensed", "condensed", "semicondensed", "normal", "semiexpanded", "expanded", "extraexpanded", "ultraexpanded", "bolditalic"]);
     return str.split(/[- ,+]+/g).filter(tok => !keywords.has(tok.toLowerCase())).join(" ");
 }
+
 function generateFont({
                           alias,
                           local,
@@ -30082,6 +31075,7 @@ function generateFont({
     }
     return result;
 }
+
 function getFontSubstitution(systemFontCache, idFactory, localFontPath, baseFontName, standardFontName, type) {
     if (baseFontName.startsWith("InvalidPDFjsFont_")) {
         return null;
@@ -30153,15 +31147,17 @@ function getFontSubstitution(systemFontCache, idFactory, localFontPath, baseFont
     return substitutionInfo;
 }
 
-;// ./src/shared/murmurhash3.js
+// ./src/shared/murmurhash3.js
 const SEED = 0xc3d2e1f0;
 const MASK_HIGH = 0xffff0000;
 const MASK_LOW = 0xffff;
+
 class MurmurHash3_64 {
     constructor(seed) {
         this.h1 = seed ? seed & 0xffffffff : SEED;
         this.h2 = seed ? seed & 0xffffffff : SEED;
     }
+
     update(input) {
         let data, length;
         if (typeof input === "string") {
@@ -30232,6 +31228,7 @@ class MurmurHash3_64 {
         this.h1 = h1;
         this.h2 = h2;
     }
+
     hexdigest() {
         let h1 = this.h1,
             h2 = this.h2;
@@ -30246,15 +31243,7 @@ class MurmurHash3_64 {
     }
 }
 
-;// ./src/core/image.js
-
-
-
-
-
-
-
-
+// ./src/core/image.js
 
 
 function resizeImageMask(src, bpc, w1, h1, w2, h2) {
@@ -30288,6 +31277,7 @@ function resizeImageMask(src, bpc, w1, h1, w2, h2) {
     }
     return dest;
 }
+
 class PDFImage {
     constructor({
                     xref,
@@ -30473,6 +31463,7 @@ class PDFImage {
             }
         }
     }
+
     static async buildImage({
                                 xref,
                                 res,
@@ -30512,6 +31503,7 @@ class PDFImage {
             localColorSpaceCache
         });
     }
+
     static async createMask({
                                 image,
                                 isOffscreenCanvasSupported = false
@@ -30596,12 +31588,15 @@ class PDFImage {
             interpolate
         };
     }
+
     get drawWidth() {
         return Math.max(this.width, this.smask?.width || 0, this.mask?.width || 0);
     }
+
     get drawHeight() {
         return Math.max(this.height, this.smask?.height || 0, this.mask?.height || 0);
     }
+
     decodeBuffer(buffer) {
         const bpc = this.bpc;
         const numComps = this.numComps;
@@ -30623,6 +31618,7 @@ class PDFImage {
             }
         }
     }
+
     getComponents(buffer) {
         const bpc = this.bpc;
         if (bpc === 8) {
@@ -30698,6 +31694,7 @@ class PDFImage {
         }
         return output;
     }
+
     async fillOpacity(rgbaBuf, width, height, actualHeight, image) {
         const smask = this.smask;
         const mask = this.mask;
@@ -30753,6 +31750,7 @@ class PDFImage {
             }
         }
     }
+
     undoPreblend(buffer, width, height) {
         const matte = this.smask?.matte;
         if (!matte) {
@@ -30777,6 +31775,7 @@ class PDFImage {
             buffer[i + 2] = (buffer[i + 2] - matteB) * k + matteB;
         }
     }
+
     async createImageData(forceRGBA = false, isOffscreenCanvasSupported = false) {
         const drawWidth = this.drawWidth;
         const drawHeight = this.drawHeight;
@@ -30946,6 +31945,7 @@ class PDFImage {
         }
         return imgData;
     }
+
     async fillGrayBuffer(buffer) {
         const numComps = this.numComps;
         if (numComps !== 1) {
@@ -30982,6 +31982,7 @@ class PDFImage {
             buffer[i] = scale * comps[i];
         }
     }
+
     createBitmap(kind, width, height, src) {
         const canvas = new OffscreenCanvas(width, height);
         const ctx = canvas.getContext("2d");
@@ -31009,6 +32010,7 @@ class PDFImage {
             interpolate: this.interpolate
         };
     }
+
     async #getImage(width, height) {
         const bitmap = await this.image.getTransferableImage();
         if (!bitmap) {
@@ -31022,6 +32024,7 @@ class PDFImage {
             interpolate: this.interpolate
         };
     }
+
     async getImageBytes(length, {
         drawWidth,
         drawHeight,
@@ -31043,31 +32046,7 @@ class PDFImage {
     }
 }
 
-;// ./src/core/evaluator.js
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// ./src/core/evaluator.js
 
 
 const DefaultPartialEvaluatorOptions = Object.freeze({
@@ -31093,6 +32072,7 @@ const PatternType = {
 };
 const TEXT_CHUNK_BATCH_SIZE = 10;
 const deferred = Promise.resolve();
+
 function normalizeBlendMode(value, parsingArray = false) {
     if (Array.isArray(value)) {
         for (const val of value) {
@@ -31151,6 +32131,7 @@ function normalizeBlendMode(value, parsingArray = false) {
     warn(`Unsupported blend mode: ${value.name}`);
     return "source-over";
 }
+
 function addCachedImageOps(opList, {
     objId,
     fn,
@@ -31166,12 +32147,15 @@ function addCachedImageOps(opList, {
         args[0].count++;
     }
 }
+
 class TimeSlotManager {
     static TIME_SLOT_DURATION_MS = 20;
     static CHECK_TIME_EVERY = 100;
+
     constructor() {
         this.reset();
     }
+
     check() {
         if (++this.checked < TimeSlotManager.CHECK_TIME_EVERY) {
             return false;
@@ -31179,11 +32163,13 @@ class TimeSlotManager {
         this.checked = 0;
         return this.endTime <= Date.now();
     }
+
     reset() {
         this.endTime = Date.now() + TimeSlotManager.TIME_SLOT_DURATION_MS;
         this.checked = 0;
     }
 }
+
 class PartialEvaluator {
     constructor({
                     xref,
@@ -31213,6 +32199,7 @@ class PartialEvaluator {
         this._regionalImageCache = new RegionalImageCache();
         this._fetchBuiltInCMapBound = this.fetchBuiltInCMap.bind(this);
     }
+
     get _pdfFunctionFactory() {
         const pdfFunctionFactory = new PDFFunctionFactory({
             xref: this.xref,
@@ -31220,14 +32207,17 @@ class PartialEvaluator {
         });
         return shadow(this, "_pdfFunctionFactory", pdfFunctionFactory);
     }
+
     get parsingType3Font() {
         return !!this.type3FontRefs;
     }
+
     clone(newOptions = null) {
         const newEvaluator = Object.create(this);
         newEvaluator.options = Object.assign(Object.create(null), this.options, newOptions);
         return newEvaluator;
     }
+
     hasBlendModes(resources, nonBlendModesSet) {
         if (!(resources instanceof Dict)) {
             return false;
@@ -31321,6 +32311,7 @@ class PartialEvaluator {
         }
         return false;
     }
+
     async fetchBuiltInCMap(name) {
         const cachedData = this.builtInCMapCache.get(name);
         if (cachedData) {
@@ -31341,6 +32332,7 @@ class PartialEvaluator {
         this.builtInCMapCache.set(name, data);
         return data;
     }
+
     async fetchStandardFontData(name) {
         const cachedData = this.standardFontDataCache.get(name);
         if (cachedData) {
@@ -31368,6 +32360,7 @@ class PartialEvaluator {
         this.standardFontDataCache.set(name, data);
         return new Stream(data);
     }
+
     async buildFormXObject(resources, xobj, smask, operatorList, task, initialState, localColorSpaceCache, seenRefs) {
         const {
             dict
@@ -31427,6 +32420,7 @@ class PartialEvaluator {
             operatorList.addOp(OPS.endMarkedContent, []);
         }
     }
+
     _sendImgData(objId, imgData, cacheGlobally = false) {
         const transfers = imgData ? [imgData.bitmap || imgData.data.buffer] : null;
         if (this.parsingType3Font || cacheGlobally) {
@@ -31434,6 +32428,7 @@ class PartialEvaluator {
         }
         return this.handler.send("obj", [objId, this.pageIndex, "Image", imgData], transfers);
     }
+
     async buildPaintImageXObject({
                                      resources,
                                      image,
@@ -31637,6 +32632,7 @@ class PartialEvaluator {
             }
         }
     }
+
     handleSMask(smask, resources, operatorList, task, stateManager, localColorSpaceCache, seenRefs) {
         const smaskContent = smask.get("G");
         const smaskOptions = {
@@ -31659,6 +32655,7 @@ class PartialEvaluator {
             newPath: true
         }), localColorSpaceCache, seenRefs);
     }
+
     handleTransferFunction(tr) {
         let transferArray;
         if (Array.isArray(tr)) {
@@ -31699,6 +32696,7 @@ class PartialEvaluator {
         }
         return transferMaps;
     }
+
     handleTilingType(fn, color, resources, pattern, patternDict, operatorList, task, localTilingPatternCache) {
         const tilingOpList = new OperatorList();
         const patternResources = Dict.merge({
@@ -31732,6 +32730,7 @@ class PartialEvaluator {
             throw reason;
         });
     }
+
     async handleSetFont(resources, fontArgs, fontRef, operatorList, task, state, fallbackFontDict = null, cssFontInfo = null) {
         const fontName = fontArgs?.[0] instanceof Name ? fontArgs[0].name : null;
         const translated = await this.loadFont(fontName, fontRef, resources, task, fallbackFontDict, cssFontInfo);
@@ -31742,6 +32741,7 @@ class PartialEvaluator {
         translated.send(this.handler);
         return translated.loadedName;
     }
+
     handleText(chars, state) {
         const font = state.font;
         const glyphs = font.charsToGlyphs(chars);
@@ -31753,6 +32753,7 @@ class PartialEvaluator {
         }
         return glyphs;
     }
+
     ensureStateFont(state) {
         if (state.font) {
             return;
@@ -31764,6 +32765,7 @@ class PartialEvaluator {
         }
         throw reason;
     }
+
     async setGState({
                         resources,
                         gState,
@@ -31855,6 +32857,7 @@ class PartialEvaluator {
             localGStateCache.set(cacheKey, gStateRef, gStateObj);
         }
     }
+
     loadFont(fontName, font, resources, task, fallbackFontDict = null, cssFontInfo = null) {
         const errorFont = async () => new TranslatedFont({
             loadedName: "g_font_error",
@@ -31966,14 +32969,14 @@ class PartialEvaluator {
         });
         return promise;
     }
+
     buildPath(fn, args, state) {
         const {
             pathMinMax: minMax,
             pathBuffer
         } = state;
         switch (fn | 0) {
-            case OPS.rectangle:
-            {
+            case OPS.rectangle: {
                 const x = state.currentPointX = args[0];
                 const y = state.currentPointY = args[1];
                 const width = args[2];
@@ -31988,24 +32991,21 @@ class PartialEvaluator {
                 Util.rectBoundingBox(x, y, xw, yh, minMax);
                 break;
             }
-            case OPS.moveTo:
-            {
+            case OPS.moveTo: {
                 const x = state.currentPointX = args[0];
                 const y = state.currentPointY = args[1];
                 pathBuffer.push(DrawOPS.moveTo, x, y);
                 Util.pointBoundingBox(x, y, minMax);
                 break;
             }
-            case OPS.lineTo:
-            {
+            case OPS.lineTo: {
                 const x = state.currentPointX = args[0];
                 const y = state.currentPointY = args[1];
                 pathBuffer.push(DrawOPS.lineTo, x, y);
                 Util.pointBoundingBox(x, y, minMax);
                 break;
             }
-            case OPS.curveTo:
-            {
+            case OPS.curveTo: {
                 const startX = state.currentPointX;
                 const startY = state.currentPointY;
                 const [x1, y1, x2, y2, x, y] = args;
@@ -32015,8 +33015,7 @@ class PartialEvaluator {
                 Util.bezierBoundingBox(startX, startY, x1, y1, x2, y2, x, y, minMax);
                 break;
             }
-            case OPS.curveTo2:
-            {
+            case OPS.curveTo2: {
                 const startX = state.currentPointX;
                 const startY = state.currentPointY;
                 const [x1, y1, x, y] = args;
@@ -32026,8 +33025,7 @@ class PartialEvaluator {
                 Util.bezierBoundingBox(startX, startY, startX, startY, x1, y1, x, y, minMax);
                 break;
             }
-            case OPS.curveTo3:
-            {
+            case OPS.curveTo3: {
                 const startX = state.currentPointX;
                 const startY = state.currentPointY;
                 const [x1, y1, x, y] = args;
@@ -32042,6 +33040,7 @@ class PartialEvaluator {
                 break;
         }
     }
+
     _getColorSpace(cs, resources, localColorSpaceCache) {
         return ColorSpaceUtils.parse({
             cs,
@@ -32053,6 +33052,7 @@ class PartialEvaluator {
             asyncIfNotCached: true
         });
     }
+
     async _handleColorSpace(csPromise) {
         try {
             return await csPromise;
@@ -32067,6 +33067,7 @@ class PartialEvaluator {
             throw ex;
         }
     }
+
     parseShading({
                      shading,
                      resources,
@@ -32104,6 +33105,7 @@ class PartialEvaluator {
         }
         return id;
     }
+
     handleColorN(operatorList, fn, args, cs, patterns, resources, task, localColorSpaceCache, localTilingPatternCache, localShadingPatternCache) {
         const patternName = args.pop();
         if (patternName instanceof Name) {
@@ -32115,7 +33117,8 @@ class PartialEvaluator {
                     const tilingPatternIR = getTilingPatternIR(localTilingPattern.operatorListIR, localTilingPattern.dict, color);
                     operatorList.addOp(fn, tilingPatternIR);
                     return undefined;
-                } catch {}
+                } catch {
+                }
             }
             const pattern = this.xref.fetchIfRef(rawPattern);
             if (pattern) {
@@ -32143,6 +33146,7 @@ class PartialEvaluator {
         }
         throw new FormatError(`Unknown PatternName: ${patternName}`);
     }
+
     _parseVisibilityExpression(array, nestingCounter, currentResult) {
         const MAX_NESTING = 10;
         if (++nestingCounter > MAX_NESTING) {
@@ -32177,6 +33181,7 @@ class PartialEvaluator {
             }
         }
     }
+
     async parseMarkedContentProps(contentProperties, resources) {
         let optionalContent;
         if (contentProperties instanceof Name) {
@@ -32230,6 +33235,7 @@ class PartialEvaluator {
         }
         return null;
     }
+
     getOperatorList({
                         stream,
                         task,
@@ -32264,11 +33270,13 @@ class PartialEvaluator {
         const stateManager = new StateManager(initialState);
         const preprocessor = new EvaluatorPreprocessor(stream, xref, stateManager);
         const timeSlotManager = new TimeSlotManager();
+
         function closePendingRestoreOPS(argument) {
             for (let i = 0, ii = preprocessor.savedStatesDepth; i < ii; i++) {
                 operatorList.addOp(OPS.restore, []);
             }
         }
+
         return new Promise(function promiseBody(resolve, reject) {
             const next = function (promise) {
                 Promise.all([promise, operatorList.ready]).then(function () {
@@ -32433,8 +33441,7 @@ class PartialEvaluator {
                     case OPS.setTextRenderingMode:
                         stateManager.state.textRenderingMode = args[0];
                         break;
-                    case OPS.setFillColorSpace:
-                    {
+                    case OPS.setFillColorSpace: {
                         const fillCS = self._getColorSpace(args[0], resources, localColorSpaceCache);
                         if (fillCS instanceof ColorSpace) {
                             stateManager.state.fillColorSpace = fillCS;
@@ -32445,8 +33452,7 @@ class PartialEvaluator {
                         }));
                         return;
                     }
-                    case OPS.setStrokeColorSpace:
-                    {
+                    case OPS.setStrokeColorSpace: {
                         const strokeCS = self._getColorSpace(args[0], resources, localColorSpaceCache);
                         if (strokeCS instanceof ColorSpace) {
                             stateManager.state.strokeColorSpace = strokeCS;
@@ -32613,8 +33619,7 @@ class PartialEvaluator {
                             throw reason;
                         }));
                         return;
-                    case OPS.setLineWidth:
-                    {
+                    case OPS.setLineWidth: {
                         const [thickness] = args;
                         if (typeof thickness !== "number") {
                             warn(`Invalid setLineWidth: ${thickness}`);
@@ -32640,8 +33645,7 @@ class PartialEvaluator {
                     case OPS.eoFillStroke:
                     case OPS.closeFillStroke:
                     case OPS.closeEOFillStroke:
-                    case OPS.endPath:
-                    {
+                    case OPS.endPath: {
                         const {
                             state: {
                                 pathBuffer,
@@ -32727,6 +33731,7 @@ class PartialEvaluator {
             throw reason;
         });
     }
+
     getTextContent({
                        stream,
                        task,
@@ -32784,6 +33789,7 @@ class PartialEvaluator {
         };
         const twoLastChars = [" ", " "];
         let twoLastCharsPos = 0;
+
         function saveLastChar(char) {
             const nextPos = (twoLastCharsPos + 1) % 2;
             const ret = twoLastChars[twoLastCharsPos] !== " " && twoLastChars[nextPos] === " ";
@@ -32791,13 +33797,16 @@ class PartialEvaluator {
             twoLastCharsPos = nextPos;
             return !keepWhiteSpace && ret;
         }
+
         function shouldAddWhitepsace() {
             return !keepWhiteSpace && twoLastChars[twoLastCharsPos] !== " " && twoLastChars[(twoLastCharsPos + 1) % 2] === " ";
         }
+
         function resetLastChars() {
             twoLastChars[0] = twoLastChars[1] = " ";
             twoLastCharsPos = 0;
         }
+
         const TRACKING_SPACE_FACTOR = 0.102;
         const NOT_A_SPACE_FACTOR = 0.03;
         const NEGATIVE_SPACE_FACTOR = -0.2;
@@ -32812,6 +33821,7 @@ class PartialEvaluator {
         const emptyGStateCache = new LocalGStateCache();
         const preprocessor = new EvaluatorPreprocessor(stream, xref, stateManager);
         let textState;
+
         function pushWhitespace({
                                     width = 0,
                                     height = 0,
@@ -32829,6 +33839,7 @@ class PartialEvaluator {
                 hasEOL: false
             });
         }
+
         function getCurrentTextTransform() {
             const font = textState.font;
             const tsm = [textState.fontSize * textState.textHScale, 0, 0, textState.fontSize, 0, textState.textRise];
@@ -32840,6 +33851,7 @@ class PartialEvaluator {
             }
             return Util.transform(textState.ctm, Util.transform(textState.textMatrix, tsm));
         }
+
         function ensureTextContentItem() {
             if (textContentItem.initialized) {
                 return textContentItem;
@@ -32888,6 +33900,7 @@ class PartialEvaluator {
             textContentItem.initialized = true;
             return textContentItem;
         }
+
         function updateAdvanceScale() {
             if (!textContentItem.initialized) {
                 return;
@@ -32907,6 +33920,7 @@ class PartialEvaluator {
             }
             textContentItem.textAdvanceScale = scaleFactor;
         }
+
         function runBidiTransform(textChunk) {
             let text = textChunk.str.join("");
             if (!disableNormalization) {
@@ -32923,16 +33937,19 @@ class PartialEvaluator {
                 hasEOL: textChunk.hasEOL
             };
         }
+
         async function handleSetFont(fontName, fontRef) {
             const translated = await self.loadFont(fontName, fontRef, resources, task);
             textState.loadedName = translated.loadedName;
             textState.font = translated.font;
             textState.fontMatrix = translated.font.fontMatrix || FONT_IDENTITY_MATRIX;
         }
+
         function applyInverseRotation(x, y, matrix) {
             const scale = Math.hypot(matrix[0], matrix[1]);
             return [(matrix[0] * x + matrix[1] * y) / scale, (matrix[2] * x + matrix[3] * y) / scale];
         }
+
         function compareWithLastPosition(glyphWidth) {
             const currentTransform = getCurrentTextTransform();
             let posX = currentTransform[4];
@@ -33065,6 +34082,7 @@ class PartialEvaluator {
             }
             return true;
         }
+
         function buildTextContentItem({
                                           chars,
                                           extraSpacing
@@ -33154,6 +34172,7 @@ class PartialEvaluator {
                 }
             }
         }
+
         function appendEOL() {
             intersector?.addExtraChar("\n");
             resetLastChars();
@@ -33172,6 +34191,7 @@ class PartialEvaluator {
                 });
             }
         }
+
         function addFakeSpaces(width, transf, textOrientation) {
             if (textOrientation * textContentItem.spaceInFlowMin <= width && width <= textOrientation * textContentItem.spaceInFlowMax) {
                 if (textContentItem.initialized) {
@@ -33197,6 +34217,7 @@ class PartialEvaluator {
             });
             return true;
         }
+
         function flushTextContentItem() {
             if (!textContentItem.initialized || !textContentItem.str) {
                 return;
@@ -33210,6 +34231,7 @@ class PartialEvaluator {
             textContentItem.initialized = false;
             textContentItem.str.length = 0;
         }
+
         function enqueueChunk(batch = false) {
             const length = textContent.items.length;
             if (length === 0) {
@@ -33222,6 +34244,7 @@ class PartialEvaluator {
             textContent.items = [];
             textContent.styles = Object.create(null);
         }
+
         const timeSlotManager = new TimeSlotManager();
         return new Promise(function promiseBody(resolve, reject) {
             const next = function (promise) {
@@ -33561,6 +34584,7 @@ class PartialEvaluator {
             throw reason;
         });
     }
+
     async extractDataStructures(dict, properties) {
         const xref = this.xref;
         let cidToGidBytes;
@@ -33661,6 +34685,7 @@ class PartialEvaluator {
         }
         return properties;
     }
+
     _simpleFontToUnicode(properties, forceGlyphs = false) {
         assert(!properties.composite, "Must be a simple font.");
         const toUnicode = [];
@@ -33740,6 +34765,7 @@ class PartialEvaluator {
         }
         return toUnicode;
     }
+
     async buildToUnicode(properties) {
         properties.hasIncludedToUnicodeMap = properties.toUnicode?.length > 0;
         if (properties.hasIncludedToUnicodeMap) {
@@ -33781,6 +34807,7 @@ class PartialEvaluator {
         }
         return new IdentityToUnicodeMap(properties.firstChar, properties.lastChar);
     }
+
     async readToUnicode(cmapObj) {
         if (!cmapObj) {
             return null;
@@ -33842,6 +34869,7 @@ class PartialEvaluator {
         }
         return null;
     }
+
     readCidToGidMap(glyphsData, toUnicode) {
         const result = [];
         for (let j = 0, jj = glyphsData.length; j < jj; j++) {
@@ -33854,6 +34882,7 @@ class PartialEvaluator {
         }
         return result;
     }
+
     extractWidths(dict, descriptor, properties) {
         const xref = this.xref;
         let glyphsWidths = [];
@@ -33974,10 +35003,12 @@ class PartialEvaluator {
         properties.defaultVMetrics = defaultVMetrics;
         properties.vmetrics = glyphsVMetrics;
     }
+
     isSerifFont(baseFontName) {
         const fontNameWoStyle = baseFontName.split("-", 1)[0];
         return fontNameWoStyle in getSerifFonts() || /serif/gi.test(fontNameWoStyle);
     }
+
     getBaseFontMetrics(name) {
         let defaultWidth = 0;
         let widths = Object.create(null);
@@ -34001,6 +35032,7 @@ class PartialEvaluator {
             widths
         };
     }
+
     buildCharCodeToWidth(widthsByGlyphName, properties) {
         const widths = Object.create(null);
         const differences = properties.differences;
@@ -34012,11 +35044,12 @@ class PartialEvaluator {
             }
             if (charCode in encoding && widthsByGlyphName[encoding[charCode]]) {
                 widths[charCode] = widthsByGlyphName[encoding[charCode]];
-                continue;
+
             }
         }
         return widths;
     }
+
     preEvaluateFont(dict) {
         const baseDict = dict;
         let type = dict.get("Subtype");
@@ -34138,6 +35171,7 @@ class PartialEvaluator {
             hash: hash ? hash.hexdigest() : ""
         };
     }
+
     async translateFont({
                             descriptor,
                             dict,
@@ -34353,6 +35387,7 @@ class PartialEvaluator {
         this.extractWidths(dict, descriptor, newProperties);
         return new Font(fontName.name, fontFile, newProperties, this.options);
     }
+
     static buildFontPaths(font, glyphs, handler, evaluatorOptions) {
         function buildPath(fontChar) {
             const glyphName = `${font.loadedName}_path_${fontChar}`;
@@ -34369,6 +35404,7 @@ class PartialEvaluator {
                 throw reason;
             }
         }
+
         for (const glyph of glyphs) {
             buildPath(glyph.fontChar);
             const accent = glyph.accent;
@@ -34377,6 +35413,7 @@ class PartialEvaluator {
             }
         }
     }
+
     static get fallbackFontDict() {
         const dict = new Dict();
         dict.set("BaseFont", Name.get("Helvetica"));
@@ -34386,9 +35423,11 @@ class PartialEvaluator {
         return shadow(this, "fallbackFontDict", dict);
     }
 }
+
 class TranslatedFont {
     #sent = false;
     #type3Loaded = null;
+
     constructor({
                     loadedName,
                     font,
@@ -34399,6 +35438,7 @@ class TranslatedFont {
         this.dict = dict;
         this.type3Dependencies = font.isType3Font ? new Set() : null;
     }
+
     send(handler) {
         if (this.#sent) {
             return;
@@ -34406,6 +35446,7 @@ class TranslatedFont {
         this.#sent = true;
         handler.send("commonobj", [this.loadedName, "Font", this.font.exportData()]);
     }
+
     fallback(handler, evaluatorOptions) {
         if (!this.font.data) {
             return;
@@ -34413,6 +35454,7 @@ class TranslatedFont {
         this.font.disableFontFace = true;
         PartialEvaluator.buildFontPaths(this.font, this.font.glyphCacheValues, handler, evaluatorOptions);
     }
+
     loadType3Data(evaluator, resources, task) {
         if (this.#type3Loaded) {
             return this.#type3Loaded;
@@ -34478,6 +35520,7 @@ class TranslatedFont {
         });
         return this.#type3Loaded;
     }
+
     #removeType3ColorOperators(operatorList, fontBBoxSize = NaN) {
         const charBBox = Util.normalizeRect(operatorList.argsArray[0].slice(2)),
             width = charBBox[2] - charBBox[0],
@@ -34539,6 +35582,7 @@ class TranslatedFont {
             i++;
         }
     }
+
     #guessType3FontBBox(operatorList) {
         let i = 1;
         const ii = operatorList.length;
@@ -34554,26 +35598,31 @@ class TranslatedFont {
         }
     }
 }
+
 class StateManager {
     constructor(initialState = new EvalState()) {
         this.state = initialState;
         this.stateStack = [];
     }
+
     save() {
         const old = this.state;
         this.stateStack.push(this.state);
         this.state = old.clone();
     }
+
     restore() {
         const prev = this.stateStack.pop();
         if (prev) {
             this.state = prev;
         }
     }
+
     transform(args) {
         this.state.ctm = Util.transform(this.state.ctm, args);
     }
 }
+
 class TextState {
     constructor() {
         this.ctm = new Float32Array(IDENTITY_MATRIX);
@@ -34590,6 +35639,7 @@ class TextState {
         this.textHScale = 1;
         this.textRise = 0;
     }
+
     setTextMatrix(a, b, c, d, e, f) {
         const m = this.textMatrix;
         m[0] = a;
@@ -34599,6 +35649,7 @@ class TextState {
         m[4] = e;
         m[5] = f;
     }
+
     setTextLineMatrix(a, b, c, d, e, f) {
         const m = this.textLineMatrix;
         m[0] = a;
@@ -34608,20 +35659,24 @@ class TextState {
         m[4] = e;
         m[5] = f;
     }
+
     translateTextMatrix(x, y) {
         const m = this.textMatrix;
         m[4] = m[0] * x + m[2] * y + m[4];
         m[5] = m[1] * x + m[3] * y + m[5];
     }
+
     translateTextLineMatrix(x, y) {
         const m = this.textLineMatrix;
         m[4] = m[0] * x + m[2] * y + m[4];
         m[5] = m[1] * x + m[3] * y + m[5];
     }
+
     carriageReturn() {
         this.translateTextLineMatrix(0, -this.leading);
         this.textMatrix = this.textLineMatrix.slice();
     }
+
     clone() {
         const clone = Object.create(this);
         clone.textMatrix = this.textMatrix.slice();
@@ -34630,6 +35685,7 @@ class TextState {
         return clone;
     }
 }
+
 class EvalState {
     constructor() {
         this.ctm = new Float32Array(IDENTITY_MATRIX);
@@ -34642,18 +35698,23 @@ class EvalState {
         this.pathMinMax = new Float32Array([Infinity, Infinity, -Infinity, -Infinity]);
         this.pathBuffer = [];
     }
+
     get fillColorSpace() {
         return this._fillColorSpace;
     }
+
     set fillColorSpace(colorSpace) {
         this._fillColorSpace = this.patternFillColorSpace = colorSpace;
     }
+
     get strokeColorSpace() {
         return this._strokeColorSpace;
     }
+
     set strokeColorSpace(colorSpace) {
         this._strokeColorSpace = this.patternStrokeColorSpace = colorSpace;
     }
+
     clone({
               newPath = false
           } = {}) {
@@ -34665,6 +35726,7 @@ class EvalState {
         return clone;
     }
 }
+
 class EvaluatorPreprocessor {
     static get opMap() {
         return shadow(this, "opMap", Object.assign(Object.create(null), {
@@ -35045,7 +36107,9 @@ class EvaluatorPreprocessor {
             null: null
         }));
     }
+
     static MAX_INVALID_PATH_OPS = 10;
+
     constructor(stream, xref, stateManager = new StateManager()) {
         this.parser = new Parser({
             lexer: new Lexer(stream, EvaluatorPreprocessor.opMap),
@@ -35056,9 +36120,11 @@ class EvaluatorPreprocessor {
         this._isPathOp = false;
         this._numInvalidPathOPS = 0;
     }
+
     get savedStatesDepth() {
         return this.stateManager.stateStack.length;
     }
+
     read(operation) {
         let args = operation.args;
         while (true) {
@@ -35125,6 +36191,7 @@ class EvaluatorPreprocessor {
             }
         }
     }
+
     preprocessCommand(fn, args) {
         switch (fn | 0) {
             case OPS.save:
@@ -35140,19 +36207,14 @@ class EvaluatorPreprocessor {
     }
 }
 
-;// ./src/core/default_appearance.js
-
-
-
-
-
-
+// ./src/core/default_appearance.js
 
 
 class DefaultAppearanceEvaluator extends EvaluatorPreprocessor {
     constructor(str) {
         super(new StringStream(str));
     }
+
     parse() {
         const operation = {
             fn: 0,
@@ -35203,9 +36265,11 @@ class DefaultAppearanceEvaluator extends EvaluatorPreprocessor {
         return result;
     }
 }
+
 function parseDefaultAppearance(str) {
     return new DefaultAppearanceEvaluator(str).parse();
 }
+
 class AppearanceStreamEvaluator extends EvaluatorPreprocessor {
     constructor(stream, evaluatorOptions, xref, globalColorSpaceCache) {
         super(stream);
@@ -35215,6 +36279,7 @@ class AppearanceStreamEvaluator extends EvaluatorPreprocessor {
         this.globalColorSpaceCache = globalColorSpaceCache;
         this.resources = stream.dict?.get("Resources");
     }
+
     parse() {
         const operation = {
             fn: 0,
@@ -35303,9 +36368,11 @@ class AppearanceStreamEvaluator extends EvaluatorPreprocessor {
         delete result.fillColorSpace;
         return result;
     }
+
     get _localColorSpaceCache() {
         return shadow(this, "_localColorSpaceCache", new LocalColorSpaceCache());
     }
+
     get _pdfFunctionFactory() {
         const pdfFunctionFactory = new PDFFunctionFactory({
             xref: this.xref,
@@ -35314,9 +36381,11 @@ class AppearanceStreamEvaluator extends EvaluatorPreprocessor {
         return shadow(this, "_pdfFunctionFactory", pdfFunctionFactory);
     }
 }
+
 function parseAppearanceStream(stream, evaluatorOptions, xref, globalColorSpaceCache) {
     return new AppearanceStreamEvaluator(stream, evaluatorOptions, xref, globalColorSpaceCache).parse();
 }
+
 function getPdfColor(color, isFill) {
     if (color[0] === color[1] && color[1] === color[2]) {
         const gray = color[0] / 255;
@@ -35324,6 +36393,7 @@ function getPdfColor(color, isFill) {
     }
     return Array.from(color, c => numberToString(c / 255)).join(" ") + ` ${isFill ? "rg" : "RG"}`;
 }
+
 function createDefaultAppearance({
                                      fontSize,
                                      fontName,
@@ -35331,6 +36401,7 @@ function createDefaultAppearance({
                                  }) {
     return `/${escapePDFName(fontName)} ${fontSize} Tf ${getPdfColor(fontColor, true)}`;
 }
+
 class FakeUnicodeFont {
     constructor(xref, fontFamily) {
         this.xref = xref;
@@ -35347,6 +36418,7 @@ class FakeUnicodeFont {
         }
         this.fontName = Name.get(`InvalidPDFjsFont_${fontFamily}_${FakeUnicodeFont._fontNameId++}`);
     }
+
     get fontDescriptorRef() {
         if (!FakeUnicodeFont._fontDescriptorRef) {
             const fontDescriptor = new Dict(this.xref);
@@ -35361,6 +36433,7 @@ class FakeUnicodeFont {
         }
         return FakeUnicodeFont._fontDescriptorRef;
     }
+
     get descendantFontRef() {
         const descendantFont = new Dict(this.xref);
         descendantFont.set("BaseFont", this.fontName);
@@ -35400,6 +36473,7 @@ class FakeUnicodeFont {
         descendantFont.set("CIDSystemInfo", cidSystemInfo);
         return this.xref.getNewPersistentRef(descendantFont);
     }
+
     get baseFontRef() {
         const baseFont = new Dict(this.xref);
         baseFont.set("BaseFont", this.fontName);
@@ -35410,6 +36484,7 @@ class FakeUnicodeFont {
         baseFont.setIfName("ToUnicode", "Identity-H");
         return this.xref.getNewPersistentRef(baseFont);
     }
+
     get resources() {
         const resources = new Dict(this.xref);
         const font = new Dict(this.xref);
@@ -35417,11 +36492,13 @@ class FakeUnicodeFont {
         resources.set("Font", font);
         return resources;
     }
+
     _createContext() {
         this.widths = new Map();
         this.ctxMeasure.font = `1000px ${this.fontFamily}`;
         return this.ctxMeasure;
     }
+
     createFontResources(text) {
         const ctx = this._createContext();
         for (const line of text.split(/\r\n?|\n/)) {
@@ -35439,6 +36516,7 @@ class FakeUnicodeFont {
         }
         return this.resources;
     }
+
     static getFirstPositionInfo(rect, rotation, fontSize) {
         const [x1, y1, x2, y2] = rect;
         let w = x2 - x1;
@@ -35454,6 +36532,7 @@ class FakeUnicodeFont {
             matrix: rotation !== 0 ? getRotationMatrix(rotation, h, lineHeight) : undefined
         };
     }
+
     createAppearance(text, rect, rotation, fontSize, bgColor, strokeAlpha) {
         const ctx = this._createContext();
         const lines = [];
@@ -35531,56 +36610,71 @@ class FakeUnicodeFont {
     }
 }
 
-;// ./src/shared/scripting_utils.js
+// ./src/shared/scripting_utils.js
 function makeColorComp(n) {
     return Math.floor(Math.max(0, Math.min(1, n)) * 255).toString(16).padStart(2, "0");
 }
+
 function scaleAndClamp(x) {
     return Math.max(0, Math.min(255, 255 * x));
 }
+
 class ColorConverters {
     static CMYK_G([c, y, m, k]) {
         return ["G", 1 - Math.min(1, 0.3 * c + 0.59 * m + 0.11 * y + k)];
     }
+
     static G_CMYK([g]) {
         return ["CMYK", 0, 0, 0, 1 - g];
     }
+
     static G_RGB([g]) {
         return ["RGB", g, g, g];
     }
+
     static G_rgb([g]) {
         g = scaleAndClamp(g);
         return [g, g, g];
     }
+
     static G_HTML([g]) {
         const G = makeColorComp(g);
         return `#${G}${G}${G}`;
     }
+
     static RGB_G([r, g, b]) {
         return ["G", 0.3 * r + 0.59 * g + 0.11 * b];
     }
+
     static RGB_rgb(color) {
         return color.map(scaleAndClamp);
     }
+
     static RGB_HTML(color) {
         return `#${color.map(makeColorComp).join("")}`;
     }
+
     static T_HTML() {
         return "#00000000";
     }
+
     static T_rgb() {
         return [null];
     }
+
     static CMYK_RGB([c, y, m, k]) {
         return ["RGB", 1 - Math.min(1, c + k), 1 - Math.min(1, m + k), 1 - Math.min(1, y + k)];
     }
+
     static CMYK_rgb([c, y, m, k]) {
         return [scaleAndClamp(1 - Math.min(1, c + k)), scaleAndClamp(1 - Math.min(1, m + k)), scaleAndClamp(1 - Math.min(1, y + k))];
     }
+
     static CMYK_HTML(components) {
         const rgb = this.CMYK_RGB(components).slice(1);
         return this.RGB_HTML(rgb);
     }
+
     static RGB_CMYK([r, g, b]) {
         const c = 1 - r;
         const m = 1 - g;
@@ -35589,10 +36683,11 @@ class ColorConverters {
         return ["CMYK", c, m, y, k];
     }
 }
+
 const DateFormats = ["m/d", "m/d/yy", "mm/dd/yy", "mm/yy", "d-mmm", "d-mmm-yy", "dd-mmm-yy", "yy-mm-dd", "mmm-yy", "mmmm-yy", "mmm d, yyyy", "mmmm d, yyyy", "m/d/yy h:MM tt", "m/d/yy HH:MM"];
 const TimeFormats = ["HH:MM", "h:MM tt", "HH:MM:ss", "h:MM:ss tt"];
 
-;// ./src/core/name_number_tree.js
+// ./src/core/name_number_tree.js
 
 
 class NameOrNumberTree {
@@ -35601,6 +36696,7 @@ class NameOrNumberTree {
         this.xref = xref;
         this._type = type;
     }
+
     getAll() {
         const map = new Map();
         if (!this.root) {
@@ -35639,6 +36735,7 @@ class NameOrNumberTree {
         }
         return map;
     }
+
     getRaw(key) {
         if (!this.root) {
             return null;
@@ -35694,24 +36791,25 @@ class NameOrNumberTree {
         }
         return null;
     }
+
     get(key) {
         return this.xref.fetchIfRef(this.getRaw(key));
     }
 }
+
 class NameTree extends NameOrNumberTree {
     constructor(root, xref) {
         super(root, xref, "Names");
     }
 }
+
 class NumberTree extends NameOrNumberTree {
     constructor(root, xref) {
         super(root, xref, "Nums");
     }
 }
 
-;// ./src/core/cleanup_helper.js
-
-
+// ./src/core/cleanup_helper.js
 
 
 function clearGlobalCaches() {
@@ -35721,8 +36819,7 @@ function clearGlobalCaches() {
     JpxImage.cleanup();
 }
 
-;// ./src/core/file_spec.js
-
+// ./src/core/file_spec.js
 
 
 function pickPlatformItem(dict) {
@@ -35742,11 +36839,14 @@ function pickPlatformItem(dict) {
     }
     return null;
 }
+
 function stripPath(str) {
     return str.substring(str.lastIndexOf("/") + 1);
 }
+
 class FileSpec {
     #contentAvailable = false;
+
     constructor(root, xref, skipContent = false) {
         if (!(root instanceof Dict)) {
             return;
@@ -35767,6 +36867,7 @@ class FileSpec {
             }
         }
     }
+
     get filename() {
         let filename = "";
         const item = pickPlatformItem(this.root);
@@ -35775,6 +36876,7 @@ class FileSpec {
         }
         return shadow(this, "filename", filename || "unnamed");
     }
+
     get content() {
         if (!this.#contentAvailable) {
             return null;
@@ -35793,6 +36895,7 @@ class FileSpec {
         }
         return content;
     }
+
     get description() {
         let description = "";
         const desc = this.root?.get("Desc");
@@ -35801,6 +36904,7 @@ class FileSpec {
         }
         return shadow(this, "description", description);
     }
+
     get serializable() {
         return {
             rawFilename: this.filename,
@@ -35811,7 +36915,7 @@ class FileSpec {
     }
 }
 
-;// ./src/core/xml_parser.js
+// ./src/core/xml_parser.js
 
 const XMLParserErrorCode = {
     NoError: 0,
@@ -35826,10 +36930,12 @@ const XMLParserErrorCode = {
     UnterminatedElement: -9,
     ElementNeverBegun: -10
 };
+
 function isWhitespace(s, index) {
     const ch = s[index];
     return ch === " " || ch === "\n" || ch === "\r" || ch === "\t";
 }
+
 function isWhitespaceString(s) {
     for (let i = 0, ii = s.length; i < ii; i++) {
         if (!isWhitespace(s, i)) {
@@ -35838,6 +36944,7 @@ function isWhitespaceString(s) {
     }
     return true;
 }
+
 class XMLParserBase {
     _resolveEntities(s) {
         return s.replaceAll(/&([^;]+);/g, (all, entity) => {
@@ -35861,14 +36968,17 @@ class XMLParserBase {
             return this.onResolveEntity(entity);
         });
     }
+
     _parseContent(s, start) {
         const attributes = [];
         let pos = start;
+
         function skipWs() {
             while (pos < s.length && isWhitespace(s, pos)) {
                 ++pos;
             }
         }
+
         while (pos < s.length && !isWhitespace(s, pos) && s[pos] !== ">" && s[pos] !== "/") {
             ++pos;
         }
@@ -35910,13 +37020,16 @@ class XMLParserBase {
             parsed: pos - start
         };
     }
+
     _parseProcessingInstruction(s, start) {
         let pos = start;
+
         function skipWs() {
             while (pos < s.length && isWhitespace(s, pos)) {
                 ++pos;
             }
         }
+
         while (pos < s.length && !isWhitespace(s, pos) && s[pos] !== ">" && s[pos] !== "?" && s[pos] !== "/") {
             ++pos;
         }
@@ -35933,6 +37046,7 @@ class XMLParserBase {
             parsed: pos - start
         };
     }
+
     parseXml(s) {
         let i = 0;
         while (i < s.length) {
@@ -36031,18 +37145,36 @@ class XMLParserBase {
             i = j;
         }
     }
+
     onResolveEntity(name) {
         return `&${name};`;
     }
-    onPi(name, value) {}
-    onComment(text) {}
-    onCdata(text) {}
-    onDoctype(doctypeContent) {}
-    onText(text) {}
-    onBeginElement(name, attributes, isEmpty) {}
-    onEndElement(name) {}
-    onError(code) {}
+
+    onPi(name, value) {
+    }
+
+    onComment(text) {
+    }
+
+    onCdata(text) {
+    }
+
+    onDoctype(doctypeContent) {
+    }
+
+    onText(text) {
+    }
+
+    onBeginElement(name, attributes, isEmpty) {
+    }
+
+    onEndElement(name) {
+    }
+
+    onError(code) {
+    }
 }
+
 class SimpleDOMNode {
     constructor(nodeName, nodeValue) {
         this.nodeName = nodeName;
@@ -36052,9 +37184,11 @@ class SimpleDOMNode {
             writable: true
         });
     }
+
     get firstChild() {
         return this.childNodes?.[0];
     }
+
     get nextSibling() {
         const childNodes = this.parentNode.childNodes;
         if (!childNodes) {
@@ -36066,18 +37200,22 @@ class SimpleDOMNode {
         }
         return childNodes[index + 1];
     }
+
     get textContent() {
         if (!this.childNodes) {
             return this.nodeValue || "";
         }
         return this.childNodes.map(child => child.textContent).join("");
     }
+
     get children() {
         return this.childNodes || [];
     }
+
     hasChildNodes() {
         return this.childNodes?.length > 0;
     }
+
     searchNode(paths, pos) {
         if (pos >= paths.length) {
             return this;
@@ -36132,6 +37270,7 @@ class SimpleDOMNode {
             }
         }
     }
+
     dump(buffer) {
         if (this.nodeName === "#text") {
             buffer.push(encodeToXmlString(this.nodeValue));
@@ -36156,6 +37295,7 @@ class SimpleDOMNode {
         }
     }
 }
+
 class SimpleXMLParser extends XMLParserBase {
     constructor({
                     hasAttributes = false,
@@ -36168,6 +37308,7 @@ class SimpleXMLParser extends XMLParserBase {
         this._hasAttributes = hasAttributes;
         this._lowerCaseName = lowerCaseName;
     }
+
     parseFromString(data) {
         this._currentFragment = [];
         this._stack = [];
@@ -36184,6 +37325,7 @@ class SimpleXMLParser extends XMLParserBase {
             documentElement
         };
     }
+
     onText(text) {
         if (isWhitespaceString(text)) {
             return;
@@ -36191,10 +37333,12 @@ class SimpleXMLParser extends XMLParserBase {
         const node = new SimpleDOMNode("#text", text);
         this._currentFragment.push(node);
     }
+
     onCdata(text) {
         const node = new SimpleDOMNode("#text", text);
         this._currentFragment.push(node);
     }
+
     onBeginElement(name, attributes, isEmpty) {
         if (this._lowerCaseName) {
             name = name.toLowerCase();
@@ -36211,6 +37355,7 @@ class SimpleXMLParser extends XMLParserBase {
         this._stack.push(this._currentFragment);
         this._currentFragment = node.childNodes;
     }
+
     onEndElement(name) {
         this._currentFragment = this._stack.pop() || [];
         const lastElement = this._currentFragment.at(-1);
@@ -36222,12 +37367,13 @@ class SimpleXMLParser extends XMLParserBase {
         }
         return lastElement;
     }
+
     onError(code) {
         this._errorCode = code;
     }
 }
 
-;// ./src/core/metadata_parser.js
+// ./src/core/metadata_parser.js
 
 class MetadataParser {
     constructor(data) {
@@ -36242,6 +37388,7 @@ class MetadataParser {
             this._parse(xmlDocument);
         }
     }
+
     _repair(data) {
         return data.replace(/^[^<]+/, "").replaceAll(/>\\376\\377([^<]+)/g, function (all, codes) {
             const bytes = codes.replaceAll(/\\([0-3])([0-7])([0-7])/g, function (code, d1, d2, d3) {
@@ -36273,6 +37420,7 @@ class MetadataParser {
             return charBuf.join("");
         });
     }
+
     _getSequence(entry) {
         const name = entry.nodeName;
         if (name !== "rdf:bag" && name !== "rdf:seq" && name !== "rdf:alt") {
@@ -36280,6 +37428,7 @@ class MetadataParser {
         }
         return entry.childNodes.filter(node => node.nodeName === "rdf:li");
     }
+
     _parseArray(entry) {
         if (!entry.hasChildNodes()) {
             return;
@@ -36288,6 +37437,7 @@ class MetadataParser {
         const sequence = this._getSequence(seqNode) || [];
         this._metadataMap.set(entry.nodeName, sequence.map(node => node.textContent.trim()));
     }
+
     _parse(xmlDocument) {
         let rdf = xmlDocument.documentElement;
         if (rdf.nodeName !== "rdf:rdf") {
@@ -36317,6 +37467,7 @@ class MetadataParser {
             }
         }
     }
+
     get serializable() {
         return {
             parsedData: this._metadataMap,
@@ -36325,9 +37476,7 @@ class MetadataParser {
     }
 }
 
-;// ./src/core/struct_tree.js
-
-
+// ./src/core/struct_tree.js
 
 
 const MAX_DEPTH = 40;
@@ -36338,6 +37487,7 @@ const StructElementType = {
     ANNOTATION: 4,
     ELEMENT: 5
 };
+
 class StructTreeRoot {
     constructor(xref, rootDict, rootRef) {
         this.xref = xref;
@@ -36346,9 +37496,11 @@ class StructTreeRoot {
         this.roleMap = new Map();
         this.structParentIds = null;
     }
+
     init() {
         this.readRoleMap();
     }
+
     #addIdToPage(pageRef, id, type) {
         if (!(pageRef instanceof Ref) || id < 0) {
             return;
@@ -36361,9 +37513,11 @@ class StructTreeRoot {
         }
         ids.push([id, type]);
     }
+
     addAnnotationIdToPage(pageRef, id) {
         this.#addIdToPage(pageRef, id, StructElementType.ANNOTATION);
     }
+
     readRoleMap() {
         const roleMapDict = this.dict.get("RoleMap");
         if (!(roleMapDict instanceof Dict)) {
@@ -36375,6 +37529,7 @@ class StructTreeRoot {
             }
         }
     }
+
     static async canCreateStructureTree({
                                             catalogRef,
                                             pdfManager,
@@ -36412,6 +37567,7 @@ class StructTreeRoot {
         }
         return true;
     }
+
     static async createStructureTree({
                                          newAnnotationsByPage,
                                          xref,
@@ -36453,6 +37609,7 @@ class StructTreeRoot {
             });
         }
     }
+
     async canUpdateStructTree({
                                   pdfManager,
                                   newAnnotationsByPage
@@ -36521,6 +37678,7 @@ class StructTreeRoot {
         }
         return true;
     }
+
     async updateStructureTree({
                                   newAnnotationsByPage,
                                   pdfManager,
@@ -36578,6 +37736,7 @@ class StructTreeRoot {
             });
         }
     }
+
     static async #writeKids({
                                 newAnnotationsByPage,
                                 structTreeRootRef,
@@ -36653,6 +37812,7 @@ class StructTreeRoot {
         }
         return nextKey + 1;
     }
+
     static #writeProperties(tagDict, {
         type,
         title,
@@ -36678,6 +37838,7 @@ class StructTreeRoot {
             tagDict.set("ActualText", stringToAsciiOrUTF16BE(actualText));
         }
     }
+
     static #collectParents({
                                elements,
                                xref,
@@ -36750,6 +37911,7 @@ class StructTreeRoot {
             }
         }
     }
+
     static async #updateParentTag({
                                       structTreeParent,
                                       tagDict,
@@ -36793,6 +37955,7 @@ class StructTreeRoot {
         cachedParentKids.splice(index >= 0 ? index + 1 : cachedParentKids.length, 0, newTagRef);
     }
 }
+
 class StructElementNode {
     constructor(tree, dict) {
         this.tree = tree;
@@ -36801,6 +37964,7 @@ class StructElementNode {
         this.kids = [];
         this.parseKids();
     }
+
     get role() {
         const nameObj = this.dict.get("S");
         const name = nameObj instanceof Name ? nameObj.name : "";
@@ -36809,6 +37973,7 @@ class StructElementNode {
         } = this.tree;
         return root.roleMap.get(name) ?? name;
     }
+
     parseKids() {
         let pageObjId = null;
         const objRef = this.dict.getRaw("Pg");
@@ -36830,6 +37995,7 @@ class StructElementNode {
             }
         }
     }
+
     parseKid(pageObjId, kid) {
         if (Number.isInteger(kid)) {
             if (this.tree.pageDict.objId !== pageObjId) {
@@ -36878,6 +38044,7 @@ class StructElementNode {
         });
     }
 }
+
 class StructElement {
     constructor({
                     type,
@@ -36894,6 +38061,7 @@ class StructElement {
         this.parentNode = null;
     }
 }
+
 class StructTreePage {
     constructor(structTreeRoot, pageDict) {
         this.root = structTreeRoot;
@@ -36902,6 +38070,7 @@ class StructTreePage {
         this.pageDict = pageDict;
         this.nodes = [];
     }
+
     collectObjects(pageRef) {
         if (!this.root || !this.rootDict || !(pageRef instanceof Ref)) {
             return null;
@@ -36924,6 +38093,7 @@ class StructTreePage {
         }
         return map;
     }
+
     parse(pageRef) {
         if (!this.root || !this.rootDict || !(pageRef instanceof Ref)) {
             return;
@@ -36962,6 +38132,7 @@ class StructTreePage {
             }
         }
     }
+
     addNode(dict, map, level = 0) {
         if (level > MAX_DEPTH) {
             warn("StructTree MAX_DEPTH reached.");
@@ -36998,6 +38169,7 @@ class StructTreePage {
         }
         return element;
     }
+
     addTopLevelNode(dict, element) {
         const obj = this.rootDict.get("K");
         if (!obj) {
@@ -37023,6 +38195,7 @@ class StructTreePage {
         }
         return save;
     }
+
     get serializable() {
         function nodeToSerializable(node, parent, level = 0) {
             if (level > MAX_DEPTH) {
@@ -37061,7 +38234,7 @@ class StructTreePage {
                 const kidElement = kid.type === StructElementType.ELEMENT ? kid.parentNode : null;
                 if (kidElement) {
                     nodeToSerializable(kidElement, obj, level + 1);
-                    continue;
+
                 } else if (kid.type === StructElementType.PAGE_CONTENT || kid.type === StructElementType.STREAM_CONTENT) {
                     obj.children.push({
                         type: "content",
@@ -37080,6 +38253,7 @@ class StructTreePage {
                 }
             }
         }
+
         const root = Object.create(null);
         root.children = [];
         root.role = "Root";
@@ -37093,26 +38267,19 @@ class StructTreePage {
     }
 }
 
-;// ./src/core/catalog.js
-
-
-
-
-
-
-
-
-
+// ./src/core/catalog.js
 
 
 const isRef = v => v instanceof Ref;
 const isValidExplicitDest = _isValidExplicitDest.bind(null, isRef, isName);
+
 function fetchDest(dest) {
     if (dest instanceof Dict) {
         dest = dest.get("D");
     }
     return isValidExplicitDest(dest) ? dest : null;
 }
+
 function fetchRemoteDest(action) {
     let dest = action.get("D");
     if (dest) {
@@ -37127,6 +38294,7 @@ function fetchRemoteDest(action) {
     }
     return null;
 }
+
 class Catalog {
     #actualNumPages = null;
     #catDict = null;
@@ -37140,6 +38308,7 @@ class Catalog {
     pageKidsCountCache = new RefSetCache();
     standardFontDataCache = new Map();
     systemFontCache = new Map();
+
     constructor(pdfManager, xref) {
         this.pdfManager = pdfManager;
         this.xref = xref;
@@ -37149,9 +38318,11 @@ class Catalog {
         }
         this.toplevelPagesDict;
     }
+
     cloneDict() {
         return this.#catDict.clone();
     }
+
     get version() {
         const version = this.#catDict.get("Version");
         if (version instanceof Name) {
@@ -37162,14 +38333,17 @@ class Catalog {
         }
         return shadow(this, "version", null);
     }
+
     get lang() {
         const lang = this.#catDict.get("Lang");
         return shadow(this, "lang", lang && typeof lang === "string" ? stringToPDFString(lang) : null);
     }
+
     get needsRendering() {
         const needsRendering = this.#catDict.get("NeedsRendering");
         return shadow(this, "needsRendering", typeof needsRendering === "boolean" ? needsRendering : false);
     }
+
     get collection() {
         let collection = null;
         try {
@@ -37185,6 +38359,7 @@ class Catalog {
         }
         return shadow(this, "collection", collection);
     }
+
     get acroForm() {
         let acroForm = null;
         try {
@@ -37200,10 +38375,12 @@ class Catalog {
         }
         return shadow(this, "acroForm", acroForm);
     }
+
     get acroFormRef() {
         const value = this.#catDict.getRaw("AcroForm");
         return shadow(this, "acroFormRef", value instanceof Ref ? value : null);
     }
+
     get metadata() {
         const streamRef = this.#catDict.getRaw("Metadata");
         if (!(streamRef instanceof Ref)) {
@@ -37230,6 +38407,7 @@ class Catalog {
         }
         return shadow(this, "metadata", metadata);
     }
+
     get markInfo() {
         let markInfo = null;
         try {
@@ -37242,6 +38420,7 @@ class Catalog {
         }
         return shadow(this, "markInfo", markInfo);
     }
+
     #readMarkInfo() {
         const obj = this.#catDict.get("MarkInfo");
         if (!(obj instanceof Dict)) {
@@ -37260,6 +38439,7 @@ class Catalog {
         }
         return markInfo;
     }
+
     get structTreeRoot() {
         let structTree = null;
         try {
@@ -37272,6 +38452,7 @@ class Catalog {
         }
         return shadow(this, "structTreeRoot", structTree);
     }
+
     #readStructTreeRoot() {
         const rawObj = this.#catDict.getRaw("StructTreeRoot");
         const obj = this.xref.fetchIfRef(rawObj);
@@ -37282,6 +38463,7 @@ class Catalog {
         root.init();
         return root;
     }
+
     get toplevelPagesDict() {
         const pagesObj = this.#catDict.get("Pages");
         if (!(pagesObj instanceof Dict)) {
@@ -37289,6 +38471,7 @@ class Catalog {
         }
         return shadow(this, "toplevelPagesDict", pagesObj);
     }
+
     get documentOutline() {
         let obj = null;
         try {
@@ -37301,6 +38484,7 @@ class Catalog {
         }
         return shadow(this, "documentOutline", obj);
     }
+
     #readDocumentOutline() {
         let obj = this.#catDict.get("Outlines");
         if (!(obj instanceof Dict)) {
@@ -37384,6 +38568,7 @@ class Catalog {
         }
         return root.items.length > 0 ? root.items : null;
     }
+
     get permissions() {
         let permissions = null;
         try {
@@ -37396,6 +38581,7 @@ class Catalog {
         }
         return shadow(this, "permissions", permissions);
     }
+
     #readPermissions() {
         const encrypt = this.xref.trailer.get("Encrypt");
         if (!(encrypt instanceof Dict)) {
@@ -37415,6 +38601,7 @@ class Catalog {
         }
         return permissions;
     }
+
     get optionalContentConfig() {
         let config = null;
         try {
@@ -37446,6 +38633,7 @@ class Catalog {
         }
         return shadow(this, "optionalContentConfig", config);
     }
+
     #readOptionalContentGroup(groupRef) {
         const group = this.xref.fetch(groupRef);
         const obj = {
@@ -37502,6 +38690,7 @@ class Catalog {
         }
         return obj;
     }
+
     #readOptionalContentConfig(config, groupRefCache) {
         function parseOnOff(refs) {
             const onParsed = [];
@@ -37514,6 +38703,7 @@ class Catalog {
             }
             return onParsed;
         }
+
         function parseOrder(refs, nestedLevels = 0) {
             if (!Array.isArray(refs)) {
                 return null;
@@ -37548,6 +38738,7 @@ class Catalog {
             }
             return order;
         }
+
         function parseNestedOrder(ref, nestedLevels) {
             if (++nestedLevels > MAX_NESTED_LEVELS) {
                 warn("parseNestedOrder - reached MAX_NESTED_LEVELS.");
@@ -37570,6 +38761,7 @@ class Catalog {
                 order: nestedOrder
             };
         }
+
         function parseRBGroups(rbGroups) {
             if (!Array.isArray(rbGroups)) {
                 return;
@@ -37588,6 +38780,7 @@ class Catalog {
                 }
             }
         }
+
         const xref = this.xref,
             parsedOrderRefs = new RefSet(),
             MAX_NESTED_LEVELS = 10;
@@ -37602,12 +38795,15 @@ class Catalog {
             groups: [...groupRefCache]
         };
     }
+
     setActualNumPages(num = null) {
         this.#actualNumPages = num;
     }
+
     get hasActualNumPages() {
         return this.#actualNumPages !== null;
     }
+
     get _pagesCount() {
         const obj = this.toplevelPagesDict.get("Count");
         if (!Number.isInteger(obj)) {
@@ -37615,9 +38811,11 @@ class Catalog {
         }
         return shadow(this, "_pagesCount", obj);
     }
+
     get numPages() {
         return this.#actualNumPages ?? this._pagesCount;
     }
+
     get destinations() {
         const rawDests = this.#readDests(),
             dests = Object.create(null);
@@ -37640,6 +38838,7 @@ class Catalog {
         }
         return shadow(this, "destinations", dests);
     }
+
     getDestination(id) {
         if (this.hasOwnProperty("destinations")) {
             return this.destinations[id] ?? null;
@@ -37661,6 +38860,7 @@ class Catalog {
         }
         return null;
     }
+
     #readDests() {
         const obj = this.#catDict.get("Names");
         const rawDests = [];
@@ -37672,6 +38872,7 @@ class Catalog {
         }
         return rawDests;
     }
+
     get pageLabels() {
         let obj = null;
         try {
@@ -37684,6 +38885,7 @@ class Catalog {
         }
         return shadow(this, "pageLabels", obj);
     }
+
     #readPageLabels() {
         const obj = this.#catDict.getRaw("PageLabels");
         if (!obj) {
@@ -37762,6 +38964,7 @@ class Catalog {
         }
         return pageLabels;
     }
+
     get pageLayout() {
         const obj = this.#catDict.get("PageLayout");
         let pageLayout = "";
@@ -37778,6 +38981,7 @@ class Catalog {
         }
         return shadow(this, "pageLayout", pageLayout);
     }
+
     get pageMode() {
         const obj = this.#catDict.get("PageMode");
         let pageMode = "UseNone";
@@ -37794,6 +38998,7 @@ class Catalog {
         }
         return shadow(this, "pageMode", pageMode);
     }
+
     get viewerPreferences() {
         const obj = this.#catDict.get("ViewerPreferences");
         if (!(obj instanceof Dict)) {
@@ -37909,6 +39114,7 @@ class Catalog {
         }
         return shadow(this, "viewerPreferences", prefs);
     }
+
     get openAction() {
         const obj = this.#catDict.get("OpenAction");
         const openAction = Object.create(null);
@@ -37934,6 +39140,7 @@ class Catalog {
         }
         return shadow(this, "openAction", objectSize(openAction) > 0 ? openAction : null);
     }
+
     get attachments() {
         const obj = this.#catDict.get("Names");
         let attachments = null;
@@ -37947,6 +39154,7 @@ class Catalog {
         }
         return shadow(this, "attachments", attachments);
     }
+
     get xfaImages() {
         const obj = this.#catDict.get("Names");
         let xfaImages = null;
@@ -37961,9 +39169,11 @@ class Catalog {
         }
         return shadow(this, "xfaImages", xfaImages);
     }
+
     #collectJavaScript() {
         const obj = this.#catDict.get("Names");
         let javaScript = null;
+
         function appendIfJavaScriptDict(name, jsDict) {
             if (!(jsDict instanceof Dict)) {
                 return;
@@ -37982,6 +39192,7 @@ class Catalog {
                 (javaScript ||= new Map()).set(name, js);
             }
         }
+
         if (obj instanceof Dict && obj.has("JavaScript")) {
             const nameTree = new NameTree(obj.getRaw("JavaScript"), this.xref);
             for (const [key, value] of nameTree.getAll()) {
@@ -37994,6 +39205,7 @@ class Catalog {
         }
         return javaScript;
     }
+
     get jsActions() {
         const javaScript = this.#collectJavaScript();
         let actions = collectActions(this.xref, this.#catDict, DocumentActionEventType);
@@ -38009,6 +39221,7 @@ class Catalog {
         }
         return shadow(this, "jsActions", actions);
     }
+
     async cleanup(manuallyTriggered = false) {
         clearGlobalCaches();
         this.globalColorSpaceCache.clear();
@@ -38027,6 +39240,7 @@ class Catalog {
         this.standardFontDataCache.clear();
         this.systemFontCache.clear();
     }
+
     async getPageDict(pageIndex) {
         const nodesToVisit = [this.toplevelPagesDict];
         const visitedNodes = new RefSet();
@@ -38121,6 +39335,7 @@ class Catalog {
         }
         throw new Error(`Page index ${pageIndex} not found.`);
     }
+
     async getAllPageDicts(recoveryMode = false) {
         const {
             ignoreErrors
@@ -38138,12 +39353,14 @@ class Catalog {
             xref = this.xref,
             pageIndexCache = this.pageIndexCache;
         let pageIndex = 0;
+
         function addPageDict(pageDict, pageRef) {
             if (pageRef && !pageIndexCache.has(pageRef)) {
                 pageIndexCache.put(pageRef, pageIndex);
             }
             map.set(pageIndex++, [pageDict, pageRef]);
         }
+
         function addPageError(error) {
             if (error instanceof XRefEntryException && !recoveryMode) {
                 throw error;
@@ -38154,6 +39371,7 @@ class Catalog {
             }
             map.set(pageIndex++, [error, null]);
         }
+
         while (queue.length > 0) {
             const queueItem = queue.at(-1);
             const {
@@ -38219,12 +39437,14 @@ class Catalog {
         }
         return map;
     }
+
     getPageIndex(pageRef) {
         const cachedPageIndex = this.pageIndexCache.get(pageRef);
         if (cachedPageIndex !== undefined) {
             return Promise.resolve(cachedPageIndex);
         }
         const xref = this.xref;
+
         function pagesBeforeRef(kidRef) {
             let total = 0,
                 parentRef;
@@ -38279,6 +39499,7 @@ class Catalog {
                 return Promise.all(kidPromises).then(() => [total, parentRef]);
             });
         }
+
         let total = 0;
         const next = ref => pagesBeforeRef(ref).then(args => {
             if (!args) {
@@ -38291,6 +39512,7 @@ class Catalog {
         });
         return next(pageRef);
     }
+
     get baseUrl() {
         const uri = this.#catDict.get("URI");
         if (uri instanceof Dict) {
@@ -38306,6 +39528,7 @@ class Catalog {
         }
         return shadow(this, "baseUrl", this.pdfManager.docBaseUrl);
     }
+
     static parseDestDictionary({
                                    destDict,
                                    resultObj,
@@ -38490,14 +39713,13 @@ class Catalog {
     }
 }
 
-;// ./src/core/object_loader.js
-
-
+// ./src/core/object_loader.js
 
 
 function mayHaveChildren(value) {
     return value instanceof Ref || value instanceof Dict || value instanceof BaseStream || Array.isArray(value);
 }
+
 function addChildren(node, nodesToVisit) {
     if (node instanceof Dict) {
         node = node.getRawValues();
@@ -38512,13 +39734,16 @@ function addChildren(node, nodesToVisit) {
         }
     }
 }
+
 class ObjectLoader {
     refSet = new RefSet();
+
     constructor(dict, keys, xref) {
         this.dict = dict;
         this.keys = keys;
         this.xref = xref;
     }
+
     async load() {
         const {
             keys,
@@ -38534,6 +39759,7 @@ class ObjectLoader {
         await this.#walk(nodesToVisit);
         this.refSet = null;
     }
+
     async #walk(nodesToVisit) {
         const nodesToRevisit = [];
         const pendingRequests = [];
@@ -38590,6 +39816,7 @@ class ObjectLoader {
             await this.#walk(nodesToRevisit);
         }
     }
+
     static async load(obj, keys, xref) {
         if (xref.stream.isDataLoaded) {
             return;
@@ -38599,7 +39826,7 @@ class ObjectLoader {
     }
 }
 
-;// ./src/core/xfa/symbol_utils.js
+// ./src/core/xfa/symbol_utils.js
 const $acceptWhitespace = Symbol();
 const $addHTML = Symbol();
 const $appendChild = Symbol();
@@ -38669,7 +39896,7 @@ const $toString = Symbol();
 const $toStyle = Symbol();
 const $uid = Symbol("uid");
 
-;// ./src/core/xfa/namespaces.js
+// ./src/core/xfa/namespaces.js
 const $buildXFAObject = Symbol();
 const NamespaceIds = {
     config: {
@@ -38734,7 +39961,7 @@ const NamespaceIds = {
     }
 };
 
-;// ./src/core/xfa/utils.js
+// ./src/core/xfa/utils.js
 
 const dimConverters = {
     pt: x => x,
@@ -38744,12 +39971,14 @@ const dimConverters = {
     px: x => x
 };
 const measurementPattern = /([+-]?\d+\.?\d*)(.*)/;
+
 function stripQuotes(str) {
     if (str.startsWith("'") || str.startsWith('"')) {
         return str.slice(1, -1);
     }
     return str;
 }
+
 function getInteger({
                         data,
                         defaultValue,
@@ -38765,6 +39994,7 @@ function getInteger({
     }
     return defaultValue;
 }
+
 function getFloat({
                       data,
                       defaultValue,
@@ -38780,6 +40010,7 @@ function getFloat({
     }
     return defaultValue;
 }
+
 function getKeyword({
                         data,
                         defaultValue,
@@ -38794,6 +40025,7 @@ function getKeyword({
     }
     return defaultValue;
 }
+
 function getStringOption(data, options) {
     return getKeyword({
         data,
@@ -38801,6 +40033,7 @@ function getStringOption(data, options) {
         validate: k => options.includes(k)
     });
 }
+
 function getMeasurement(str, def = "0") {
     def ||= "0";
     if (!str) {
@@ -38824,6 +40057,7 @@ function getMeasurement(str, def = "0") {
     }
     return value;
 }
+
 function getRatio(data) {
     if (!data) {
         return {
@@ -38847,6 +40081,7 @@ function getRatio(data) {
         den
     };
 }
+
 function getRelevant(data) {
     if (!data) {
         return [];
@@ -38856,6 +40091,7 @@ function getRelevant(data) {
         viewname: e.substring(1)
     }));
 }
+
 function getColor(data, def = [0, 0, 0]) {
     let [r, g, b] = def;
     if (!data) {
@@ -38880,6 +40116,7 @@ function getColor(data, def = [0, 0, 0]) {
         b
     };
 }
+
 function getBBox(data) {
     const def = -1;
     if (!data) {
@@ -38907,32 +40144,37 @@ function getBBox(data) {
         height
     };
 }
+
 class HTMLResult {
     static get FAILURE() {
         return shadow(this, "FAILURE", new HTMLResult(false, null, null, null));
     }
+
     static get EMPTY() {
         return shadow(this, "EMPTY", new HTMLResult(true, null, null, null));
     }
+
     constructor(success, html, bbox, breakNode) {
         this.success = success;
         this.html = html;
         this.bbox = bbox;
         this.breakNode = breakNode;
     }
+
     isBreak() {
         return !!this.breakNode;
     }
+
     static breakNode(node) {
         return new HTMLResult(false, null, null, node);
     }
+
     static success(html, bbox = null) {
         return new HTMLResult(true, html, bbox, null);
     }
 }
 
-;// ./src/core/xfa/fonts.js
-
+// ./src/core/xfa/fonts.js
 
 
 class FontFinder {
@@ -38943,6 +40185,7 @@ class FontFinder {
         this.defaultFont = null;
         this.add(pdfFonts);
     }
+
     add(pdfFonts, reallyMissingFonts = null) {
         for (const pdfFont of pdfFonts) {
             this.addPdfFont(pdfFont);
@@ -38960,6 +40203,7 @@ class FontFinder {
             this.fonts.set(missing, myriad);
         }
     }
+
     addPdfFont(pdfFont) {
         const cssFontInfo = pdfFont.cssFontInfo;
         const name = cssFontInfo.fontFamily;
@@ -38991,9 +40235,11 @@ class FontFinder {
         }
         font[property] = pdfFont;
     }
+
     getDefault() {
         return this.defaultFont;
     }
+
     find(fontName, mustWarn = true) {
         let font = this.fonts.get(fontName) || this.cache.get(fontName);
         if (font) {
@@ -39049,6 +40295,7 @@ class FontFinder {
         return null;
     }
 }
+
 function selectFont(xfaFont, typeface) {
     if (xfaFont.posture === "italic") {
         if (xfaFont.weight === "bold") {
@@ -39060,6 +40307,7 @@ function selectFont(xfaFont, typeface) {
     }
     return typeface.regular;
 }
+
 function fonts_getMetrics(xfaFont, real = false) {
     let pdfFont = null;
     if (xfaFont) {
@@ -39084,9 +40332,10 @@ function fonts_getMetrics(xfaFont, real = false) {
     };
 }
 
-;// ./src/core/xfa/text.js
+// ./src/core/xfa/text.js
 
 const WIDTH_FACTOR = 1.02;
+
 class FontInfo {
     constructor(xfaFont, margin, lineHeight, fontFinder) {
         this.lineHeight = lineHeight;
@@ -39117,6 +40366,7 @@ class FontInfo {
             [this.pdfFont, this.xfaFont] = this.defaultFont(fontFinder);
         }
     }
+
     defaultFont(fontFinder) {
         const font = fontFinder.find("Helvetica", false) || fontFinder.find("Myriad Pro", false) || fontFinder.find("Arial", false) || fontFinder.getDefault();
         if (font?.regular) {
@@ -39141,11 +40391,13 @@ class FontInfo {
         return [null, xfaFont];
     }
 }
+
 class FontSelector {
     constructor(defaultXfaFont, defaultParaMargin, defaultLineHeight, fontFinder) {
         this.fontFinder = fontFinder;
         this.stack = [new FontInfo(defaultXfaFont, defaultParaMargin, defaultLineHeight, fontFinder)];
     }
+
     pushData(xfaFont, margin, lineHeight) {
         const lastFont = this.stack.at(-1);
         for (const name of ["typeface", "posture", "weight", "size", "letterSpacing"]) {
@@ -39164,29 +40416,36 @@ class FontSelector {
         }
         this.stack.push(fontInfo);
     }
+
     popFont() {
         this.stack.pop();
     }
+
     topFont() {
         return this.stack.at(-1);
     }
 }
+
 class TextMeasure {
     constructor(defaultXfaFont, defaultParaMargin, defaultLineHeight, fonts) {
         this.glyphs = [];
         this.fontSelector = new FontSelector(defaultXfaFont, defaultParaMargin, defaultLineHeight, fonts);
         this.extraHeight = 0;
     }
+
     pushData(xfaFont, margin, lineHeight) {
         this.fontSelector.pushData(xfaFont, margin, lineHeight);
     }
+
     popFont(xfaFont) {
         return this.fontSelector.popFont();
     }
+
     addPara() {
         const lastFont = this.fontSelector.topFont();
         this.extraHeight += lastFont.paraMargin.top + lastFont.paraMargin.bottom;
     }
+
     addString(str) {
         if (!str) {
             return;
@@ -39223,6 +40482,7 @@ class TextMeasure {
         }
         this.glyphs.pop();
     }
+
     compute(maxWidth) {
         let lastSpacePos = -1,
             lastSpaceWidth = 0,
@@ -39294,7 +40554,7 @@ class TextMeasure {
     }
 }
 
-;// ./src/core/xfa/som.js
+// ./src/core/xfa/som.js
 
 
 const namePattern = /^[^.[]+/;
@@ -39308,6 +40568,7 @@ const operators = {
 };
 const shortcuts = new Map([["$data", (root, current) => root.datasets ? root.datasets.data : root], ["$record", (root, current) => (root.datasets ? root.datasets.data : root)[$getChildren]()[0]], ["$template", (root, current) => root.template], ["$connectionSet", (root, current) => root.connectionSet], ["$form", (root, current) => root.form], ["$layout", (root, current) => root.layout], ["$host", (root, current) => root.host], ["$dataWindow", (root, current) => root.dataWindow], ["$event", (root, current) => root.event], ["!", (root, current) => root.datasets], ["$xfa", (root, current) => root], ["xfa", (root, current) => root], ["$", (root, current) => current]]);
 const somCache = new WeakMap();
+
 function parseIndex(index) {
     index = index.trim();
     if (index === "*") {
@@ -39315,6 +40576,7 @@ function parseIndex(index) {
     }
     return parseInt(index, 10) || 0;
 }
+
 function parseExpression(expr, dotDotAllowed, noExpr = true) {
     let match = expr.match(namePattern);
     if (!match) {
@@ -39391,6 +40653,7 @@ function parseExpression(expr, dotDotAllowed, noExpr = true) {
     }
     return parsed;
 }
+
 function searchNode(root, container, expr, dotDotAllowed = true, useCache = true) {
     const parsed = parseExpression(expr, dotDotAllowed);
     if (!parsed) {
@@ -39468,6 +40731,7 @@ function searchNode(root, container, expr, dotDotAllowed = true, useCache = true
     }
     return root;
 }
+
 function createDataNode(root, container, expr) {
     const parsed = parseExpression(expr);
     if (!parsed) {
@@ -39527,11 +40791,7 @@ function createDataNode(root, container, expr) {
     return null;
 }
 
-;// ./src/core/xfa/xfa_object.js
-
-
-
-
+// ./src/core/xfa/xfa_object.js
 
 
 const _applyPrototype = Symbol();
@@ -39553,6 +40813,7 @@ const _setAttributes = Symbol();
 const _validator = Symbol();
 let uid = 0;
 const NS_DATASETS = NamespaceIds.datasets.id;
+
 class XFAObject {
     constructor(nsId, name, hasChildren = false) {
         this[$namespaceId] = nsId;
@@ -39563,12 +40824,15 @@ class XFAObject {
         this[$uid] = `${name}${uid++}`;
         this[$globalData] = null;
     }
+
     get isXFAObject() {
         return true;
     }
+
     get isXFAObjectArray() {
         return false;
     }
+
     createNodes(path) {
         let root = this,
             node = null;
@@ -39585,6 +40849,7 @@ class XFAObject {
         }
         return node;
     }
+
     [$onChild](child) {
         if (!this[_hasChildren] || !this[$onChildCheck](child)) {
             return false;
@@ -39613,43 +40878,55 @@ class XFAObject {
         warn(`XFA - node "${this[$nodeName]}"${id} has already enough "${name}"!`);
         return false;
     }
+
     [$onChildCheck](child) {
         return this.hasOwnProperty(child[$nodeName]) && child[$namespaceId] === this[$namespaceId];
     }
+
     [$isNsAgnostic]() {
         return false;
     }
+
     [$acceptWhitespace]() {
         return false;
     }
+
     [$isCDATAXml]() {
         return false;
     }
+
     [$isBindable]() {
         return false;
     }
+
     [$popPara]() {
         if (this.para) {
             this[$getTemplateRoot]()[$extra].paraStack.pop();
         }
     }
+
     [$pushPara]() {
         this[$getTemplateRoot]()[$extra].paraStack.push(this.para);
     }
+
     [$setId](ids) {
         if (this.id && this[$namespaceId] === NamespaceIds.template.id) {
             ids.set(this.id, this);
         }
     }
+
     [$getTemplateRoot]() {
         return this[$globalData].template;
     }
+
     [$isSplittable]() {
         return false;
     }
+
     [$isThereMoreWidth]() {
         return false;
     }
+
     [$appendChild](child) {
         child[_parent] = this;
         this[_children].push(child);
@@ -39657,16 +40934,25 @@ class XFAObject {
             child[$globalData] = this[$globalData];
         }
     }
+
     [$removeChild](child) {
         const i = this[_children].indexOf(child);
         this[_children].splice(i, 1);
     }
+
     [$hasSettableValue]() {
         return this.hasOwnProperty("value");
     }
-    [$setValue](_) {}
-    [$onText](_) {}
-    [$finalize]() {}
+
+    [$setValue](_) {
+    }
+
+    [$onText](_) {
+    }
+
+    [$finalize]() {
+    }
+
     [$clean](builder) {
         delete this[_hasChildren];
         if (this[$cleanup]) {
@@ -39674,9 +40960,11 @@ class XFAObject {
             delete this[$cleanup];
         }
     }
+
     [$indexOf](child) {
         return this[_children].indexOf(child);
     }
+
     [$insertAt](i, child) {
         child[_parent] = this;
         this[_children].splice(i, 0, child);
@@ -39684,18 +40972,22 @@ class XFAObject {
             child[$globalData] = this[$globalData];
         }
     }
+
     [$isTransparent]() {
         return !this.name;
     }
+
     [$lastAttribute]() {
         return "";
     }
+
     [$text]() {
         if (this[_children].length === 0) {
             return this[$content];
         }
         return this[_children].map(c => c[$text]()).join("");
     }
+
     get [_attributeNames]() {
         const proto = Object.getPrototypeOf(this);
         if (!proto._attributes) {
@@ -39709,6 +41001,7 @@ class XFAObject {
         }
         return shadow(this, _attributeNames, proto._attributes);
     }
+
     [$isDescendent](parent) {
         let node = this;
         while (node) {
@@ -39719,18 +41012,22 @@ class XFAObject {
         }
         return false;
     }
+
     [$getParent]() {
         return this[_parent];
     }
+
     [$getSubformParent]() {
         return this[$getParent]();
     }
+
     [$getChildren](name = null) {
         if (!name) {
             return this[_children];
         }
         return this[name];
     }
+
     [$dump]() {
         const dumped = Object.create(null);
         if (this[$content]) {
@@ -39753,18 +41050,22 @@ class XFAObject {
         }
         return dumped;
     }
+
     [$toStyle]() {
         return null;
     }
+
     [$toHTML]() {
         return HTMLResult.EMPTY;
     }
-    *[$getContainedChildren]() {
+
+    * [$getContainedChildren]() {
         for (const node of this[$getChildren]()) {
             yield node;
         }
     }
-    *[_filteredChildrenGenerator](filter, include) {
+
+    * [_filteredChildrenGenerator](filter, include) {
         for (const node of this[$getContainedChildren]()) {
             if (!filter || include === filter.has(node[$nodeName])) {
                 const availableSpace = this[$getAvailableSpace]();
@@ -39776,13 +41077,18 @@ class XFAObject {
             }
         }
     }
+
     [$flushHTML]() {
         return null;
     }
+
     [$addHTML](html, bbox) {
         this[$extra].children.push(html);
     }
-    [$getAvailableSpace]() {}
+
+    [$getAvailableSpace]() {
+    }
+
     [$childrenToHTML]({
                           filter = null,
                           include = true
@@ -39816,19 +41122,23 @@ class XFAObject {
         this[$extra].generator = null;
         return HTMLResult.EMPTY;
     }
+
     [$setSetAttributes](attributes) {
         this[_setAttributes] = new Set(Object.keys(attributes));
     }
+
     [_getUnsetAttributes](protoAttributes) {
         const allAttr = this[_attributeNames];
         const setAttr = this[_setAttributes];
         return [...protoAttributes].filter(x => allAttr.has(x) && !setAttr.has(x));
     }
+
     [$resolvePrototypes](ids, ancestors = new Set()) {
         for (const child of this[_children]) {
             child[_resolvePrototypesHelper](ids, ancestors);
         }
     }
+
     [_resolvePrototypesHelper](ids, ancestors) {
         const proto = this[_getPrototype](ids, ancestors);
         if (proto) {
@@ -39837,6 +41147,7 @@ class XFAObject {
             this[$resolvePrototypes](ids, ancestors);
         }
     }
+
     [_getPrototype](ids, ancestors) {
         const {
             use,
@@ -39895,6 +41206,7 @@ class XFAObject {
         ancestors.delete(proto);
         return proto;
     }
+
     [_applyPrototype](proto, ids, ancestors) {
         if (ancestors.has(proto)) {
             warn(`XFA - Cycle detected in prototypes use.`);
@@ -39949,6 +41261,7 @@ class XFAObject {
             }
         }
     }
+
     static [_cloneAttribute](obj) {
         if (Array.isArray(obj)) {
             return obj.map(x => XFAObject[_cloneAttribute](x));
@@ -39958,6 +41271,7 @@ class XFAObject {
         }
         return obj;
     }
+
     [$clone]() {
         const clone = Object.create(Object.getPrototypeOf(this));
         for (const $symbol of Object.getOwnPropertySymbols(this)) {
@@ -39990,19 +41304,23 @@ class XFAObject {
         }
         return clone;
     }
+
     [$getChildren](name = null) {
         if (!name) {
             return this[_children];
         }
         return this[_children].filter(c => c[$nodeName] === name);
     }
+
     [$getChildrenByClass](name) {
         return this[name];
     }
+
     [$getChildrenByName](name, allTransparent, first = true) {
         return Array.from(this[$getChildrenByNameIt](name, allTransparent, first));
     }
-    *[$getChildrenByNameIt](name, allTransparent, first = true) {
+
+    * [$getChildrenByNameIt](name, allTransparent, first = true) {
         if (name === "parent") {
             yield this[_parent];
             return;
@@ -40023,17 +41341,21 @@ class XFAObject {
         }
     }
 }
+
 class XFAObjectArray {
     constructor(max = Infinity) {
         this[_max] = max;
         this[_children] = [];
     }
+
     get isXFAObject() {
         return false;
     }
+
     get isXFAObjectArray() {
         return true;
     }
+
     push(child) {
         const len = this[_children].length;
         if (len <= this[_max]) {
@@ -40043,24 +41365,30 @@ class XFAObjectArray {
         warn(`XFA - node "${child[$nodeName]}" accepts no more than ${this[_max]} children`);
         return false;
     }
+
     isEmpty() {
         return this[_children].length === 0;
     }
+
     dump() {
         return this[_children].length === 1 ? this[_children][0][$dump]() : this[_children].map(x => x[$dump]());
     }
+
     [$clone]() {
         const clone = new XFAObjectArray(this[_max]);
         clone[_children] = this[_children].map(c => c[$clone]());
         return clone;
     }
+
     get children() {
         return this[_children];
     }
+
     clear() {
         this[_children].length = 0;
     }
 }
+
 class XFAAttribute {
     constructor(node, name, value) {
         this[_parent] = node;
@@ -40069,26 +41397,33 @@ class XFAAttribute {
         this[$consumed] = false;
         this[$uid] = `attribute${uid++}`;
     }
+
     [$getParent]() {
         return this[_parent];
     }
+
     [$isDataValue]() {
         return true;
     }
+
     [$getDataValue]() {
         return this[$content].trim();
     }
+
     [$setValue](value) {
         value = value.value || "";
         this[$content] = value.toString();
     }
+
     [$text]() {
         return this[$content];
     }
+
     [$isDescendent](parent) {
         return this[_parent] === parent || this[_parent][$isDescendent](parent);
     }
 }
+
 class XmlObject extends XFAObject {
     constructor(nsId, name, attributes = {}) {
         super(nsId, name);
@@ -40113,6 +41448,7 @@ class XmlObject extends XFAObject {
         }
         this[$consumed] = false;
     }
+
     [$toString](buf) {
         const tagName = this[$nodeName];
         if (tagName === "#text") {
@@ -40151,6 +41487,7 @@ class XmlObject extends XFAObject {
         }
         buf.push(`</${prefix}${utf8TagName}>`);
     }
+
     [$onChild](child) {
         if (this[$content]) {
             const node = new XmlObject(this[$namespaceId], "#text");
@@ -40161,9 +41498,11 @@ class XmlObject extends XFAObject {
         this[$appendChild](child);
         return true;
     }
+
     [$onText](str) {
         this[$content] += str;
     }
+
     [$finalize]() {
         if (this[$content] && this[_children].length > 0) {
             const node = new XmlObject(this[$namespaceId], "#text");
@@ -40172,6 +41511,7 @@ class XmlObject extends XFAObject {
             delete this[$content];
         }
     }
+
     [$toHTML]() {
         if (this[$nodeName] === "#text") {
             return HTMLResult.success({
@@ -40181,15 +41521,18 @@ class XmlObject extends XFAObject {
         }
         return HTMLResult.EMPTY;
     }
+
     [$getChildren](name = null) {
         if (!name) {
             return this[_children];
         }
         return this[_children].filter(c => c[$nodeName] === name);
     }
+
     [$getAttributes]() {
         return this[_attributes];
     }
+
     [$getChildrenByClass](name) {
         const value = this[_attributes].get(name);
         if (value !== undefined) {
@@ -40197,7 +41540,8 @@ class XmlObject extends XFAObject {
         }
         return this[$getChildren](name);
     }
-    *[$getChildrenByNameIt](name, allTransparent) {
+
+    * [$getChildrenByNameIt](name, allTransparent) {
         const value = this[_attributes].get(name);
         if (value) {
             yield value;
@@ -40211,7 +41555,8 @@ class XmlObject extends XFAObject {
             }
         }
     }
-    *[$getAttributeIt](name, skipConsumed) {
+
+    * [$getAttributeIt](name, skipConsumed) {
         const value = this[_attributes].get(name);
         if (value && (!skipConsumed || !value[$consumed])) {
             yield value;
@@ -40220,7 +41565,8 @@ class XmlObject extends XFAObject {
             yield* child[$getAttributeIt](name, skipConsumed);
         }
     }
-    *[$getRealChildrenByNameIt](name, allTransparent, skipConsumed) {
+
+    * [$getRealChildrenByNameIt](name, allTransparent, skipConsumed) {
         for (const child of this[_children]) {
             if (child[$nodeName] === name && (!skipConsumed || !child[$consumed])) {
                 yield child;
@@ -40230,12 +41576,14 @@ class XmlObject extends XFAObject {
             }
         }
     }
+
     [$isDataValue]() {
         if (this[_dataValue] === null) {
             return this[_children].length === 0 || this[_children][0][$namespaceId] === NamespaceIds.xhtml.id;
         }
         return this[_dataValue];
     }
+
     [$getDataValue]() {
         if (this[_dataValue] === null) {
             if (this[_children].length === 0) {
@@ -40248,10 +41596,12 @@ class XmlObject extends XFAObject {
         }
         return this[$content].trim();
     }
+
     [$setValue](value) {
         value = value.value || "";
         this[$content] = value.toString();
     }
+
     [$dump](hasNS = false) {
         const dumped = Object.create(null);
         if (hasNS) {
@@ -40272,21 +41622,27 @@ class XmlObject extends XFAObject {
         return dumped;
     }
 }
+
 class ContentObject extends XFAObject {
     constructor(nsId, name) {
         super(nsId, name);
         this[$content] = "";
     }
+
     [$onText](text) {
         this[$content] += text;
     }
-    [$finalize]() {}
+
+    [$finalize]() {
+    }
 }
+
 class OptionObject extends ContentObject {
     constructor(nsId, name, options) {
         super(nsId, name);
         this[_options] = options;
     }
+
     [$finalize]() {
         this[$content] = getKeyword({
             data: this[$content],
@@ -40294,22 +41650,26 @@ class OptionObject extends ContentObject {
             validate: k => this[_options].includes(k)
         });
     }
+
     [$clean](builder) {
         super[$clean](builder);
         delete this[_options];
     }
 }
+
 class StringObject extends ContentObject {
     [$finalize]() {
         this[$content] = this[$content].trim();
     }
 }
+
 class IntegerObject extends ContentObject {
     constructor(nsId, name, defaultValue, validator) {
         super(nsId, name);
         this[_defaultValue] = defaultValue;
         this[_validator] = validator;
     }
+
     [$finalize]() {
         this[$content] = getInteger({
             data: this[$content],
@@ -40317,28 +41677,27 @@ class IntegerObject extends ContentObject {
             validate: this[_validator]
         });
     }
+
     [$clean](builder) {
         super[$clean](builder);
         delete this[_defaultValue];
         delete this[_validator];
     }
 }
+
 class Option01 extends IntegerObject {
     constructor(nsId, name) {
         super(nsId, name, 0, n => n === 1);
     }
 }
+
 class Option10 extends IntegerObject {
     constructor(nsId, name) {
         super(nsId, name, 1, n => n === 0);
     }
 }
 
-;// ./src/core/xfa/html_utils.js
-
-
-
-
+// ./src/core/xfa/html_utils.js
 
 
 function measureToString(m) {
@@ -40347,6 +41706,7 @@ function measureToString(m) {
     }
     return Number.isInteger(m) ? `${m}px` : `${m.toFixed(2)}px`;
 }
+
 const converters = {
     anchorType(node, style) {
         const parent = node[$getSubformParent]();
@@ -40466,6 +41826,7 @@ const converters = {
         }
     }
 };
+
 function setMinMaxDimensions(node, style) {
     const parent = node[$getSubformParent]();
     if (parent.layout === "position") {
@@ -40483,6 +41844,7 @@ function setMinMaxDimensions(node, style) {
         }
     }
 }
+
 function layoutText(text, xfaFont, margin, lineHeight, fontFinder, width) {
     const measure = new TextMeasure(xfaFont, margin, lineHeight, fontFinder);
     if (typeof text === "string") {
@@ -40492,6 +41854,7 @@ function layoutText(text, xfaFont, margin, lineHeight, fontFinder, width) {
     }
     return measure.compute(width);
 }
+
 function layoutNode(node, availableSpace) {
     let height = null;
     let width = null;
@@ -40554,6 +41917,7 @@ function layoutNode(node, availableSpace) {
         isBroken
     };
 }
+
 function computeBbox(node, html, availableSpace) {
     let bbox;
     if (node.w !== "" && node.h !== "") {
@@ -40586,6 +41950,7 @@ function computeBbox(node, html, availableSpace) {
     }
     return bbox;
 }
+
 function fixDimensions(node) {
     const parent = node[$getSubformParent]();
     if (parent.layout?.includes("row")) {
@@ -40610,6 +41975,7 @@ function fixDimensions(node) {
         }
     }
 }
+
 function layoutClass(node) {
     switch (node.layout) {
         case "position":
@@ -40630,6 +41996,7 @@ function layoutClass(node) {
             return "xfaPosition";
     }
 }
+
 function toStyle(node, ...names) {
     const style = Object.create(null);
     for (const name of names) {
@@ -40652,6 +42019,7 @@ function toStyle(node, ...names) {
     }
     return style;
 }
+
 function createWrapper(node, html) {
     const {
         attributes
@@ -40737,6 +42105,7 @@ function createWrapper(node, html) {
     }
     return wrapper;
 }
+
 function fixTextIndent(styles) {
     const indent = getMeasurement(styles.textIndent, "0px");
     if (indent >= 0) {
@@ -40747,6 +42116,7 @@ function fixTextIndent(styles) {
     const padding = getMeasurement(styles[name], "0px");
     styles[name] = `${padding - indent}px`;
 }
+
 function setAccess(node, classNames) {
     switch (node.access) {
         case "nonInteractive":
@@ -40760,13 +42130,16 @@ function setAccess(node, classNames) {
             break;
     }
 }
+
 function isPrintOnly(node) {
     return node.relevant.length > 0 && !node.relevant[0].excluded && node.relevant[0].viewname === "print";
 }
+
 function getCurrentPara(node) {
     const stack = node[$getTemplateRoot]()[$extra].paraStack;
     return stack.length ? stack.at(-1) : null;
 }
+
 function setPara(node, nodeStyle, value) {
     if (value.attributes.class?.includes("xfaRich")) {
         if (nodeStyle) {
@@ -40802,6 +42175,7 @@ function setPara(node, nodeStyle, value) {
         }
     }
 }
+
 function setFontFamily(xfaFont, node, fontFinder, style) {
     if (!fontFinder) {
         delete style.fontFamily;
@@ -40830,6 +42204,7 @@ function setFontFamily(xfaFont, node, fontFinder, style) {
         }
     }
 }
+
 function fixURL(str) {
     const absoluteUrl = createValidAbsoluteUrl(str, null, {
         addDefaultProtocol: true,
@@ -40838,8 +42213,7 @@ function fixURL(str) {
     return absoluteUrl ? absoluteUrl.href : null;
 }
 
-;// ./src/core/xfa/layout.js
-
+// ./src/core/xfa/layout.js
 
 
 function createLine(node, children) {
@@ -40851,6 +42225,7 @@ function createLine(node, children) {
         children
     };
 }
+
 function flushHTML(node) {
     if (!node[$extra]) {
         return null;
@@ -40876,13 +42251,13 @@ function flushHTML(node) {
     }
     return html;
 }
+
 function addHTML(node, html, bbox) {
     const extra = node[$extra];
     const availableSpace = extra.availableSpace;
     const [x, y, w, h] = bbox;
     switch (node.layout) {
-        case "position":
-        {
+        case "position": {
             extra.width = Math.max(extra.width, x + w);
             extra.height = Math.max(extra.height, y + h);
             extra.children.push(html);
@@ -40909,8 +42284,7 @@ function addHTML(node, html, bbox) {
             extra.width = Math.max(extra.width, extra.currentWidth);
             break;
         case "rl-row":
-        case "row":
-        {
+        case "row": {
             extra.children.push(html);
             extra.width += w;
             extra.height = Math.max(extra.height, h);
@@ -40920,15 +42294,13 @@ function addHTML(node, html, bbox) {
             }
             break;
         }
-        case "table":
-        {
+        case "table": {
             extra.width = MathClamp(w, extra.width, availableSpace.width);
             extra.height += h;
             extra.children.push(html);
             break;
         }
-        case "tb":
-        {
+        case "tb": {
             extra.width = MathClamp(w, extra.width, availableSpace.width);
             extra.height += h;
             extra.children.push(html);
@@ -40936,6 +42308,7 @@ function addHTML(node, html, bbox) {
         }
     }
 }
+
 function getAvailableSpace(node) {
     const availableSpace = node[$extra].availableSpace;
     const marginV = node.margin ? node.margin.topInset + node.margin.bottomInset : 0;
@@ -40971,6 +42344,7 @@ function getAvailableSpace(node) {
             return availableSpace;
     }
 }
+
 function getTransformedBBox(node) {
     let w = node.w === "" ? NaN : node.w;
     let h = node.h === "" ? NaN : node.h;
@@ -41021,6 +42395,7 @@ function getTransformedBBox(node) {
     }
     return [node.x + x + Math.min(0, w), node.y + y + Math.min(0, h), Math.abs(w), Math.abs(h)];
 }
+
 function checkDimensions(node, space) {
     if (node[$getTemplateRoot]()[$extra].firstUnsplittable === null) {
         return true;
@@ -41107,15 +42482,7 @@ function checkDimensions(node, space) {
     }
 }
 
-;// ./src/core/xfa/template.js
-
-
-
-
-
-
-
-
+// ./src/core/xfa/template.js
 
 
 const TEMPLATE_NS_ID = NamespaceIds.template.id;
@@ -41126,6 +42493,7 @@ const DEFAULT_TAB_INDEX = 5000;
 const HEADING_PATTERN = /^H(\d+)$/;
 const MIMES = new Set(["image/gif", "image/jpeg", "image/jpg", "image/pjpeg", "image/png", "image/apng", "image/x-png", "image/bmp", "image/x-ms-bmp", "image/tiff", "image/tif", "application/octet-stream"]);
 const IMAGES_HEADERS = [[[0x42, 0x4d], "image/bmp"], [[0xff, 0xd8, 0xff], "image/jpeg"], [[0x49, 0x49, 0x2a, 0x00], "image/tiff"], [[0x4d, 0x4d, 0x00, 0x2a], "image/tiff"], [[0x47, 0x49, 0x46, 0x38, 0x39, 0x61], "image/gif"], [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], "image/png"]];
+
 function getBorderDims(node) {
     if (!node || !node.border) {
         return {
@@ -41145,9 +42513,11 @@ function getBorderDims(node) {
         h: borderExtra.widths[1] + borderExtra.widths[3] + borderExtra.insets[1] + borderExtra.insets[3]
     };
 }
+
 function hasMargin(node) {
     return node.margin && (node.margin.topInset || node.margin.rightInset || node.margin.bottomInset || node.margin.leftInset);
 }
+
 function _setValue(templateNode, value) {
     if (!templateNode.value) {
         const nodeValue = new Value({});
@@ -41156,6 +42526,7 @@ function _setValue(templateNode, value) {
     }
     templateNode.value[$setValue](value);
 }
+
 function* getContainedChildren(node) {
     for (const child of node[$getChildren]()) {
         if (child instanceof SubformSet) {
@@ -41165,9 +42536,11 @@ function* getContainedChildren(node) {
         yield child;
     }
 }
+
 function isRequired(node) {
     return node.validate?.nullTest === "error";
 }
+
 function setTabIndex(node) {
     while (node) {
         if (!node.traversal) {
@@ -41197,6 +42570,7 @@ function setTabIndex(node) {
         node = ref[0];
     }
 }
+
 function applyAssist(obj, attributes) {
     const assist = obj.assist;
     if (assist) {
@@ -41224,6 +42598,7 @@ function applyAssist(obj, attributes) {
         }
     }
 }
+
 function ariaLabel(obj) {
     if (!obj.assist) {
         return null;
@@ -41237,6 +42612,7 @@ function ariaLabel(obj) {
     }
     return null;
 }
+
 function valueToHtml(value) {
     return HTMLResult.success({
         name: "div",
@@ -41253,6 +42629,7 @@ function valueToHtml(value) {
         }]
     });
 }
+
 function setFirstUnsplittable(node) {
     const root = node[$getTemplateRoot]();
     if (root[$extra].firstUnsplittable === null) {
@@ -41260,12 +42637,14 @@ function setFirstUnsplittable(node) {
         root[$extra].noLayoutFailure = true;
     }
 }
+
 function unsetFirstUnsplittable(node) {
     const root = node[$getTemplateRoot]();
     if (root[$extra].firstUnsplittable === node) {
         root[$extra].noLayoutFailure = false;
     }
 }
+
 function handleBreak(node) {
     if (node[$extra]) {
         return false;
@@ -41329,6 +42708,7 @@ function handleBreak(node) {
     node[$extra].index = index;
     return true;
 }
+
 function handleOverflow(node, extraNode, space) {
     const root = node[$getTemplateRoot]();
     const saved = root[$extra].noLayoutFailure;
@@ -41340,6 +42720,7 @@ function handleOverflow(node, extraNode, space) {
     root[$extra].noLayoutFailure = saved;
     extraNode[$getSubformParent] = savedMethod;
 }
+
 class AppearanceFilter extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "appearanceFilter");
@@ -41349,6 +42730,7 @@ class AppearanceFilter extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Arc extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "arc", true);
@@ -41374,6 +42756,7 @@ class Arc extends XFAObject {
         this.edge = null;
         this.fill = null;
     }
+
     [$toHTML]() {
         const edge = this.edge || new Edge({});
         const edgeStyle = edge[$toStyle]();
@@ -41448,6 +42831,7 @@ class Arc extends XFAObject {
         return HTMLResult.success(svg);
     }
 }
+
 class Area extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "area", true);
@@ -41473,24 +42857,30 @@ class Area extends XFAObject {
         this.subform = new XFAObjectArray();
         this.subformSet = new XFAObjectArray();
     }
-    *[$getContainedChildren]() {
+
+    * [$getContainedChildren]() {
         yield* getContainedChildren(this);
     }
+
     [$isTransparent]() {
         return true;
     }
+
     [$isBindable]() {
         return true;
     }
+
     [$addHTML](html, bbox) {
         const [x, y, w, h] = bbox;
         this[$extra].width = Math.max(this[$extra].width, x + w);
         this[$extra].height = Math.max(this[$extra].height, y + h);
         this[$extra].children.push(html);
     }
+
     [$getAvailableSpace]() {
         return this[$extra].availableSpace;
     }
+
     [$toHTML](availableSpace) {
         const style = toStyle(this, "position");
         const attributes = {
@@ -41534,6 +42924,7 @@ class Area extends XFAObject {
         return HTMLResult.success(html, bbox);
     }
 }
+
 class Assist extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "assist", true);
@@ -41544,10 +42935,12 @@ class Assist extends XFAObject {
         this.speak = null;
         this.toolTip = null;
     }
+
     [$toHTML]() {
         return this.toolTip?.[$content] || null;
     }
 }
+
 class Barcode extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "barcode", true);
@@ -41604,6 +42997,7 @@ class Barcode extends XFAObject {
         this.extras = null;
     }
 }
+
 class Bind extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "bind", true);
@@ -41612,6 +43006,7 @@ class Bind extends XFAObject {
         this.picture = null;
     }
 }
+
 class BindItems extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "bindItems");
@@ -41621,6 +43016,7 @@ class BindItems extends XFAObject {
         this.valueRef = attributes.valueRef || "";
     }
 }
+
 class Bookend extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "bookend");
@@ -41631,6 +43027,7 @@ class Bookend extends XFAObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class BooleanElement extends Option01 {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "boolean");
@@ -41639,10 +43036,12 @@ class BooleanElement extends Option01 {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$toHTML](availableSpace) {
         return valueToHtml(this[$content] === 1 ? "1" : "0");
     }
 }
+
 class Border extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "border", true);
@@ -41659,6 +43058,7 @@ class Border extends XFAObject {
         this.fill = null;
         this.margin = null;
     }
+
     [$getExtra]() {
         if (!this[$extra]) {
             const edges = this.edge.children.slice();
@@ -41684,6 +43084,7 @@ class Border extends XFAObject {
         }
         return this[$extra];
     }
+
     [$toStyle]() {
         const {
             edges
@@ -41727,6 +43128,7 @@ class Border extends XFAObject {
         return style;
     }
 }
+
 class Break extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "break", true);
@@ -41750,6 +43152,7 @@ class Break extends XFAObject {
         this.extras = null;
     }
 }
+
 class BreakAfter extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "breakAfter", true);
@@ -41768,6 +43171,7 @@ class BreakAfter extends XFAObject {
         this.script = null;
     }
 }
+
 class BreakBefore extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "breakBefore", true);
@@ -41785,11 +43189,13 @@ class BreakBefore extends XFAObject {
         this.usehref = attributes.usehref || "";
         this.script = null;
     }
+
     [$toHTML](availableSpace) {
         this[$extra] = {};
         return HTMLResult.FAILURE;
     }
 }
+
 class Button extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "button", true);
@@ -41799,6 +43205,7 @@ class Button extends XFAObject {
         this.usehref = attributes.usehref || "";
         this.extras = null;
     }
+
     [$toHTML](availableSpace) {
         const parent = this[$getParent]();
         const grandpa = parent[$getParent]();
@@ -41838,6 +43245,7 @@ class Button extends XFAObject {
         return HTMLResult.success(htmlButton);
     }
 }
+
 class Calculate extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "calculate", true);
@@ -41850,6 +43258,7 @@ class Calculate extends XFAObject {
         this.script = null;
     }
 }
+
 class Caption extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "caption", true);
@@ -41865,9 +43274,11 @@ class Caption extends XFAObject {
         this.para = null;
         this.value = null;
     }
+
     [$setValue](value) {
         _setValue(this, value);
     }
+
     [$getExtra](availableSpace) {
         if (!this[$extra]) {
             let {
@@ -41892,6 +43303,7 @@ class Caption extends XFAObject {
         }
         return this[$extra];
     }
+
     [$toHTML](availableSpace) {
         if (!this.value) {
             return HTMLResult.EMPTY;
@@ -41957,6 +43369,7 @@ class Caption extends XFAObject {
         });
     }
 }
+
 class Certificate extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "certificate");
@@ -41966,6 +43379,7 @@ class Certificate extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Certificates extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "certificates", true);
@@ -41983,6 +43397,7 @@ class Certificates extends XFAObject {
         this.subjectDNs = null;
     }
 }
+
 class CheckButton extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "checkButton", true);
@@ -41996,6 +43411,7 @@ class CheckButton extends XFAObject {
         this.extras = null;
         this.margin = null;
     }
+
     [$toHTML](availableSpace) {
         const style = toStyle(this, "margin");
         const size = measureToString(this.size);
@@ -42055,6 +43471,7 @@ class CheckButton extends XFAObject {
         });
     }
 }
+
 class ChoiceList extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "choiceList", true);
@@ -42072,6 +43489,7 @@ class ChoiceList extends XFAObject {
         this.extras = null;
         this.margin = null;
     }
+
     [$toHTML](availableSpace) {
         const style = toStyle(this, "border", "margin");
         const ui = this[$getParent]();
@@ -42146,6 +43564,7 @@ class ChoiceList extends XFAObject {
         });
     }
 }
+
 class Color extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "color", true);
@@ -42156,13 +43575,16 @@ class Color extends XFAObject {
         this.value = attributes.value ? getColor(attributes.value) : "";
         this.extras = null;
     }
+
     [$hasSettableValue]() {
         return false;
     }
+
     [$toStyle]() {
         return this.value ? Util.makeHexColor(this.value.r, this.value.g, this.value.b) : null;
     }
 }
+
 class Comb extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "comb");
@@ -42176,6 +43598,7 @@ class Comb extends XFAObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Connect extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "connect", true);
@@ -42188,6 +43611,7 @@ class Connect extends XFAObject {
         this.picture = null;
     }
 }
+
 class ContentArea extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "contentArea", true);
@@ -42203,6 +43627,7 @@ class ContentArea extends XFAObject {
         this.desc = null;
         this.extras = null;
     }
+
     [$toHTML](availableSpace) {
         const left = measureToString(this.x);
         const top = measureToString(this.y);
@@ -42227,6 +43652,7 @@ class ContentArea extends XFAObject {
         });
     }
 }
+
 class Corner extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "corner", true);
@@ -42246,12 +43672,14 @@ class Corner extends XFAObject {
         this.color = null;
         this.extras = null;
     }
+
     [$toStyle]() {
         const style = toStyle(this, "visibility");
         style.radius = measureToString(this.join === "square" ? 0 : this.radius);
         return style;
     }
 }
+
 class DateElement extends ContentObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "date");
@@ -42260,14 +43688,17 @@ class DateElement extends ContentObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$finalize]() {
         const date = this[$content].trim();
         this[$content] = date ? new Date(date) : null;
     }
+
     [$toHTML](availableSpace) {
         return valueToHtml(this[$content] ? this[$content].toString() : "");
     }
 }
+
 class DateTime extends ContentObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "dateTime");
@@ -42276,14 +43707,17 @@ class DateTime extends ContentObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$finalize]() {
         const date = this[$content].trim();
         this[$content] = date ? new Date(date) : null;
     }
+
     [$toHTML](availableSpace) {
         return valueToHtml(this[$content] ? this[$content].toString() : "");
     }
 }
+
 class DateTimeEdit extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "dateTimeEdit", true);
@@ -42297,6 +43731,7 @@ class DateTimeEdit extends XFAObject {
         this.extras = null;
         this.margin = null;
     }
+
     [$toHTML](availableSpace) {
         const style = toStyle(this, "border", "font", "margin");
         const field = this[$getParent]()[$getParent]();
@@ -42325,6 +43760,7 @@ class DateTimeEdit extends XFAObject {
         });
     }
 }
+
 class Decimal extends ContentObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "decimal");
@@ -42343,14 +43779,17 @@ class Decimal extends ContentObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$finalize]() {
         const number = parseFloat(this[$content].trim());
         this[$content] = isNaN(number) ? null : number;
     }
+
     [$toHTML](availableSpace) {
         return valueToHtml(this[$content] !== null ? this[$content].toString() : "");
     }
 }
+
 class DefaultUi extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "defaultUi", true);
@@ -42360,6 +43799,7 @@ class DefaultUi extends XFAObject {
         this.extras = null;
     }
 }
+
 class Desc extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "desc", true);
@@ -42378,6 +43818,7 @@ class Desc extends XFAObject {
         this.time = new XFAObjectArray();
     }
 }
+
 class DigestMethod extends OptionObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "digestMethod", ["", "SHA1", "SHA256", "SHA512", "RIPEMD160"]);
@@ -42386,6 +43827,7 @@ class DigestMethod extends OptionObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class DigestMethods extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "digestMethods", true);
@@ -42396,6 +43838,7 @@ class DigestMethods extends XFAObject {
         this.digestMethod = new XFAObjectArray();
     }
 }
+
 class Draw extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "draw", true);
@@ -42440,9 +43883,11 @@ class Draw extends XFAObject {
         this.value = null;
         this.setProperty = new XFAObjectArray();
     }
+
     [$setValue](value) {
         _setValue(this, value);
     }
+
     [$toHTML](availableSpace) {
         setTabIndex(this);
         if (this.presence === "hidden" || this.presence === "inactive") {
@@ -42518,6 +43963,7 @@ class Draw extends XFAObject {
         return HTMLResult.success(createWrapper(this, html), bbox);
     }
 }
+
 class Edge extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "edge", true);
@@ -42531,6 +43977,7 @@ class Edge extends XFAObject {
         this.color = null;
         this.extras = null;
     }
+
     [$toStyle]() {
         const style = toStyle(this, "visibility");
         Object.assign(style, {
@@ -42575,6 +44022,7 @@ class Edge extends XFAObject {
         return style;
     }
 }
+
 class Encoding extends OptionObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "encoding", ["adbe.x509.rsa_sha1", "adbe.pkcs7.detached", "adbe.pkcs7.sha1"]);
@@ -42583,6 +44031,7 @@ class Encoding extends OptionObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Encodings extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "encodings", true);
@@ -42593,6 +44042,7 @@ class Encodings extends XFAObject {
         this.encoding = new XFAObjectArray();
     }
 }
+
 class Encrypt extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "encrypt", true);
@@ -42602,6 +44052,7 @@ class Encrypt extends XFAObject {
         this.certificate = null;
     }
 }
+
 class EncryptData extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "encryptData", true);
@@ -42614,6 +44065,7 @@ class EncryptData extends XFAObject {
         this.manifest = null;
     }
 }
+
 class Encryption extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "encryption", true);
@@ -42624,6 +44076,7 @@ class Encryption extends XFAObject {
         this.certificate = new XFAObjectArray();
     }
 }
+
 class EncryptionMethod extends OptionObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "encryptionMethod", ["", "AES256-CBC", "TRIPLEDES-CBC", "AES128-CBC", "AES192-CBC"]);
@@ -42632,6 +44085,7 @@ class EncryptionMethod extends OptionObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class EncryptionMethods extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "encryptionMethods", true);
@@ -42642,6 +44096,7 @@ class EncryptionMethods extends XFAObject {
         this.encryptionMethod = new XFAObjectArray();
     }
 }
+
 class Event extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "event", true);
@@ -42660,6 +44115,7 @@ class Event extends XFAObject {
         this.submit = null;
     }
 }
+
 class ExData extends ContentObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "exData");
@@ -42677,9 +44133,11 @@ class ExData extends ContentObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$isCDATAXml]() {
         return this.contentType === "text/html";
     }
+
     [$onChild](child) {
         if (this.contentType === "text/html" && child[$namespaceId] === NamespaceIds.xhtml.id) {
             this[$content] = child;
@@ -42691,6 +44149,7 @@ class ExData extends ContentObject {
         }
         return false;
     }
+
     [$toHTML](availableSpace) {
         if (this.contentType !== "text/html" || !this[$content]) {
             return HTMLResult.EMPTY;
@@ -42698,6 +44157,7 @@ class ExData extends ContentObject {
         return this[$content][$toHTML](availableSpace);
     }
 }
+
 class ExObject extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "exObject", true);
@@ -42723,6 +44183,7 @@ class ExObject extends XFAObject {
         this.time = new XFAObjectArray();
     }
 }
+
 class ExclGroup extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "exclGroup", true);
@@ -42766,12 +44227,15 @@ class ExclGroup extends XFAObject {
         this.field = new XFAObjectArray();
         this.setProperty = new XFAObjectArray();
     }
+
     [$isBindable]() {
         return true;
     }
+
     [$hasSettableValue]() {
         return true;
     }
+
     [$setValue](value) {
         for (const field of this.field.children) {
             if (!field.value) {
@@ -42782,9 +44246,11 @@ class ExclGroup extends XFAObject {
             field.value[$setValue](value);
         }
     }
+
     [$isThereMoreWidth]() {
         return this.layout.endsWith("-tb") && this[$extra].attempt === 0 && this[$extra].numberInLine > 0 || this[$getParent]()[$isThereMoreWidth]();
     }
+
     [$isSplittable]() {
         const parent = this[$getSubformParent]();
         if (!parent[$isSplittable]()) {
@@ -42803,15 +44269,19 @@ class ExclGroup extends XFAObject {
         this[$extra]._isSplittable = true;
         return true;
     }
+
     [$flushHTML]() {
         return flushHTML(this);
     }
+
     [$addHTML](html, bbox) {
         addHTML(this, html, bbox);
     }
+
     [$getAvailableSpace]() {
         return getAvailableSpace(this);
     }
+
     [$toHTML](availableSpace) {
         setTabIndex(this);
         if (this.presence === "hidden" || this.presence === "inactive" || this.h === 0 || this.w === 0) {
@@ -42927,6 +44397,7 @@ class ExclGroup extends XFAObject {
         return HTMLResult.success(createWrapper(this, html), bbox);
     }
 }
+
 class Execute extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "execute");
@@ -42938,6 +44409,7 @@ class Execute extends XFAObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Extras extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "extras", true);
@@ -42958,6 +44430,7 @@ class Extras extends XFAObject {
         this.time = new XFAObjectArray();
     }
 }
+
 class Field extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "field", true);
@@ -43012,12 +44485,15 @@ class Field extends XFAObject {
         this.event = new XFAObjectArray();
         this.setProperty = new XFAObjectArray();
     }
+
     [$isBindable]() {
         return true;
     }
+
     [$setValue](value) {
         _setValue(this, value);
     }
+
     [$toHTML](availableSpace) {
         setTabIndex(this);
         if (!this.ui) {
@@ -43272,6 +44748,7 @@ class Field extends XFAObject {
         return HTMLResult.success(createWrapper(this, html), bbox);
     }
 }
+
 class Fill extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "fill", true);
@@ -43287,6 +44764,7 @@ class Fill extends XFAObject {
         this.solid = null;
         this.stipple = null;
     }
+
     [$toStyle]() {
         const parent = this[$getParent]();
         const grandpa = parent[$getParent]();
@@ -43326,6 +44804,7 @@ class Fill extends XFAObject {
         return style;
     }
 }
+
 class Filter extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "filter", true);
@@ -43351,6 +44830,7 @@ class Filter extends XFAObject {
         this.timeStamp = null;
     }
 }
+
 class Float extends ContentObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "float");
@@ -43359,14 +44839,17 @@ class Float extends ContentObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$finalize]() {
         const number = parseFloat(this[$content].trim());
         this[$content] = isNaN(number) ? null : number;
     }
+
     [$toHTML](availableSpace) {
         return valueToHtml(this[$content] !== null ? this[$content].toString() : "");
     }
 }
+
 class template_Font extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "font", true);
@@ -43411,10 +44894,12 @@ class template_Font extends XFAObject {
         this.extras = null;
         this.fill = null;
     }
+
     [$clean](builder) {
         super[$clean](builder);
         this[$globalData].usedTypefaces.add(this.typeface);
     }
+
     [$toStyle]() {
         const style = toStyle(this, "fill");
         const color = style.color;
@@ -43457,6 +44942,7 @@ class template_Font extends XFAObject {
         return style;
     }
 }
+
 class Format extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "format", true);
@@ -43467,6 +44953,7 @@ class Format extends XFAObject {
         this.picture = null;
     }
 }
+
 class Handler extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "handler");
@@ -43476,6 +44963,7 @@ class Handler extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Hyphenation extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "hyphenation");
@@ -43514,6 +45002,7 @@ class Hyphenation extends XFAObject {
         });
     }
 }
+
 class Image extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "image");
@@ -43526,6 +45015,7 @@ class Image extends StringObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$toHTML]() {
         if (this.contentType && !MIMES.has(this.contentType.toLowerCase())) {
             return HTMLResult.EMPTY;
@@ -43591,6 +45081,7 @@ class Image extends StringObject {
         });
     }
 }
+
 class ImageEdit extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "imageEdit", true);
@@ -43602,6 +45093,7 @@ class ImageEdit extends XFAObject {
         this.extras = null;
         this.margin = null;
     }
+
     [$toHTML](availableSpace) {
         if (this.data === "embed") {
             return HTMLResult.success({
@@ -43613,6 +45105,7 @@ class ImageEdit extends XFAObject {
         return HTMLResult.EMPTY;
     }
 }
+
 class Integer extends ContentObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "integer");
@@ -43621,14 +45114,17 @@ class Integer extends ContentObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$finalize]() {
         const number = parseInt(this[$content].trim(), 10);
         this[$content] = isNaN(number) ? null : number;
     }
+
     [$toHTML](availableSpace) {
         return valueToHtml(this[$content] !== null ? this[$content].toString() : "");
     }
 }
+
 class Issuers extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "issuers", true);
@@ -43639,6 +45135,7 @@ class Issuers extends XFAObject {
         this.certificate = new XFAObjectArray();
     }
 }
+
 class Items extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "items", true);
@@ -43664,6 +45161,7 @@ class Items extends XFAObject {
         this.text = new XFAObjectArray();
         this.time = new XFAObjectArray();
     }
+
     [$toHTML]() {
         const output = [];
         for (const child of this[$getChildren]()) {
@@ -43672,6 +45170,7 @@ class Items extends XFAObject {
         return HTMLResult.success(output);
     }
 }
+
 class Keep extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "keep", true);
@@ -43685,6 +45184,7 @@ class Keep extends XFAObject {
         this.extras = null;
     }
 }
+
 class KeyUsage extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "keyUsage");
@@ -43704,6 +45204,7 @@ class KeyUsage extends XFAObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Line extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "line", true);
@@ -43714,6 +45215,7 @@ class Line extends XFAObject {
         this.usehref = attributes.usehref || "";
         this.edge = null;
     }
+
     [$toHTML]() {
         const parent = this[$getParent]()[$getParent]();
         const edge = this.edge || new Edge({});
@@ -43776,6 +45278,7 @@ class Line extends XFAObject {
         return HTMLResult.success(svg);
     }
 }
+
 class Linear extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "linear", true);
@@ -43786,6 +45289,7 @@ class Linear extends XFAObject {
         this.color = null;
         this.extras = null;
     }
+
     [$toStyle](startColor) {
         startColor = startColor ? startColor[$toStyle]() : "#FFFFFF";
         const transf = this.type.replace(/([RBLT])/, " $1").toLowerCase();
@@ -43793,6 +45297,7 @@ class Linear extends XFAObject {
         return `linear-gradient(${transf}, ${startColor}, ${endColor})`;
     }
 }
+
 class LockDocument extends ContentObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "lockDocument");
@@ -43801,10 +45306,12 @@ class LockDocument extends ContentObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$finalize]() {
         this[$content] = getStringOption(this[$content], ["auto", "0", "1"]);
     }
 }
+
 class Manifest extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "manifest", true);
@@ -43817,6 +45324,7 @@ class Manifest extends XFAObject {
         this.ref = new XFAObjectArray();
     }
 }
+
 class Margin extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "margin", true);
@@ -43829,12 +45337,14 @@ class Margin extends XFAObject {
         this.usehref = attributes.usehref || "";
         this.extras = null;
     }
+
     [$toStyle]() {
         return {
             margin: measureToString(this.topInset) + " " + measureToString(this.rightInset) + " " + measureToString(this.bottomInset) + " " + measureToString(this.leftInset)
         };
     }
 }
+
 class Mdp extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "mdp");
@@ -43849,6 +45359,7 @@ class Mdp extends XFAObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Medium extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "medium");
@@ -43864,6 +45375,7 @@ class Medium extends XFAObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Message extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "message", true);
@@ -43873,6 +45385,7 @@ class Message extends XFAObject {
         this.text = new XFAObjectArray();
     }
 }
+
 class NumericEdit extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "numericEdit", true);
@@ -43885,6 +45398,7 @@ class NumericEdit extends XFAObject {
         this.extras = null;
         this.margin = null;
     }
+
     [$toHTML](availableSpace) {
         const style = toStyle(this, "border", "font", "margin");
         const field = this[$getParent]()[$getParent]();
@@ -43913,6 +45427,7 @@ class NumericEdit extends XFAObject {
         });
     }
 }
+
 class Occur extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "occur", true);
@@ -43936,6 +45451,7 @@ class Occur extends XFAObject {
         this.usehref = attributes.usehref || "";
         this.extras = null;
     }
+
     [$clean]() {
         const parent = this[$getParent]();
         const originalMin = this.min;
@@ -43957,6 +45473,7 @@ class Occur extends XFAObject {
         }
     }
 }
+
 class Oid extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "oid");
@@ -43966,6 +45483,7 @@ class Oid extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Oids extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "oids", true);
@@ -43976,6 +45494,7 @@ class Oids extends XFAObject {
         this.oid = new XFAObjectArray();
     }
 }
+
 class Overflow extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "overflow");
@@ -43986,6 +45505,7 @@ class Overflow extends XFAObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$getExtra]() {
         if (!this[$extra]) {
             const parent = this[$getParent]();
@@ -44004,6 +45524,7 @@ class Overflow extends XFAObject {
         return this[$extra];
     }
 }
+
 class PageArea extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "pageArea", true);
@@ -44036,6 +45557,7 @@ class PageArea extends XFAObject {
         this.field = new XFAObjectArray();
         this.subform = new XFAObjectArray();
     }
+
     [$isUsable]() {
         if (!this[$extra]) {
             this[$extra] = {
@@ -44045,9 +45567,11 @@ class PageArea extends XFAObject {
         }
         return !this.occur || this.occur.max === -1 || this[$extra].numberOfUse < this.occur.max;
     }
+
     [$cleanPage]() {
         delete this[$extra];
     }
+
     [$getNextPage]() {
         this[$extra] ||= {
             numberOfUse: 0
@@ -44061,12 +45585,14 @@ class PageArea extends XFAObject {
         }
         return parent[$getNextPage]();
     }
+
     [$getAvailableSpace]() {
         return this[$extra].space || {
             width: 0,
             height: 0
         };
     }
+
     [$toHTML]() {
         this[$extra] ||= {
             numberOfUse: 1
@@ -44113,6 +45639,7 @@ class PageArea extends XFAObject {
         });
     }
 }
+
 class PageSet extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "pageSet", true);
@@ -44128,6 +45655,7 @@ class PageSet extends XFAObject {
         this.pageArea = new XFAObjectArray();
         this.pageSet = new XFAObjectArray();
     }
+
     [$cleanPage]() {
         for (const page of this.pageArea.children) {
             page[$cleanPage]();
@@ -44136,9 +45664,11 @@ class PageSet extends XFAObject {
             page[$cleanPage]();
         }
     }
+
     [$isUsable]() {
         return !this.occur || this.occur.max === -1 || this[$extra].numberOfUse < this.occur.max;
     }
+
     [$getNextPage]() {
         this[$extra] ||= {
             numberOfUse: 1,
@@ -44186,6 +45716,7 @@ class PageSet extends XFAObject {
         return this.pageArea.children[0];
     }
 }
+
 class Para extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "para", true);
@@ -44216,6 +45747,7 @@ class Para extends XFAObject {
         });
         this.hyphenation = null;
     }
+
     [$toStyle]() {
         const style = toStyle(this, "hAlign");
         if (this.marginLeft !== "") {
@@ -44240,13 +45772,15 @@ class Para extends XFAObject {
         if (this.tabDefault !== "") {
             style.tabSize = measureToString(this.tabDefault);
         }
-        if (this.tabStops.length > 0) {}
+        if (this.tabStops.length > 0) {
+        }
         if (this.hyphenatation) {
             Object.assign(style, this.hyphenatation[$toStyle]());
         }
         return style;
     }
 }
+
 class PasswordEdit extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "passwordEdit", true);
@@ -44260,6 +45794,7 @@ class PasswordEdit extends XFAObject {
         this.margin = null;
     }
 }
+
 class template_Pattern extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "pattern", true);
@@ -44270,6 +45805,7 @@ class template_Pattern extends XFAObject {
         this.color = null;
         this.extras = null;
     }
+
     [$toStyle](startColor) {
         startColor = startColor ? startColor[$toStyle]() : "#FFFFFF";
         const endColor = this.color ? this.color[$toStyle]() : "#000000";
@@ -44293,6 +45829,7 @@ class template_Pattern extends XFAObject {
         return "";
     }
 }
+
 class Picture extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "picture");
@@ -44301,6 +45838,7 @@ class Picture extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Proto extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "proto", true);
@@ -44416,6 +45954,7 @@ class Proto extends XFAObject {
         this.variables = new XFAObjectArray();
     }
 }
+
 class Radial extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "radial", true);
@@ -44426,6 +45965,7 @@ class Radial extends XFAObject {
         this.color = null;
         this.extras = null;
     }
+
     [$toStyle](startColor) {
         startColor = startColor ? startColor[$toStyle]() : "#FFFFFF";
         const endColor = this.color ? this.color[$toStyle]() : "#000000";
@@ -44433,6 +45973,7 @@ class Radial extends XFAObject {
         return `radial-gradient(circle at center, ${colors})`;
     }
 }
+
 class Reason extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "reason");
@@ -44442,6 +45983,7 @@ class Reason extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Reasons extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "reasons", true);
@@ -44452,6 +45994,7 @@ class Reasons extends XFAObject {
         this.reason = new XFAObjectArray();
     }
 }
+
 class Rectangle extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "rectangle", true);
@@ -44463,6 +46006,7 @@ class Rectangle extends XFAObject {
         this.edge = new XFAObjectArray(4);
         this.fill = null;
     }
+
     [$toHTML]() {
         const edge = this.edge.children.length ? this.edge.children[0] : new Edge({});
         const edgeStyle = edge[$toStyle]();
@@ -44519,6 +46063,7 @@ class Rectangle extends XFAObject {
         return HTMLResult.success(svg);
     }
 }
+
 class RefElement extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "ref");
@@ -44527,6 +46072,7 @@ class RefElement extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Script extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "script");
@@ -44539,6 +46085,7 @@ class Script extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class SetProperty extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "setProperty");
@@ -44547,6 +46094,7 @@ class SetProperty extends XFAObject {
         this.target = attributes.target || "";
     }
 }
+
 class SignData extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "signData", true);
@@ -44560,6 +46108,7 @@ class SignData extends XFAObject {
         this.manifest = null;
     }
 }
+
 class Signature extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "signature", true);
@@ -44574,6 +46123,7 @@ class Signature extends XFAObject {
         this.margin = null;
     }
 }
+
 class Signing extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "signing", true);
@@ -44584,6 +46134,7 @@ class Signing extends XFAObject {
         this.certificate = new XFAObjectArray();
     }
 }
+
 class Solid extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "solid", true);
@@ -44592,10 +46143,12 @@ class Solid extends XFAObject {
         this.usehref = attributes.usehref || "";
         this.extras = null;
     }
+
     [$toStyle](startColor) {
         return startColor ? startColor[$toStyle]() : "#FFFFFF";
     }
 }
+
 class Speak extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "speak");
@@ -44611,6 +46164,7 @@ class Speak extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Stipple extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "stipple", true);
@@ -44625,11 +46179,13 @@ class Stipple extends XFAObject {
         this.color = null;
         this.extras = null;
     }
+
     [$toStyle](bgColor) {
         const alpha = this.rate / 100;
         return Util.makeHexColor(Math.round(bgColor.value.r * (1 - alpha) + this.value.r * alpha), Math.round(bgColor.value.g * (1 - alpha) + this.value.g * alpha), Math.round(bgColor.value.b * (1 - alpha) + this.value.b * alpha));
     }
 }
+
 class Subform extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "subform", true);
@@ -44697,6 +46253,7 @@ class Subform extends XFAObject {
         this.subform = new XFAObjectArray();
         this.subformSet = new XFAObjectArray();
     }
+
     [$getSubformParent]() {
         const parent = this[$getParent]();
         if (parent instanceof SubformSet) {
@@ -44704,24 +46261,31 @@ class Subform extends XFAObject {
         }
         return parent;
     }
+
     [$isBindable]() {
         return true;
     }
+
     [$isThereMoreWidth]() {
         return this.layout.endsWith("-tb") && this[$extra].attempt === 0 && this[$extra].numberInLine > 0 || this[$getParent]()[$isThereMoreWidth]();
     }
-    *[$getContainedChildren]() {
+
+    * [$getContainedChildren]() {
         yield* getContainedChildren(this);
     }
+
     [$flushHTML]() {
         return flushHTML(this);
     }
+
     [$addHTML](html, bbox) {
         addHTML(this, html, bbox);
     }
+
     [$getAvailableSpace]() {
         return getAvailableSpace(this);
     }
+
     [$isSplittable]() {
         const parent = this[$getSubformParent]();
         if (!parent[$isSplittable]()) {
@@ -44744,6 +46308,7 @@ class Subform extends XFAObject {
         this[$extra]._isSplittable = true;
         return true;
     }
+
     [$toHTML](availableSpace) {
         setTabIndex(this);
         if (this.break) {
@@ -44933,6 +46498,7 @@ class Subform extends XFAObject {
         return result;
     }
 }
+
 class SubformSet extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "subformSet", true);
@@ -44953,9 +46519,11 @@ class SubformSet extends XFAObject {
         this.subform = new XFAObjectArray();
         this.subformSet = new XFAObjectArray();
     }
-    *[$getContainedChildren]() {
+
+    * [$getContainedChildren]() {
         yield* getContainedChildren(this);
     }
+
     [$getSubformParent]() {
         let parent = this[$getParent]();
         while (!(parent instanceof Subform)) {
@@ -44963,10 +46531,12 @@ class SubformSet extends XFAObject {
         }
         return parent;
     }
+
     [$isBindable]() {
         return true;
     }
 }
+
 class SubjectDN extends ContentObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "subjectDN");
@@ -44976,6 +46546,7 @@ class SubjectDN extends ContentObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$finalize]() {
         this[$content] = new Map(this[$content].split(this.delimiter).map(kv => {
             kv = kv.split("=", 2);
@@ -44984,6 +46555,7 @@ class SubjectDN extends ContentObject {
         }));
     }
 }
+
 class SubjectDNs extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "subjectDNs", true);
@@ -44994,6 +46566,7 @@ class SubjectDNs extends XFAObject {
         this.subjectDN = new XFAObjectArray();
     }
 }
+
 class Submit extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "submit", true);
@@ -45018,6 +46591,7 @@ class Submit extends XFAObject {
         this.signData = new XFAObjectArray();
     }
 }
+
 class Template extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "template", true);
@@ -45025,6 +46599,7 @@ class Template extends XFAObject {
         this.extras = null;
         this.subform = new XFAObjectArray();
     }
+
     [$finalize]() {
         if (this.subform.children.length === 0) {
             warn("XFA - No subforms in template node.");
@@ -45034,16 +46609,19 @@ class Template extends XFAObject {
         }
         this[$tabIndex] = DEFAULT_TAB_INDEX;
     }
+
     [$isSplittable]() {
         return true;
     }
+
     [$searchNode](expr, container) {
         if (expr.startsWith("#")) {
             return [this[$ids].get(expr.slice(1))];
         }
         return searchNode(this, container, expr, true, true);
     }
-    *[$toPages]() {
+
+    * [$toPages]() {
         if (!this.subform.children.length) {
             return HTMLResult.success({
                 name: "div",
@@ -45237,6 +46815,7 @@ class Template extends XFAObject {
         }
     }
 }
+
 class Text extends ContentObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "text");
@@ -45251,9 +46830,11 @@ class Text extends ContentObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$acceptWhitespace]() {
         return true;
     }
+
     [$onChild](child) {
         if (child[$namespaceId] === NamespaceIds.xhtml.id) {
             this[$content] = child;
@@ -45262,23 +46843,27 @@ class Text extends ContentObject {
         warn(`XFA - Invalid content in Text: ${child[$nodeName]}.`);
         return false;
     }
+
     [$onText](str) {
         if (this[$content] instanceof XFAObject) {
             return;
         }
         super[$onText](str);
     }
+
     [$finalize]() {
         if (typeof this[$content] === "string") {
             this[$content] = this[$content].replaceAll("\r\n", "\n");
         }
     }
+
     [$getExtra]() {
         if (typeof this[$content] === "string") {
             return this[$content].split(/[\u2029\u2028\n]/).filter(line => !!line).join("\n");
         }
         return this[$content][$text]();
     }
+
     [$toHTML](availableSpace) {
         if (typeof this[$content] === "string") {
             const html = valueToHtml(this[$content]).html;
@@ -45313,6 +46898,7 @@ class Text extends ContentObject {
         return this[$content][$toHTML](availableSpace);
     }
 }
+
 class TextEdit extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "textEdit", true);
@@ -45336,6 +46922,7 @@ class TextEdit extends XFAObject {
         this.extras = null;
         this.margin = null;
     }
+
     [$toHTML](availableSpace) {
         const style = toStyle(this, "border", "font", "margin");
         let html;
@@ -45382,6 +46969,7 @@ class TextEdit extends XFAObject {
         });
     }
 }
+
 class Time extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "time");
@@ -45390,14 +46978,17 @@ class Time extends StringObject {
         this.use = attributes.use || "";
         this.usehref = attributes.usehref || "";
     }
+
     [$finalize]() {
         const date = this[$content].trim();
         this[$content] = date ? new Date(date) : null;
     }
+
     [$toHTML](availableSpace) {
         return valueToHtml(this[$content] ? this[$content].toString() : "");
     }
 }
+
 class TimeStamp extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "timeStamp");
@@ -45408,6 +46999,7 @@ class TimeStamp extends XFAObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class ToolTip extends StringObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "toolTip");
@@ -45417,6 +47009,7 @@ class ToolTip extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Traversal extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "traversal", true);
@@ -45427,6 +47020,7 @@ class Traversal extends XFAObject {
         this.traverse = new XFAObjectArray();
     }
 }
+
 class Traverse extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "traverse", true);
@@ -45438,13 +47032,16 @@ class Traverse extends XFAObject {
         this.extras = null;
         this.script = null;
     }
+
     get name() {
         return this.operation;
     }
+
     [$isTransparent]() {
         return false;
     }
 }
+
 class Ui extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "ui", true);
@@ -45465,6 +47062,7 @@ class Ui extends XFAObject {
         this.signature = null;
         this.textEdit = null;
     }
+
     [$getExtra]() {
         if (this[$extra] === undefined) {
             for (const name of Object.getOwnPropertyNames(this)) {
@@ -45482,6 +47080,7 @@ class Ui extends XFAObject {
         }
         return this[$extra];
     }
+
     [$toHTML](availableSpace) {
         const obj = this[$getExtra]();
         if (obj) {
@@ -45490,6 +47089,7 @@ class Ui extends XFAObject {
         return HTMLResult.EMPTY;
     }
 }
+
 class Validate extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "validate", true);
@@ -45505,6 +47105,7 @@ class Validate extends XFAObject {
         this.script = null;
     }
 }
+
 class Value extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "value", true);
@@ -45531,6 +47132,7 @@ class Value extends XFAObject {
         this.text = null;
         this.time = null;
     }
+
     [$setValue](value) {
         const parent = this[$getParent]();
         if (parent instanceof Field) {
@@ -45558,6 +47160,7 @@ class Value extends XFAObject {
         this[value[$nodeName]] = value;
         this[$appendChild](value);
     }
+
     [$text]() {
         if (this.exData) {
             if (typeof this.exData[$content] === "string") {
@@ -45576,6 +47179,7 @@ class Value extends XFAObject {
         }
         return null;
     }
+
     [$toHTML](availableSpace) {
         for (const name of Object.getOwnPropertyNames(this)) {
             const obj = this[name];
@@ -45587,6 +47191,7 @@ class Value extends XFAObject {
         return HTMLResult.EMPTY;
     }
 }
+
 class Variables extends XFAObject {
     constructor(attributes) {
         super(TEMPLATE_NS_ID, "variables", true);
@@ -45606,10 +47211,12 @@ class Variables extends XFAObject {
         this.text = new XFAObjectArray();
         this.time = new XFAObjectArray();
     }
+
     [$isTransparent]() {
         return true;
     }
 }
+
 class TemplateNamespace {
     static [$buildXFAObject](name, attributes) {
         if (TemplateNamespace.hasOwnProperty(name)) {
@@ -45619,360 +47226,471 @@ class TemplateNamespace {
         }
         return undefined;
     }
+
     static appearanceFilter(attrs) {
         return new AppearanceFilter(attrs);
     }
+
     static arc(attrs) {
         return new Arc(attrs);
     }
+
     static area(attrs) {
         return new Area(attrs);
     }
+
     static assist(attrs) {
         return new Assist(attrs);
     }
+
     static barcode(attrs) {
         return new Barcode(attrs);
     }
+
     static bind(attrs) {
         return new Bind(attrs);
     }
+
     static bindItems(attrs) {
         return new BindItems(attrs);
     }
+
     static bookend(attrs) {
         return new Bookend(attrs);
     }
+
     static boolean(attrs) {
         return new BooleanElement(attrs);
     }
+
     static border(attrs) {
         return new Border(attrs);
     }
+
     static break(attrs) {
         return new Break(attrs);
     }
+
     static breakAfter(attrs) {
         return new BreakAfter(attrs);
     }
+
     static breakBefore(attrs) {
         return new BreakBefore(attrs);
     }
+
     static button(attrs) {
         return new Button(attrs);
     }
+
     static calculate(attrs) {
         return new Calculate(attrs);
     }
+
     static caption(attrs) {
         return new Caption(attrs);
     }
+
     static certificate(attrs) {
         return new Certificate(attrs);
     }
+
     static certificates(attrs) {
         return new Certificates(attrs);
     }
+
     static checkButton(attrs) {
         return new CheckButton(attrs);
     }
+
     static choiceList(attrs) {
         return new ChoiceList(attrs);
     }
+
     static color(attrs) {
         return new Color(attrs);
     }
+
     static comb(attrs) {
         return new Comb(attrs);
     }
+
     static connect(attrs) {
         return new Connect(attrs);
     }
+
     static contentArea(attrs) {
         return new ContentArea(attrs);
     }
+
     static corner(attrs) {
         return new Corner(attrs);
     }
+
     static date(attrs) {
         return new DateElement(attrs);
     }
+
     static dateTime(attrs) {
         return new DateTime(attrs);
     }
+
     static dateTimeEdit(attrs) {
         return new DateTimeEdit(attrs);
     }
+
     static decimal(attrs) {
         return new Decimal(attrs);
     }
+
     static defaultUi(attrs) {
         return new DefaultUi(attrs);
     }
+
     static desc(attrs) {
         return new Desc(attrs);
     }
+
     static digestMethod(attrs) {
         return new DigestMethod(attrs);
     }
+
     static digestMethods(attrs) {
         return new DigestMethods(attrs);
     }
+
     static draw(attrs) {
         return new Draw(attrs);
     }
+
     static edge(attrs) {
         return new Edge(attrs);
     }
+
     static encoding(attrs) {
         return new Encoding(attrs);
     }
+
     static encodings(attrs) {
         return new Encodings(attrs);
     }
+
     static encrypt(attrs) {
         return new Encrypt(attrs);
     }
+
     static encryptData(attrs) {
         return new EncryptData(attrs);
     }
+
     static encryption(attrs) {
         return new Encryption(attrs);
     }
+
     static encryptionMethod(attrs) {
         return new EncryptionMethod(attrs);
     }
+
     static encryptionMethods(attrs) {
         return new EncryptionMethods(attrs);
     }
+
     static event(attrs) {
         return new Event(attrs);
     }
+
     static exData(attrs) {
         return new ExData(attrs);
     }
+
     static exObject(attrs) {
         return new ExObject(attrs);
     }
+
     static exclGroup(attrs) {
         return new ExclGroup(attrs);
     }
+
     static execute(attrs) {
         return new Execute(attrs);
     }
+
     static extras(attrs) {
         return new Extras(attrs);
     }
+
     static field(attrs) {
         return new Field(attrs);
     }
+
     static fill(attrs) {
         return new Fill(attrs);
     }
+
     static filter(attrs) {
         return new Filter(attrs);
     }
+
     static float(attrs) {
         return new Float(attrs);
     }
+
     static font(attrs) {
         return new template_Font(attrs);
     }
+
     static format(attrs) {
         return new Format(attrs);
     }
+
     static handler(attrs) {
         return new Handler(attrs);
     }
+
     static hyphenation(attrs) {
         return new Hyphenation(attrs);
     }
+
     static image(attrs) {
         return new Image(attrs);
     }
+
     static imageEdit(attrs) {
         return new ImageEdit(attrs);
     }
+
     static integer(attrs) {
         return new Integer(attrs);
     }
+
     static issuers(attrs) {
         return new Issuers(attrs);
     }
+
     static items(attrs) {
         return new Items(attrs);
     }
+
     static keep(attrs) {
         return new Keep(attrs);
     }
+
     static keyUsage(attrs) {
         return new KeyUsage(attrs);
     }
+
     static line(attrs) {
         return new Line(attrs);
     }
+
     static linear(attrs) {
         return new Linear(attrs);
     }
+
     static lockDocument(attrs) {
         return new LockDocument(attrs);
     }
+
     static manifest(attrs) {
         return new Manifest(attrs);
     }
+
     static margin(attrs) {
         return new Margin(attrs);
     }
+
     static mdp(attrs) {
         return new Mdp(attrs);
     }
+
     static medium(attrs) {
         return new Medium(attrs);
     }
+
     static message(attrs) {
         return new Message(attrs);
     }
+
     static numericEdit(attrs) {
         return new NumericEdit(attrs);
     }
+
     static occur(attrs) {
         return new Occur(attrs);
     }
+
     static oid(attrs) {
         return new Oid(attrs);
     }
+
     static oids(attrs) {
         return new Oids(attrs);
     }
+
     static overflow(attrs) {
         return new Overflow(attrs);
     }
+
     static pageArea(attrs) {
         return new PageArea(attrs);
     }
+
     static pageSet(attrs) {
         return new PageSet(attrs);
     }
+
     static para(attrs) {
         return new Para(attrs);
     }
+
     static passwordEdit(attrs) {
         return new PasswordEdit(attrs);
     }
+
     static pattern(attrs) {
         return new template_Pattern(attrs);
     }
+
     static picture(attrs) {
         return new Picture(attrs);
     }
+
     static proto(attrs) {
         return new Proto(attrs);
     }
+
     static radial(attrs) {
         return new Radial(attrs);
     }
+
     static reason(attrs) {
         return new Reason(attrs);
     }
+
     static reasons(attrs) {
         return new Reasons(attrs);
     }
+
     static rectangle(attrs) {
         return new Rectangle(attrs);
     }
+
     static ref(attrs) {
         return new RefElement(attrs);
     }
+
     static script(attrs) {
         return new Script(attrs);
     }
+
     static setProperty(attrs) {
         return new SetProperty(attrs);
     }
+
     static signData(attrs) {
         return new SignData(attrs);
     }
+
     static signature(attrs) {
         return new Signature(attrs);
     }
+
     static signing(attrs) {
         return new Signing(attrs);
     }
+
     static solid(attrs) {
         return new Solid(attrs);
     }
+
     static speak(attrs) {
         return new Speak(attrs);
     }
+
     static stipple(attrs) {
         return new Stipple(attrs);
     }
+
     static subform(attrs) {
         return new Subform(attrs);
     }
+
     static subformSet(attrs) {
         return new SubformSet(attrs);
     }
+
     static subjectDN(attrs) {
         return new SubjectDN(attrs);
     }
+
     static subjectDNs(attrs) {
         return new SubjectDNs(attrs);
     }
+
     static submit(attrs) {
         return new Submit(attrs);
     }
+
     static template(attrs) {
         return new Template(attrs);
     }
+
     static text(attrs) {
         return new Text(attrs);
     }
+
     static textEdit(attrs) {
         return new TextEdit(attrs);
     }
+
     static time(attrs) {
         return new Time(attrs);
     }
+
     static timeStamp(attrs) {
         return new TimeStamp(attrs);
     }
+
     static toolTip(attrs) {
         return new ToolTip(attrs);
     }
+
     static traversal(attrs) {
         return new Traversal(attrs);
     }
+
     static traverse(attrs) {
         return new Traverse(attrs);
     }
+
     static ui(attrs) {
         return new Ui(attrs);
     }
+
     static validate(attrs) {
         return new Validate(attrs);
     }
+
     static value(attrs) {
         return new Value(attrs);
     }
+
     static variables(attrs) {
         return new Variables(attrs);
     }
 }
 
-;// ./src/core/xfa/bind.js
-
-
-
-
+// ./src/core/xfa/bind.js
 
 
 const bind_NS_DATASETS = NamespaceIds.datasets.id;
+
 function createText(content) {
     const node = new Text({});
     node[$content] = content;
     return node;
 }
+
 class Binder {
     constructor(root) {
         this.root = root;
@@ -45981,19 +47699,24 @@ class Binder {
         this.emptyMerge = this.data[$getChildren]().length === 0;
         this.root.form = this.form = root.template[$clone]();
     }
+
     _isConsumeData() {
         return !this.emptyMerge && this._mergeMode;
     }
+
     _isMatchTemplate() {
         return !this._isConsumeData();
     }
+
     bind() {
         this._bindElement(this.form, this.data);
         return this.form;
     }
+
     getData() {
         return this.data;
     }
+
     _bindValue(formNode, data, picture) {
         formNode[$data] = data;
         if (formNode[$hasSettableValue]()) {
@@ -46012,6 +47735,7 @@ class Binder {
             warn(`XFA - Nodes haven't the same type.`);
         }
     }
+
     _findDataByNameToConsume(name, isValue, dataNode, global) {
         if (!name) {
             return null;
@@ -46048,6 +47772,7 @@ class Binder {
         }
         return null;
     }
+
     _setProperties(formNode, dataNode) {
         if (!formNode.hasOwnProperty("setProperty")) {
             return;
@@ -46110,6 +47835,7 @@ class Binder {
             targetNode[$finalize]();
         }
     }
+
     _bindItems(formNode, dataNode) {
         if (!formNode.hasOwnProperty("items") || !formNode.hasOwnProperty("bindItems") || formNode.bindItems.isEmpty()) {
             return;
@@ -46175,6 +47901,7 @@ class Binder {
             }
         }
     }
+
     _bindOccurrences(formNode, matches, picture) {
         let baseClone;
         if (matches.length > 1) {
@@ -46201,6 +47928,7 @@ class Binder {
             this._bindItems(clone, match);
         }
     }
+
     _createOccurrences(formNode) {
         if (!this.emptyMerge) {
             return;
@@ -46237,6 +47965,7 @@ class Binder {
             }
         }
     }
+
     _getOccurInfo(formNode) {
         const {
             name,
@@ -46248,11 +47977,13 @@ class Binder {
         const max = occur.max === -1 ? Infinity : occur.max;
         return [occur.min, max];
     }
+
     _setAndBind(formNode, dataNode) {
         this._setProperties(formNode, dataNode);
         this._bindItems(formNode, dataNode);
         this._bindElement(formNode, dataNode);
     }
+
     _bindElement(formNode, dataNode) {
         const uselessNodes = [];
         this._createOccurrences(formNode);
@@ -46381,13 +48112,14 @@ class Binder {
     }
 }
 
-;// ./src/core/xfa/data.js
+// ./src/core/xfa/data.js
 
 class DataHandler {
     constructor(root, data) {
         this.data = data;
         this.dataset = root.datasets || null;
     }
+
     serialize(storage) {
         const stack = [[-1, this.data[$getChildren]()]];
         while (stack.length > 0) {
@@ -46430,13 +48162,11 @@ class DataHandler {
     }
 }
 
-;// ./src/core/xfa/config.js
-
-
-
+// ./src/core/xfa/config.js
 
 
 const CONFIG_NS_ID = NamespaceIds.config.id;
+
 class Acrobat extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "acrobat", true);
@@ -46448,42 +48178,50 @@ class Acrobat extends XFAObject {
         this.submitUrl = new XFAObjectArray();
     }
 }
+
 class Acrobat7 extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "acrobat7", true);
         this.dynamicRender = null;
     }
 }
+
 class ADBE_JSConsole extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "ADBE_JSConsole", ["delegate", "Enable", "Disable"]);
     }
 }
+
 class ADBE_JSDebugger extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "ADBE_JSDebugger", ["delegate", "Enable", "Disable"]);
     }
 }
+
 class AddSilentPrint extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "addSilentPrint");
     }
 }
+
 class AddViewerPreferences extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "addViewerPreferences");
     }
 }
+
 class AdjustData extends Option10 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "adjustData");
     }
 }
+
 class AdobeExtensionLevel extends IntegerObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "adobeExtensionLevel", 0, n => n >= 1 && n <= 8);
     }
 }
+
 class Agent extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "agent", true);
@@ -46491,16 +48229,19 @@ class Agent extends XFAObject {
         this.common = new XFAObjectArray();
     }
 }
+
 class AlwaysEmbed extends ContentObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "alwaysEmbed");
     }
 }
+
 class Amd extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "amd");
     }
 }
+
 class config_Area extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "area");
@@ -46512,46 +48253,55 @@ class config_Area extends XFAObject {
         this.name = getStringOption(attributes.name, ["", "barcode", "coreinit", "deviceDriver", "font", "general", "layout", "merge", "script", "signature", "sourceSet", "templateCache"]);
     }
 }
+
 class Attributes extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "attributes", ["preserve", "delegate", "ignore"]);
     }
 }
+
 class AutoSave extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "autoSave", ["disabled", "enabled"]);
     }
 }
+
 class Base extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "base");
     }
 }
+
 class BatchOutput extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "batchOutput");
         this.format = getStringOption(attributes.format, ["none", "concat", "zip", "zipCompress"]);
     }
 }
+
 class BehaviorOverride extends ContentObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "behaviorOverride");
     }
+
     [$finalize]() {
         this[$content] = new Map(this[$content].trim().split(/\s+/).filter(x => x.includes(":")).map(x => x.split(":", 2)));
     }
 }
+
 class Cache extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "cache", true);
         this.templateCache = null;
     }
 }
+
 class Change extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "change");
     }
 }
+
 class Common extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "common", true);
@@ -46566,22 +48316,26 @@ class Common extends XFAObject {
         this.log = new XFAObjectArray();
     }
 }
+
 class Compress extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "compress");
         this.scope = getStringOption(attributes.scope, ["imageOnly", "document"]);
     }
 }
+
 class CompressLogicalStructure extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "compressLogicalStructure");
     }
 }
+
 class CompressObjectStream extends Option10 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "compressObjectStream");
     }
 }
+
 class Compression extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "compression", true);
@@ -46591,6 +48345,7 @@ class Compression extends XFAObject {
         this.type = null;
     }
 }
+
 class Config extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "config", true);
@@ -46600,31 +48355,37 @@ class Config extends XFAObject {
         this.agent = new XFAObjectArray();
     }
 }
+
 class Conformance extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "conformance", ["A", "B"]);
     }
 }
+
 class ContentCopy extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "contentCopy");
     }
 }
+
 class Copies extends IntegerObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "copies", 1, n => n >= 1);
     }
 }
+
 class Creator extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "creator");
     }
 }
+
 class CurrentPage extends IntegerObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "currentPage", 0, n => n >= 0);
     }
 }
+
 class Data extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "data", true);
@@ -46642,28 +48403,33 @@ class Data extends XFAObject {
         this.transform = new XFAObjectArray();
     }
 }
+
 class Debug extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "debug", true);
         this.uri = null;
     }
 }
+
 class DefaultTypeface extends ContentObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "defaultTypeface");
         this.writingScript = getStringOption(attributes.writingScript, ["*", "Arabic", "Cyrillic", "EastEuropeanRoman", "Greek", "Hebrew", "Japanese", "Korean", "Roman", "SimplifiedChinese", "Thai", "TraditionalChinese", "Vietnamese"]);
     }
 }
+
 class Destination extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "destination", ["pdf", "pcl", "ps", "webClient", "zpl"]);
     }
 }
+
 class DocumentAssembly extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "documentAssembly");
     }
 }
+
 class Driver extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "driver", true);
@@ -46672,26 +48438,31 @@ class Driver extends XFAObject {
         this.xdc = null;
     }
 }
+
 class DuplexOption extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "duplexOption", ["simplex", "duplexFlipLongEdge", "duplexFlipShortEdge"]);
     }
 }
+
 class DynamicRender extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "dynamicRender", ["forbidden", "required"]);
     }
 }
+
 class Embed extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "embed");
     }
 }
+
 class config_Encrypt extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "encrypt");
     }
 }
+
 class config_Encryption extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "encryption", true);
@@ -46700,16 +48471,19 @@ class config_Encryption extends XFAObject {
         this.permissions = null;
     }
 }
+
 class EncryptionLevel extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "encryptionLevel", ["40bit", "128bit"]);
     }
 }
+
 class Enforce extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "enforce");
     }
 }
+
 class Equate extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "equate");
@@ -46722,6 +48496,7 @@ class Equate extends XFAObject {
         this.to = attributes.to || "";
     }
 }
+
 class EquateRange extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "equateRange");
@@ -46729,6 +48504,7 @@ class EquateRange extends XFAObject {
         this.to = attributes.to || "";
         this._unicodeRange = attributes.unicodeRange || "";
     }
+
     get unicodeRange() {
         const ranges = [];
         const unicodeRegex = /U\+([0-9a-fA-F]+)/;
@@ -46749,24 +48525,29 @@ class EquateRange extends XFAObject {
         return shadow(this, "unicodeRange", ranges);
     }
 }
+
 class Exclude extends ContentObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "exclude");
     }
+
     [$finalize]() {
         this[$content] = this[$content].trim().split(/\s+/).filter(x => x && ["calculate", "close", "enter", "exit", "initialize", "ready", "validate"].includes(x));
     }
 }
+
 class ExcludeNS extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "excludeNS");
     }
 }
+
 class FlipLabel extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "flipLabel", ["usePrinterSetting", "on", "off"]);
     }
 }
+
 class config_FontInfo extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "fontInfo", true);
@@ -46778,46 +48559,55 @@ class config_FontInfo extends XFAObject {
         this.neverEmbed = new XFAObjectArray();
     }
 }
+
 class FormFieldFilling extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "formFieldFilling");
     }
 }
+
 class GroupParent extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "groupParent");
     }
 }
+
 class IfEmpty extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "ifEmpty", ["dataValue", "dataGroup", "ignore", "remove"]);
     }
 }
+
 class IncludeXDPContent extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "includeXDPContent");
     }
 }
+
 class IncrementalLoad extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "incrementalLoad", ["none", "forwardOnly"]);
     }
 }
+
 class IncrementalMerge extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "incrementalMerge");
     }
 }
+
 class Interactive extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "interactive");
     }
 }
+
 class Jog extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "jog", ["usePrinterSetting", "none", "pageSet"]);
     }
 }
+
 class LabelPrinter extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "labelPrinter", true);
@@ -46828,31 +48618,37 @@ class LabelPrinter extends XFAObject {
         this.xdc = null;
     }
 }
+
 class Layout extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "layout", ["paginate", "panel"]);
     }
 }
+
 class Level extends IntegerObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "level", 0, n => n > 0);
     }
 }
+
 class Linearized extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "linearized");
     }
 }
+
 class Locale extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "locale");
     }
 }
+
 class LocaleSet extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "localeSet");
     }
 }
+
 class Log extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "log", true);
@@ -46862,6 +48658,7 @@ class Log extends XFAObject {
         this.uri = null;
     }
 }
+
 class MapElement extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "map", true);
@@ -46869,12 +48666,14 @@ class MapElement extends XFAObject {
         this.equateRange = new XFAObjectArray();
     }
 }
+
 class MediumInfo extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "mediumInfo", true);
         this.map = null;
     }
 }
+
 class config_Message extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "message", true);
@@ -46882,48 +48681,57 @@ class config_Message extends XFAObject {
         this.severity = null;
     }
 }
+
 class Messaging extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "messaging", true);
         this.message = new XFAObjectArray();
     }
 }
+
 class Mode extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "mode", ["append", "overwrite"]);
     }
 }
+
 class ModifyAnnots extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "modifyAnnots");
     }
 }
+
 class MsgId extends IntegerObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "msgId", 1, n => n >= 1);
     }
 }
+
 class NameAttr extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "nameAttr");
     }
 }
+
 class NeverEmbed extends ContentObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "neverEmbed");
     }
 }
+
 class NumberOfCopies extends IntegerObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "numberOfCopies", null, n => n >= 2 && n <= 5);
     }
 }
+
 class OpenAction extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "openAction", true);
         this.destination = null;
     }
 }
+
 class Output extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "output", true);
@@ -46932,26 +48740,31 @@ class Output extends XFAObject {
         this.uri = null;
     }
 }
+
 class OutputBin extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "outputBin");
     }
 }
+
 class OutputXSL extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "outputXSL", true);
         this.uri = null;
     }
 }
+
 class Overprint extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "overprint", ["none", "both", "draw", "field"]);
     }
 }
+
 class Packets extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "packets");
     }
+
     [$finalize]() {
         if (this[$content] === "*") {
             return;
@@ -46959,6 +48772,7 @@ class Packets extends StringObject {
         this[$content] = this[$content].trim().split(/\s+/).filter(x => ["config", "datasets", "template", "xfdf", "xslt"].includes(x));
     }
 }
+
 class PageOffset extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "pageOffset");
@@ -46974,10 +48788,12 @@ class PageOffset extends XFAObject {
         });
     }
 }
+
 class PageRange extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "pageRange");
     }
+
     [$finalize]() {
         const numbers = this[$content].trim().split(/\s+/).map(x => parseInt(x, 10));
         const ranges = [];
@@ -46987,21 +48803,25 @@ class PageRange extends StringObject {
         this[$content] = ranges;
     }
 }
+
 class Pagination extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "pagination", ["simplex", "duplexShortEdge", "duplexLongEdge"]);
     }
 }
+
 class PaginationOverride extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "paginationOverride", ["none", "forceDuplex", "forceDuplexLongEdge", "forceDuplexShortEdge", "forceSimplex"]);
     }
 }
+
 class Part extends IntegerObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "part", 1, n => false);
     }
 }
+
 class Pcl extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "pcl", true);
@@ -47016,6 +48836,7 @@ class Pcl extends XFAObject {
         this.xdc = null;
     }
 }
+
 class Pdf extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "pdf", true);
@@ -47041,6 +48862,7 @@ class Pdf extends XFAObject {
         this.xdc = null;
     }
 }
+
 class Pdfa extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "pdfa", true);
@@ -47050,6 +48872,7 @@ class Pdfa extends XFAObject {
         this.part = null;
     }
 }
+
 class Permissions extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "permissions", true);
@@ -47064,26 +48887,31 @@ class Permissions extends XFAObject {
         this.printHighQuality = null;
     }
 }
+
 class PickTrayByPDFSize extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "pickTrayByPDFSize");
     }
 }
+
 class config_Picture extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "picture");
     }
 }
+
 class PlaintextMetadata extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "plaintextMetadata");
     }
 }
+
 class Presence extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "presence", ["preserve", "dissolve", "dissolveStructure", "ignore", "remove"]);
     }
 }
+
 class Present extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "present", true);
@@ -47111,31 +48939,37 @@ class Present extends XFAObject {
         this.zpl = new XFAObjectArray();
     }
 }
+
 class Print extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "print");
     }
 }
+
 class PrintHighQuality extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "printHighQuality");
     }
 }
+
 class PrintScaling extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "printScaling", ["appdefault", "noScaling"]);
     }
 }
+
 class PrinterName extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "printerName");
     }
 }
+
 class Producer extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "producer");
     }
 }
+
 class Ps extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "ps", true);
@@ -47149,10 +48983,12 @@ class Ps extends XFAObject {
         this.xdc = null;
     }
 }
+
 class Range extends ContentObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "range");
     }
+
     [$finalize]() {
         this[$content] = this[$content].split(",", 2).map(range => range.split("-").map(x => parseInt(x.trim(), 10))).filter(range => range.every(x => !isNaN(x))).map(range => {
             if (range.length === 1) {
@@ -47162,10 +48998,12 @@ class Range extends ContentObject {
         });
     }
 }
+
 class Record extends ContentObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "record");
     }
+
     [$finalize]() {
         this[$content] = this[$content].trim();
         const n = parseInt(this[$content], 10);
@@ -47174,18 +49012,22 @@ class Record extends ContentObject {
         }
     }
 }
+
 class Relevant extends ContentObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "relevant");
     }
+
     [$finalize]() {
         this[$content] = this[$content].trim().split(/\s+/);
     }
 }
+
 class Rename extends ContentObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "rename");
     }
+
     [$finalize]() {
         this[$content] = this[$content].trim();
         if (this[$content].toLowerCase().startsWith("xml") || new RegExp("[\\p{L}_][\\p{L}\\d._\\p{M}-]*", "u").test(this[$content])) {
@@ -47193,16 +49035,19 @@ class Rename extends ContentObject {
         }
     }
 }
+
 class RenderPolicy extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "renderPolicy", ["server", "client"]);
     }
 }
+
 class RunScripts extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "runScripts", ["both", "client", "none", "server"]);
     }
 }
+
 class config_Script extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "script", true);
@@ -47211,16 +49056,19 @@ class config_Script extends XFAObject {
         this.runScripts = null;
     }
 }
+
 class ScriptModel extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "scriptModel", ["XFA", "none"]);
     }
 }
+
 class Severity extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "severity", ["ignore", "error", "information", "trace", "warning"]);
     }
 }
+
 class SilentPrint extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "silentPrint", true);
@@ -47228,47 +49076,56 @@ class SilentPrint extends XFAObject {
         this.printerName = null;
     }
 }
+
 class Staple extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "staple");
         this.mode = getStringOption(attributes.mode, ["usePrinterSetting", "on", "off"]);
     }
 }
+
 class StartNode extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "startNode");
     }
 }
+
 class StartPage extends IntegerObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "startPage", 0, n => true);
     }
 }
+
 class SubmitFormat extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "submitFormat", ["html", "delegate", "fdf", "xml", "pdf"]);
     }
 }
+
 class SubmitUrl extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "submitUrl");
     }
 }
+
 class SubsetBelow extends IntegerObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "subsetBelow", 100, n => n >= 0 && n <= 100);
     }
 }
+
 class SuppressBanner extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "suppressBanner");
     }
 }
+
 class Tagged extends Option01 {
     constructor(attributes) {
         super(CONFIG_NS_ID, "tagged");
     }
 }
+
 class config_Template extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "template", true);
@@ -47279,16 +49136,19 @@ class config_Template extends XFAObject {
         this.xsl = null;
     }
 }
+
 class Threshold extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "threshold", ["trace", "error", "information", "warning"]);
     }
 }
+
 class To extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "to", ["null", "memory", "stderr", "stdout", "system", "uri"]);
     }
 }
+
 class TemplateCache extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "templateCache");
@@ -47299,12 +49159,14 @@ class TemplateCache extends XFAObject {
         });
     }
 }
+
 class Trace extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "trace", true);
         this.area = new XFAObjectArray();
     }
 }
+
 class Transform extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "transform", true);
@@ -47317,39 +49179,47 @@ class Transform extends XFAObject {
         this.whitespace = null;
     }
 }
+
 class Type extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "type", ["none", "ascii85", "asciiHex", "ccittfax", "flate", "lzw", "runLength", "native", "xdp", "mergedXDP"]);
     }
 }
+
 class Uri extends StringObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "uri");
     }
 }
+
 class config_Validate extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "validate", ["preSubmit", "prePrint", "preExecute", "preSave"]);
     }
 }
+
 class ValidateApprovalSignatures extends ContentObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "validateApprovalSignatures");
     }
+
     [$finalize]() {
         this[$content] = this[$content].trim().split(/\s+/).filter(x => ["docReady", "postSign"].includes(x));
     }
 }
+
 class ValidationMessaging extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "validationMessaging", ["allMessagesIndividually", "allMessagesTogether", "firstMessageOnly", "noMessages"]);
     }
 }
+
 class Version extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "version", ["1.7", "1.6", "1.5", "1.4", "1.3", "1.2"]);
     }
 }
+
 class VersionControl extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "VersionControl");
@@ -47358,6 +49228,7 @@ class VersionControl extends XFAObject {
         this.sourceBelow = getStringOption(attributes.sourceBelow, ["update", "maintain"]);
     }
 }
+
 class ViewerPreferences extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "viewerPreferences", true);
@@ -47372,6 +49243,7 @@ class ViewerPreferences extends XFAObject {
         this.printScaling = null;
     }
 }
+
 class WebClient extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "webClient", true);
@@ -47380,15 +49252,18 @@ class WebClient extends XFAObject {
         this.xdc = null;
     }
 }
+
 class Whitespace extends OptionObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "whitespace", ["preserve", "ltrim", "normalize", "rtrim", "trim"]);
     }
 }
+
 class Window extends ContentObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "window");
     }
+
     [$finalize]() {
         const pair = this[$content].split(",", 2).map(x => parseInt(x.trim(), 10));
         if (pair.some(x => isNaN(x))) {
@@ -47401,6 +49276,7 @@ class Window extends ContentObject {
         this[$content] = pair;
     }
 }
+
 class Xdc extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "xdc", true);
@@ -47408,12 +49284,14 @@ class Xdc extends XFAObject {
         this.xsl = new XFAObjectArray();
     }
 }
+
 class Xdp extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "xdp", true);
         this.packets = null;
     }
 }
+
 class Xsl extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "xsl", true);
@@ -47421,6 +49299,7 @@ class Xsl extends XFAObject {
         this.uri = null;
     }
 }
+
 class Zpl extends XFAObject {
     constructor(attributes) {
         super(CONFIG_NS_ID, "zpl", true);
@@ -47431,6 +49310,7 @@ class Zpl extends XFAObject {
         this.xdc = null;
     }
 }
+
 class ConfigNamespace {
     static [$buildXFAObject](name, attributes) {
         if (ConfigNamespace.hasOwnProperty(name)) {
@@ -47438,429 +49318,569 @@ class ConfigNamespace {
         }
         return undefined;
     }
+
     static acrobat(attrs) {
         return new Acrobat(attrs);
     }
+
     static acrobat7(attrs) {
         return new Acrobat7(attrs);
     }
+
     static ADBE_JSConsole(attrs) {
         return new ADBE_JSConsole(attrs);
     }
+
     static ADBE_JSDebugger(attrs) {
         return new ADBE_JSDebugger(attrs);
     }
+
     static addSilentPrint(attrs) {
         return new AddSilentPrint(attrs);
     }
+
     static addViewerPreferences(attrs) {
         return new AddViewerPreferences(attrs);
     }
+
     static adjustData(attrs) {
         return new AdjustData(attrs);
     }
+
     static adobeExtensionLevel(attrs) {
         return new AdobeExtensionLevel(attrs);
     }
+
     static agent(attrs) {
         return new Agent(attrs);
     }
+
     static alwaysEmbed(attrs) {
         return new AlwaysEmbed(attrs);
     }
+
     static amd(attrs) {
         return new Amd(attrs);
     }
+
     static area(attrs) {
         return new config_Area(attrs);
     }
+
     static attributes(attrs) {
         return new Attributes(attrs);
     }
+
     static autoSave(attrs) {
         return new AutoSave(attrs);
     }
+
     static base(attrs) {
         return new Base(attrs);
     }
+
     static batchOutput(attrs) {
         return new BatchOutput(attrs);
     }
+
     static behaviorOverride(attrs) {
         return new BehaviorOverride(attrs);
     }
+
     static cache(attrs) {
         return new Cache(attrs);
     }
+
     static change(attrs) {
         return new Change(attrs);
     }
+
     static common(attrs) {
         return new Common(attrs);
     }
+
     static compress(attrs) {
         return new Compress(attrs);
     }
+
     static compressLogicalStructure(attrs) {
         return new CompressLogicalStructure(attrs);
     }
+
     static compressObjectStream(attrs) {
         return new CompressObjectStream(attrs);
     }
+
     static compression(attrs) {
         return new Compression(attrs);
     }
+
     static config(attrs) {
         return new Config(attrs);
     }
+
     static conformance(attrs) {
         return new Conformance(attrs);
     }
+
     static contentCopy(attrs) {
         return new ContentCopy(attrs);
     }
+
     static copies(attrs) {
         return new Copies(attrs);
     }
+
     static creator(attrs) {
         return new Creator(attrs);
     }
+
     static currentPage(attrs) {
         return new CurrentPage(attrs);
     }
+
     static data(attrs) {
         return new Data(attrs);
     }
+
     static debug(attrs) {
         return new Debug(attrs);
     }
+
     static defaultTypeface(attrs) {
         return new DefaultTypeface(attrs);
     }
+
     static destination(attrs) {
         return new Destination(attrs);
     }
+
     static documentAssembly(attrs) {
         return new DocumentAssembly(attrs);
     }
+
     static driver(attrs) {
         return new Driver(attrs);
     }
+
     static duplexOption(attrs) {
         return new DuplexOption(attrs);
     }
+
     static dynamicRender(attrs) {
         return new DynamicRender(attrs);
     }
+
     static embed(attrs) {
         return new Embed(attrs);
     }
+
     static encrypt(attrs) {
         return new config_Encrypt(attrs);
     }
+
     static encryption(attrs) {
         return new config_Encryption(attrs);
     }
+
     static encryptionLevel(attrs) {
         return new EncryptionLevel(attrs);
     }
+
     static enforce(attrs) {
         return new Enforce(attrs);
     }
+
     static equate(attrs) {
         return new Equate(attrs);
     }
+
     static equateRange(attrs) {
         return new EquateRange(attrs);
     }
+
     static exclude(attrs) {
         return new Exclude(attrs);
     }
+
     static excludeNS(attrs) {
         return new ExcludeNS(attrs);
     }
+
     static flipLabel(attrs) {
         return new FlipLabel(attrs);
     }
+
     static fontInfo(attrs) {
         return new config_FontInfo(attrs);
     }
+
     static formFieldFilling(attrs) {
         return new FormFieldFilling(attrs);
     }
+
     static groupParent(attrs) {
         return new GroupParent(attrs);
     }
+
     static ifEmpty(attrs) {
         return new IfEmpty(attrs);
     }
+
     static includeXDPContent(attrs) {
         return new IncludeXDPContent(attrs);
     }
+
     static incrementalLoad(attrs) {
         return new IncrementalLoad(attrs);
     }
+
     static incrementalMerge(attrs) {
         return new IncrementalMerge(attrs);
     }
+
     static interactive(attrs) {
         return new Interactive(attrs);
     }
+
     static jog(attrs) {
         return new Jog(attrs);
     }
+
     static labelPrinter(attrs) {
         return new LabelPrinter(attrs);
     }
+
     static layout(attrs) {
         return new Layout(attrs);
     }
+
     static level(attrs) {
         return new Level(attrs);
     }
+
     static linearized(attrs) {
         return new Linearized(attrs);
     }
+
     static locale(attrs) {
         return new Locale(attrs);
     }
+
     static localeSet(attrs) {
         return new LocaleSet(attrs);
     }
+
     static log(attrs) {
         return new Log(attrs);
     }
+
     static map(attrs) {
         return new MapElement(attrs);
     }
+
     static mediumInfo(attrs) {
         return new MediumInfo(attrs);
     }
+
     static message(attrs) {
         return new config_Message(attrs);
     }
+
     static messaging(attrs) {
         return new Messaging(attrs);
     }
+
     static mode(attrs) {
         return new Mode(attrs);
     }
+
     static modifyAnnots(attrs) {
         return new ModifyAnnots(attrs);
     }
+
     static msgId(attrs) {
         return new MsgId(attrs);
     }
+
     static nameAttr(attrs) {
         return new NameAttr(attrs);
     }
+
     static neverEmbed(attrs) {
         return new NeverEmbed(attrs);
     }
+
     static numberOfCopies(attrs) {
         return new NumberOfCopies(attrs);
     }
+
     static openAction(attrs) {
         return new OpenAction(attrs);
     }
+
     static output(attrs) {
         return new Output(attrs);
     }
+
     static outputBin(attrs) {
         return new OutputBin(attrs);
     }
+
     static outputXSL(attrs) {
         return new OutputXSL(attrs);
     }
+
     static overprint(attrs) {
         return new Overprint(attrs);
     }
+
     static packets(attrs) {
         return new Packets(attrs);
     }
+
     static pageOffset(attrs) {
         return new PageOffset(attrs);
     }
+
     static pageRange(attrs) {
         return new PageRange(attrs);
     }
+
     static pagination(attrs) {
         return new Pagination(attrs);
     }
+
     static paginationOverride(attrs) {
         return new PaginationOverride(attrs);
     }
+
     static part(attrs) {
         return new Part(attrs);
     }
+
     static pcl(attrs) {
         return new Pcl(attrs);
     }
+
     static pdf(attrs) {
         return new Pdf(attrs);
     }
+
     static pdfa(attrs) {
         return new Pdfa(attrs);
     }
+
     static permissions(attrs) {
         return new Permissions(attrs);
     }
+
     static pickTrayByPDFSize(attrs) {
         return new PickTrayByPDFSize(attrs);
     }
+
     static picture(attrs) {
         return new config_Picture(attrs);
     }
+
     static plaintextMetadata(attrs) {
         return new PlaintextMetadata(attrs);
     }
+
     static presence(attrs) {
         return new Presence(attrs);
     }
+
     static present(attrs) {
         return new Present(attrs);
     }
+
     static print(attrs) {
         return new Print(attrs);
     }
+
     static printHighQuality(attrs) {
         return new PrintHighQuality(attrs);
     }
+
     static printScaling(attrs) {
         return new PrintScaling(attrs);
     }
+
     static printerName(attrs) {
         return new PrinterName(attrs);
     }
+
     static producer(attrs) {
         return new Producer(attrs);
     }
+
     static ps(attrs) {
         return new Ps(attrs);
     }
+
     static range(attrs) {
         return new Range(attrs);
     }
+
     static record(attrs) {
         return new Record(attrs);
     }
+
     static relevant(attrs) {
         return new Relevant(attrs);
     }
+
     static rename(attrs) {
         return new Rename(attrs);
     }
+
     static renderPolicy(attrs) {
         return new RenderPolicy(attrs);
     }
+
     static runScripts(attrs) {
         return new RunScripts(attrs);
     }
+
     static script(attrs) {
         return new config_Script(attrs);
     }
+
     static scriptModel(attrs) {
         return new ScriptModel(attrs);
     }
+
     static severity(attrs) {
         return new Severity(attrs);
     }
+
     static silentPrint(attrs) {
         return new SilentPrint(attrs);
     }
+
     static staple(attrs) {
         return new Staple(attrs);
     }
+
     static startNode(attrs) {
         return new StartNode(attrs);
     }
+
     static startPage(attrs) {
         return new StartPage(attrs);
     }
+
     static submitFormat(attrs) {
         return new SubmitFormat(attrs);
     }
+
     static submitUrl(attrs) {
         return new SubmitUrl(attrs);
     }
+
     static subsetBelow(attrs) {
         return new SubsetBelow(attrs);
     }
+
     static suppressBanner(attrs) {
         return new SuppressBanner(attrs);
     }
+
     static tagged(attrs) {
         return new Tagged(attrs);
     }
+
     static template(attrs) {
         return new config_Template(attrs);
     }
+
     static templateCache(attrs) {
         return new TemplateCache(attrs);
     }
+
     static threshold(attrs) {
         return new Threshold(attrs);
     }
+
     static to(attrs) {
         return new To(attrs);
     }
+
     static trace(attrs) {
         return new Trace(attrs);
     }
+
     static transform(attrs) {
         return new Transform(attrs);
     }
+
     static type(attrs) {
         return new Type(attrs);
     }
+
     static uri(attrs) {
         return new Uri(attrs);
     }
+
     static validate(attrs) {
         return new config_Validate(attrs);
     }
+
     static validateApprovalSignatures(attrs) {
         return new ValidateApprovalSignatures(attrs);
     }
+
     static validationMessaging(attrs) {
         return new ValidationMessaging(attrs);
     }
+
     static version(attrs) {
         return new Version(attrs);
     }
+
     static versionControl(attrs) {
         return new VersionControl(attrs);
     }
+
     static viewerPreferences(attrs) {
         return new ViewerPreferences(attrs);
     }
+
     static webClient(attrs) {
         return new WebClient(attrs);
     }
+
     static whitespace(attrs) {
         return new Whitespace(attrs);
     }
+
     static window(attrs) {
         return new Window(attrs);
     }
+
     static xdc(attrs) {
         return new Xdc(attrs);
     }
+
     static xdp(attrs) {
         return new Xdp(attrs);
     }
+
     static xsl(attrs) {
         return new Xsl(attrs);
     }
+
     static zpl(attrs) {
         return new Zpl(attrs);
     }
 }
 
-;// ./src/core/xfa/connection_set.js
+// ./src/core/xfa/connection_set.js
 
 
 const CONNECTION_SET_NS_ID = NamespaceIds.connectionSet.id;
+
 class ConnectionSet extends XFAObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "connectionSet", true);
@@ -47869,6 +49889,7 @@ class ConnectionSet extends XFAObject {
         this.xsdConnection = new XFAObjectArray();
     }
 }
+
 class EffectiveInputPolicy extends XFAObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "effectiveInputPolicy");
@@ -47878,6 +49899,7 @@ class EffectiveInputPolicy extends XFAObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class EffectiveOutputPolicy extends XFAObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "effectiveOutputPolicy");
@@ -47887,6 +49909,7 @@ class EffectiveOutputPolicy extends XFAObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class Operation extends StringObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "operation");
@@ -47898,6 +49921,7 @@ class Operation extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class RootElement extends StringObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "rootElement");
@@ -47907,6 +49931,7 @@ class RootElement extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class SoapAction extends StringObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "soapAction");
@@ -47916,6 +49941,7 @@ class SoapAction extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class SoapAddress extends StringObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "soapAddress");
@@ -47925,6 +49951,7 @@ class SoapAddress extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class connection_set_Uri extends StringObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "uri");
@@ -47934,6 +49961,7 @@ class connection_set_Uri extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class WsdlAddress extends StringObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "wsdlAddress");
@@ -47943,6 +49971,7 @@ class WsdlAddress extends StringObject {
         this.usehref = attributes.usehref || "";
     }
 }
+
 class WsdlConnection extends XFAObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "wsdlConnection", true);
@@ -47956,6 +49985,7 @@ class WsdlConnection extends XFAObject {
         this.wsdlAddress = null;
     }
 }
+
 class XmlConnection extends XFAObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "xmlConnection", true);
@@ -47964,6 +49994,7 @@ class XmlConnection extends XFAObject {
         this.uri = null;
     }
 }
+
 class XsdConnection extends XFAObject {
     constructor(attributes) {
         super(CONNECTION_SET_NS_ID, "xsdConnection", true);
@@ -47973,6 +50004,7 @@ class XsdConnection extends XFAObject {
         this.uri = null;
     }
 }
+
 class ConnectionSetNamespace {
     static [$buildXFAObject](name, attributes) {
         if (ConnectionSetNamespace.hasOwnProperty(name)) {
@@ -47980,63 +50012,78 @@ class ConnectionSetNamespace {
         }
         return undefined;
     }
+
     static connectionSet(attrs) {
         return new ConnectionSet(attrs);
     }
+
     static effectiveInputPolicy(attrs) {
         return new EffectiveInputPolicy(attrs);
     }
+
     static effectiveOutputPolicy(attrs) {
         return new EffectiveOutputPolicy(attrs);
     }
+
     static operation(attrs) {
         return new Operation(attrs);
     }
+
     static rootElement(attrs) {
         return new RootElement(attrs);
     }
+
     static soapAction(attrs) {
         return new SoapAction(attrs);
     }
+
     static soapAddress(attrs) {
         return new SoapAddress(attrs);
     }
+
     static uri(attrs) {
         return new connection_set_Uri(attrs);
     }
+
     static wsdlAddress(attrs) {
         return new WsdlAddress(attrs);
     }
+
     static wsdlConnection(attrs) {
         return new WsdlConnection(attrs);
     }
+
     static xmlConnection(attrs) {
         return new XmlConnection(attrs);
     }
+
     static xsdConnection(attrs) {
         return new XsdConnection(attrs);
     }
 }
 
-;// ./src/core/xfa/datasets.js
-
+// ./src/core/xfa/datasets.js
 
 
 const DATASETS_NS_ID = NamespaceIds.datasets.id;
+
 class datasets_Data extends XmlObject {
     constructor(attributes) {
         super(DATASETS_NS_ID, "data", attributes);
     }
+
     [$isNsAgnostic]() {
         return true;
     }
 }
+
 class Datasets extends XFAObject {
     constructor(attributes) {
         super(DATASETS_NS_ID, "datasets", true);
         this.data = null;
         this.Signature = null;
     }
+
     [$onChild](child) {
         const name = child[$nodeName];
         if (name === "data" && child[$namespaceId] === DATASETS_NS_ID || name === "Signature" && child[$namespaceId] === NamespaceIds.signature.id) {
@@ -48045,6 +50092,7 @@ class Datasets extends XFAObject {
         this[$appendChild](child);
     }
 }
+
 class DatasetsNamespace {
     static [$buildXFAObject](name, attributes) {
         if (DatasetsNamespace.hasOwnProperty(name)) {
@@ -48052,19 +50100,21 @@ class DatasetsNamespace {
         }
         return undefined;
     }
+
     static datasets(attributes) {
         return new Datasets(attributes);
     }
+
     static data(attributes) {
         return new datasets_Data(attributes);
     }
 }
 
-;// ./src/core/xfa/locale_set.js
-
+// ./src/core/xfa/locale_set.js
 
 
 const LOCALE_SET_NS_ID = NamespaceIds.localeSet.id;
+
 class CalendarSymbols extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "calendarSymbols", true);
@@ -48075,40 +50125,47 @@ class CalendarSymbols extends XFAObject {
         this.monthNames = new XFAObjectArray(2);
     }
 }
+
 class CurrencySymbol extends StringObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "currencySymbol");
         this.name = getStringOption(attributes.name, ["symbol", "isoname", "decimal"]);
     }
 }
+
 class CurrencySymbols extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "currencySymbols", true);
         this.currencySymbol = new XFAObjectArray(3);
     }
 }
+
 class DatePattern extends StringObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "datePattern");
         this.name = getStringOption(attributes.name, ["full", "long", "med", "short"]);
     }
 }
+
 class DatePatterns extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "datePatterns", true);
         this.datePattern = new XFAObjectArray(4);
     }
 }
+
 class DateTimeSymbols extends ContentObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "dateTimeSymbols");
     }
 }
+
 class Day extends StringObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "day");
     }
 }
+
 class DayNames extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "dayNames", true);
@@ -48120,17 +50177,20 @@ class DayNames extends XFAObject {
         this.day = new XFAObjectArray(7);
     }
 }
+
 class Era extends StringObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "era");
     }
 }
+
 class EraNames extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "eraNames", true);
         this.era = new XFAObjectArray(2);
     }
 }
+
 class locale_set_Locale extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "locale", true);
@@ -48146,28 +50206,33 @@ class locale_set_Locale extends XFAObject {
         this.typeFaces = null;
     }
 }
+
 class locale_set_LocaleSet extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "localeSet", true);
         this.locale = new XFAObjectArray();
     }
 }
+
 class Meridiem extends StringObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "meridiem");
     }
 }
+
 class MeridiemNames extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "meridiemNames", true);
         this.meridiem = new XFAObjectArray(2);
     }
 }
+
 class Month extends StringObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "month");
     }
 }
+
 class MonthNames extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "monthNames", true);
@@ -48179,54 +50244,63 @@ class MonthNames extends XFAObject {
         this.month = new XFAObjectArray(12);
     }
 }
+
 class NumberPattern extends StringObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "numberPattern");
         this.name = getStringOption(attributes.name, ["full", "long", "med", "short"]);
     }
 }
+
 class NumberPatterns extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "numberPatterns", true);
         this.numberPattern = new XFAObjectArray(4);
     }
 }
+
 class NumberSymbol extends StringObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "numberSymbol");
         this.name = getStringOption(attributes.name, ["decimal", "grouping", "percent", "minus", "zero"]);
     }
 }
+
 class NumberSymbols extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "numberSymbols", true);
         this.numberSymbol = new XFAObjectArray(5);
     }
 }
+
 class TimePattern extends StringObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "timePattern");
         this.name = getStringOption(attributes.name, ["full", "long", "med", "short"]);
     }
 }
+
 class TimePatterns extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "timePatterns", true);
         this.timePattern = new XFAObjectArray(4);
     }
 }
+
 class TypeFace extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "typeFace", true);
         this.name = attributes.name | "";
     }
 }
+
 class TypeFaces extends XFAObject {
     constructor(attributes) {
         super(LOCALE_SET_NS_ID, "typeFaces", true);
         this.typeFace = new XFAObjectArray();
     }
 }
+
 class LocaleSetNamespace {
     static [$buildXFAObject](name, attributes) {
         if (LocaleSetNamespace.hasOwnProperty(name)) {
@@ -48234,89 +50308,115 @@ class LocaleSetNamespace {
         }
         return undefined;
     }
+
     static calendarSymbols(attrs) {
         return new CalendarSymbols(attrs);
     }
+
     static currencySymbol(attrs) {
         return new CurrencySymbol(attrs);
     }
+
     static currencySymbols(attrs) {
         return new CurrencySymbols(attrs);
     }
+
     static datePattern(attrs) {
         return new DatePattern(attrs);
     }
+
     static datePatterns(attrs) {
         return new DatePatterns(attrs);
     }
+
     static dateTimeSymbols(attrs) {
         return new DateTimeSymbols(attrs);
     }
+
     static day(attrs) {
         return new Day(attrs);
     }
+
     static dayNames(attrs) {
         return new DayNames(attrs);
     }
+
     static era(attrs) {
         return new Era(attrs);
     }
+
     static eraNames(attrs) {
         return new EraNames(attrs);
     }
+
     static locale(attrs) {
         return new locale_set_Locale(attrs);
     }
+
     static localeSet(attrs) {
         return new locale_set_LocaleSet(attrs);
     }
+
     static meridiem(attrs) {
         return new Meridiem(attrs);
     }
+
     static meridiemNames(attrs) {
         return new MeridiemNames(attrs);
     }
+
     static month(attrs) {
         return new Month(attrs);
     }
+
     static monthNames(attrs) {
         return new MonthNames(attrs);
     }
+
     static numberPattern(attrs) {
         return new NumberPattern(attrs);
     }
+
     static numberPatterns(attrs) {
         return new NumberPatterns(attrs);
     }
+
     static numberSymbol(attrs) {
         return new NumberSymbol(attrs);
     }
+
     static numberSymbols(attrs) {
         return new NumberSymbols(attrs);
     }
+
     static timePattern(attrs) {
         return new TimePattern(attrs);
     }
+
     static timePatterns(attrs) {
         return new TimePatterns(attrs);
     }
+
     static typeFace(attrs) {
         return new TypeFace(attrs);
     }
+
     static typeFaces(attrs) {
         return new TypeFaces(attrs);
     }
 }
 
-;// ./src/core/xfa/signature.js
+// ./src/core/xfa/signature.js
 
 
 const SIGNATURE_NS_ID = NamespaceIds.signature.id;
+
 class signature_Signature extends XFAObject {
     constructor(attributes) {
         super(SIGNATURE_NS_ID, "signature", true);
     }
 }
+
 class SignatureNamespace {
     static [$buildXFAObject](name, attributes) {
         if (SignatureNamespace.hasOwnProperty(name)) {
@@ -48324,20 +50424,23 @@ class SignatureNamespace {
         }
         return undefined;
     }
+
     static signature(attributes) {
         return new signature_Signature(attributes);
     }
 }
 
-;// ./src/core/xfa/stylesheet.js
+// ./src/core/xfa/stylesheet.js
 
 
 const STYLESHEET_NS_ID = NamespaceIds.stylesheet.id;
+
 class Stylesheet extends XFAObject {
     constructor(attributes) {
         super(STYLESHEET_NS_ID, "stylesheet", true);
     }
 }
+
 class StylesheetNamespace {
     static [$buildXFAObject](name, attributes) {
         if (StylesheetNamespace.hasOwnProperty(name)) {
@@ -48345,16 +50448,17 @@ class StylesheetNamespace {
         }
         return undefined;
     }
+
     static stylesheet(attributes) {
         return new Stylesheet(attributes);
     }
 }
 
-;// ./src/core/xfa/xdp.js
-
+// ./src/core/xfa/xdp.js
 
 
 const XDP_NS_ID = NamespaceIds.xdp.id;
+
 class xdp_Xdp extends XFAObject {
     constructor(attributes) {
         super(XDP_NS_ID, "xdp", true);
@@ -48367,11 +50471,13 @@ class xdp_Xdp extends XFAObject {
         this.stylesheet = new XFAObjectArray();
         this.template = null;
     }
+
     [$onChildCheck](child) {
         const ns = NamespaceIds[child[$nodeName]];
         return ns && child[$namespaceId] === ns.id;
     }
 }
+
 class XdpNamespace {
     static [$buildXFAObject](name, attributes) {
         if (XdpNamespace.hasOwnProperty(name)) {
@@ -48379,15 +50485,13 @@ class XdpNamespace {
         }
         return undefined;
     }
+
     static xdp(attributes) {
         return new xdp_Xdp(attributes);
     }
 }
 
-;// ./src/core/xfa/xhtml.js
-
-
-
+// ./src/core/xfa/xhtml.js
 
 
 const XHTML_NS_ID = NamespaceIds.xhtml.id;
@@ -48400,6 +50504,7 @@ const StyleMapping = new Map([["page-break-after", "breakAfter"], ["page-break-b
 const spacesRegExp = /\s+/g;
 const crlfRegExp = /[\r\n]+/g;
 const crlfForRichTextRegExp = /\r\n?/g;
+
 function mapStyle(styleStr, node, richText) {
     const style = Object.create(null);
     if (!styleStr) {
@@ -48442,6 +50547,7 @@ function mapStyle(styleStr, node, richText) {
     fixTextIndent(style);
     return style;
 }
+
 function checkStyle(node) {
     if (!node.style) {
         return "";
@@ -48453,20 +50559,25 @@ function checkStyle(node) {
         return VALID_STYLES.has(key);
     }).map(kv => kv.join(":")).join(";");
 }
+
 const NoWhites = new Set(["body", "html"]);
+
 class XhtmlObject extends XmlObject {
     constructor(attributes, name) {
         super(XHTML_NS_ID, name);
         this[$richText] = false;
         this.style = attributes.style || "";
     }
+
     [$clean](builder) {
         super[$clean](builder);
         this.style = checkStyle(this);
     }
+
     [$acceptWhitespace]() {
         return !NoWhites.has(this[$nodeName]);
     }
+
     [$onText](str, richText = false) {
         if (!richText) {
             str = str.replaceAll(crlfRegExp, "");
@@ -48480,6 +50591,7 @@ class XhtmlObject extends XmlObject {
             this[$content] += str;
         }
     }
+
     [$pushGlyphs](measure, mustPop = true) {
         const xfaFont = Object.create(null);
         const margin = {
@@ -48562,6 +50674,7 @@ class XhtmlObject extends XmlObject {
             measure.popFont();
         }
     }
+
     [$toHTML](availableSpace) {
         const children = [];
         this[$extra] = {
@@ -48588,16 +50701,19 @@ class XhtmlObject extends XmlObject {
         });
     }
 }
+
 class A extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "a");
         this.href = fixURL(attributes.href) || "";
     }
 }
+
 class B extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "b");
     }
+
     [$pushGlyphs](measure) {
         measure.pushFont({
             weight: "bold"
@@ -48606,10 +50722,12 @@ class B extends XhtmlObject {
         measure.popFont();
     }
 }
+
 class Body extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "body");
     }
+
     [$toHTML](availableSpace) {
         const res = super[$toHTML](availableSpace);
         const {
@@ -48623,26 +50741,32 @@ class Body extends XhtmlObject {
         return res;
     }
 }
+
 class Br extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "br");
     }
+
     [$text]() {
         return "\n";
     }
+
     [$pushGlyphs](measure) {
         measure.addString("\n");
     }
+
     [$toHTML](availableSpace) {
         return HTMLResult.success({
             name: "br"
         });
     }
 }
+
 class Html extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "html");
     }
+
     [$toHTML](availableSpace) {
         const children = [];
         this[$extra] = {
@@ -48675,10 +50799,12 @@ class Html extends XhtmlObject {
         });
     }
 }
+
 class I extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "i");
     }
+
     [$pushGlyphs](measure) {
         measure.pushFont({
             posture: "italic"
@@ -48687,26 +50813,31 @@ class I extends XhtmlObject {
         measure.popFont();
     }
 }
+
 class Li extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "li");
     }
 }
+
 class Ol extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "ol");
     }
 }
+
 class P extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "p");
     }
+
     [$pushGlyphs](measure) {
         super[$pushGlyphs](measure, false);
         measure.addString("\n");
         measure.addPara();
         measure.popFont();
     }
+
     [$text]() {
         const siblings = this[$getParent]()[$getChildren]();
         if (siblings.at(-1) === this) {
@@ -48715,26 +50846,31 @@ class P extends XhtmlObject {
         return super[$text]() + "\n";
     }
 }
+
 class Span extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "span");
     }
 }
+
 class Sub extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "sub");
     }
 }
+
 class Sup extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "sup");
     }
 }
+
 class Ul extends XhtmlObject {
     constructor(attributes) {
         super(attributes, "ul");
     }
 }
+
 class XhtmlNamespace {
     static [$buildXFAObject](name, attributes) {
         if (XhtmlNamespace.hasOwnProperty(name)) {
@@ -48742,55 +50878,61 @@ class XhtmlNamespace {
         }
         return undefined;
     }
+
     static a(attributes) {
         return new A(attributes);
     }
+
     static b(attributes) {
         return new B(attributes);
     }
+
     static body(attributes) {
         return new Body(attributes);
     }
+
     static br(attributes) {
         return new Br(attributes);
     }
+
     static html(attributes) {
         return new Html(attributes);
     }
+
     static i(attributes) {
         return new I(attributes);
     }
+
     static li(attributes) {
         return new Li(attributes);
     }
+
     static ol(attributes) {
         return new Ol(attributes);
     }
+
     static p(attributes) {
         return new P(attributes);
     }
+
     static span(attributes) {
         return new Span(attributes);
     }
+
     static sub(attributes) {
         return new Sub(attributes);
     }
+
     static sup(attributes) {
         return new Sup(attributes);
     }
+
     static ul(attributes) {
         return new Ul(attributes);
     }
 }
 
-;// ./src/core/xfa/setup.js
-
-
-
-
-
-
-
+// ./src/core/xfa/setup.js
 
 
 const NamespaceSetUp = {
@@ -48805,24 +50947,20 @@ const NamespaceSetUp = {
     xhtml: XhtmlNamespace
 };
 
-;// ./src/core/xfa/unknown.js
+// ./src/core/xfa/unknown.js
 
 
 class UnknownNamespace {
     constructor(nsId) {
         this.namespaceId = nsId;
     }
+
     [$buildXFAObject](name, attributes) {
         return new XmlObject(this.namespaceId, name, attributes);
     }
 }
 
-;// ./src/core/xfa/builder.js
-
-
-
-
-
+// ./src/core/xfa/builder.js
 
 
 class Root extends XFAObject {
@@ -48831,10 +50969,12 @@ class Root extends XFAObject {
         this.element = null;
         this[$ids] = ids;
     }
+
     [$onChild](child) {
         this.element = child;
         return true;
     }
+
     [$finalize]() {
         super[$finalize]();
         if (this.element.template instanceof Template) {
@@ -48844,14 +50984,17 @@ class Root extends XFAObject {
         }
     }
 }
+
 class Empty extends XFAObject {
     constructor() {
         super(-1, "", Object.create(null));
     }
+
     [$onChild](_) {
         return false;
     }
 }
+
 class Builder {
     constructor(rootNameSpace = null) {
         this._namespaceStack = [];
@@ -48863,9 +51006,11 @@ class Builder {
                                                                       }) => id));
         this._currentNamespace = rootNameSpace || new UnknownNamespace(++this._nextNsId);
     }
+
     buildRoot(ids) {
         return new Root(ids);
     }
+
     build({
               nsPrefix,
               name,
@@ -48914,9 +51059,11 @@ class Builder {
         }
         return node;
     }
+
     isNsAgnostic() {
         return this._nsAgnosticLevel > 0;
     }
+
     _searchNamespace(nsName) {
         let ns = this._namespaces.get(nsName);
         if (ns) {
@@ -48938,6 +51085,7 @@ class Builder {
         this._namespaces.set(nsName, ns);
         return ns;
     }
+
     _addNamespacePrefix(prefixes) {
         for (const {
             prefix,
@@ -48952,6 +51100,7 @@ class Builder {
             prefixStack.push(namespace);
         }
     }
+
     _getNamespaceToUse(prefix) {
         if (!prefix) {
             return this._currentNamespace;
@@ -48963,6 +51112,7 @@ class Builder {
         warn(`Unknown namespace prefix: ${prefix}.`);
         return null;
     }
+
     clean(data) {
         const {
             hasNamespace,
@@ -48985,9 +51135,7 @@ class Builder {
     }
 }
 
-;// ./src/core/xfa/parser.js
-
-
+// ./src/core/xfa/parser.js
 
 
 class XFAParser extends XMLParserBase {
@@ -49005,6 +51153,7 @@ class XFAParser extends XMLParserBase {
         this._nbsps = /\xa0+/g;
         this._richText = richText;
     }
+
     parse(data) {
         this.parseXml(data);
         if (this._errorCode !== XMLParserErrorCode.NoError) {
@@ -49013,6 +51162,7 @@ class XFAParser extends XMLParserBase {
         this._current[$finalize]();
         return this._current.element;
     }
+
     onText(text) {
         text = text.replace(this._nbsps, match => match.slice(1) + " ");
         if (this._richText || this._current[$acceptWhitespace]()) {
@@ -49024,9 +51174,11 @@ class XFAParser extends XMLParserBase {
         }
         this._current[$onText](text.trim());
     }
+
     onCdata(text) {
         this._current[$onText](text);
     }
+
     _mkAttributes(attributes, tagName) {
         let namespace = null;
         let prefixes = null;
@@ -49062,6 +51214,7 @@ class XFAParser extends XMLParserBase {
         }
         return [namespace, prefixes, attributeObj];
     }
+
     _getNameAndPrefix(name, nsAgnostic) {
         const i = name.indexOf(":");
         if (i === -1) {
@@ -49069,6 +51222,7 @@ class XFAParser extends XMLParserBase {
         }
         return [name.substring(i + 1), nsAgnostic ? "" : name.substring(0, i)];
     }
+
     onBeginElement(tagName, attributes, isEmpty) {
         const [namespace, prefixes, attributesObj] = this._mkAttributes(attributes, tagName);
         const [name, nsPrefix] = this._getNameAndPrefix(tagName, this._builder.isNsAgnostic());
@@ -49091,6 +51245,7 @@ class XFAParser extends XMLParserBase {
         this._stack.push(this._current);
         this._current = node;
     }
+
     onEndElement(name) {
         const node = this._current;
         if (node[$isCDATAXml]() && typeof node[$content] === "string") {
@@ -49107,18 +51262,13 @@ class XFAParser extends XMLParserBase {
         }
         node[$clean](this._builder);
     }
+
     onError(code) {
         this._errorCode = code;
     }
 }
 
-;// ./src/core/xfa/factory.js
-
-
-
-
-
-
+// ./src/core/xfa/factory.js
 
 
 class XFAFactory {
@@ -49133,9 +51283,11 @@ class XFAFactory {
             warn(`XFA - an error occurred during parsing and binding: ${e}`);
         }
     }
+
     isValid() {
         return !!(this.root && this.form);
     }
+
     _createPagesHelper() {
         const iterator = this.form[$toPages]();
         return new Promise((resolve, reject) => {
@@ -49154,6 +51306,7 @@ class XFAFactory {
             setTimeout(nextIteration, 0);
         });
     }
+
     async _createPages() {
         try {
             this.pages = await this._createPagesHelper();
@@ -49168,18 +51321,22 @@ class XFAFactory {
             warn(`XFA - an error occurred during layout: ${e}`);
         }
     }
+
     getBoundingBox(pageIndex) {
         return this.dims[pageIndex];
     }
+
     async getNumPages() {
         if (!this.pages) {
             await this._createPages();
         }
         return this.dims.length;
     }
+
     setImages(images) {
         this.form[$globalData].images = images;
     }
+
     setFonts(fonts) {
         this.form[$globalData].fontFinder = new FontFinder(fonts);
         const missingFonts = [];
@@ -49195,9 +51352,11 @@ class XFAFactory {
         }
         return null;
     }
+
     appendFonts(fonts, reallyMissingFonts) {
         this.form[$globalData].fontFinder.add(fonts, reallyMissingFonts);
     }
+
     async getPages() {
         if (!this.pages) {
             await this._createPages();
@@ -49206,15 +51365,18 @@ class XFAFactory {
         this.pages = null;
         return pages;
     }
+
     serializeData(storage) {
         return this.dataHandler.serialize(storage);
     }
+
     static _createDocument(data) {
         if (!data["/xdp:xdp"]) {
             return data["xdp:xdp"];
         }
         return Object.values(data).join("");
     }
+
     static getRichTextAsHtml(rc) {
         if (!rc || typeof rc !== "string") {
             return null;
@@ -49253,20 +51415,7 @@ class XFAFactory {
     }
 }
 
-;// ./src/core/annotation.js
-
-
-
-
-
-
-
-
-
-
-
-
-
+// ./src/core/annotation.js
 
 
 class AnnotationFactory {
@@ -49284,10 +51433,12 @@ class AnnotationFactory {
             return null;
         });
     }
+
     static async create(xref, ref, annotationGlobals, idFactory, collectFields, orphanFields, pageRef) {
         const pageIndex = collectFields ? await this._getPageIndex(xref, ref, annotationGlobals.pdfManager) : null;
         return annotationGlobals.pdfManager.ensure(this, "_create", [xref, ref, annotationGlobals, idFactory, collectFields, orphanFields, pageIndex, pageRef]);
     }
+
     static _create(xref, ref, annotationGlobals, idFactory, collectFields = false, orphanFields = null, pageIndex = null, pageRef = null) {
         const dict = xref.fetchIfRef(ref);
         if (!(dict instanceof Dict)) {
@@ -49378,6 +51529,7 @@ class AnnotationFactory {
                 return new Annotation(parameters);
         }
     }
+
     static async _getPageIndex(xref, ref, pdfManager) {
         try {
             const annotDict = await xref.fetchIfRefAsync(ref);
@@ -49411,6 +51563,7 @@ class AnnotationFactory {
         }
         return -1;
     }
+
     static generateImages(annotations, xref, isOffscreenCanvasSupported) {
         if (!isOffscreenCanvasSupported) {
             warn("generateImages: OffscreenCanvas is not supported, cannot save or print some annotations with images.");
@@ -49429,6 +51582,7 @@ class AnnotationFactory {
         }
         return imagePromises;
     }
+
     static async saveNewAnnotations(evaluator, task, annotations, imagePromises, changes) {
         const xref = evaluator.xref;
         let baseFontRef;
@@ -49502,6 +51656,7 @@ class AnnotationFactory {
             annotations: (await Promise.all(promises)).flat()
         };
     }
+
     static async printNewAnnotations(annotationGlobals, evaluator, task, annotations, imagePromises) {
         if (!annotations) {
             return null;
@@ -49567,6 +51722,7 @@ class AnnotationFactory {
         return Promise.all(promises);
     }
 }
+
 function getRgbColor(color, defaultColor = new Uint8ClampedArray(3)) {
     if (!Array.isArray(color)) {
         return defaultColor;
@@ -49588,9 +51744,11 @@ function getRgbColor(color, defaultColor = new Uint8ClampedArray(3)) {
             return defaultColor;
     }
 }
+
 function getPdfColorArray(color, defaultValue = null) {
     return color && Array.from(color, c => c / 255) || defaultValue;
 }
+
 function getQuadPoints(dict, rect) {
     const quadPoints = dict.getArray("QuadPoints");
     if (!isNumberArray(quadPoints, null) || quadPoints.length === 0 || quadPoints.length % 8 > 0) {
@@ -49610,6 +51768,7 @@ function getQuadPoints(dict, rect) {
     }
     return newQuadPoints;
 }
+
 function getTransformMatrix(rect, bbox, matrix) {
     const minMax = new Float32Array([Infinity, Infinity, -Infinity, -Infinity]);
     Util.axialAlignedBoundingBox(bbox, matrix, minMax);
@@ -49621,6 +51780,7 @@ function getTransformMatrix(rect, bbox, matrix) {
     const yRatio = (rect[3] - rect[1]) / (maxY - minY);
     return [xRatio, 0, 0, yRatio, rect[0] - minX * xRatio, rect[1] - minY * yRatio];
 }
+
 class Annotation {
     constructor(params) {
         const {
@@ -49702,9 +51862,11 @@ class Annotation {
         this._fallbackFontDict = null;
         this._needAppearances = false;
     }
+
     _hasFlag(flags, flag) {
         return !!(flags & flag);
     }
+
     _buildFlags(noView, noPrint) {
         let {
             flags
@@ -49731,12 +51893,15 @@ class Annotation {
         }
         return flags | AnnotationFlag.PRINT;
     }
+
     _isViewable(flags) {
         return !this._hasFlag(flags, AnnotationFlag.INVISIBLE) && !this._hasFlag(flags, AnnotationFlag.NOVIEW);
     }
+
     _isPrintable(flags) {
         return this._hasFlag(flags, AnnotationFlag.PRINT) && !this._hasFlag(flags, AnnotationFlag.HIDDEN) && !this._hasFlag(flags, AnnotationFlag.INVISIBLE);
     }
+
     mustBeViewed(annotationStorage, _renderForms) {
         const noView = annotationStorage?.get(this.data.id)?.noView;
         if (noView !== undefined) {
@@ -49744,6 +51909,7 @@ class Annotation {
         }
         return this.viewable && !this._hasFlag(this.flags, AnnotationFlag.HIDDEN);
     }
+
     mustBePrinted(annotationStorage) {
         const noPrint = annotationStorage?.get(this.data.id)?.noPrint;
         if (noPrint !== undefined) {
@@ -49751,9 +51917,11 @@ class Annotation {
         }
         return this.printable;
     }
+
     mustBeViewedWhenEditing(isEditing, modifiedIds = null) {
         return isEditing ? !this.data.isEditable : !modifiedIds?.has(this.data.id);
     }
+
     get viewable() {
         if (this.data.quadPoints === null) {
             return false;
@@ -49763,6 +51931,7 @@ class Annotation {
         }
         return this._isViewable(this.flags);
     }
+
     get printable() {
         if (this.data.quadPoints === null) {
             return false;
@@ -49772,6 +51941,7 @@ class Annotation {
         }
         return this._isPrintable(this.flags);
     }
+
     _parseStringHelper(data) {
         const str = typeof data === "string" ? stringToPDFString(data) : "";
         const dir = str && bidi(str).dir === "rtl" ? "rtl" : "ltr";
@@ -49780,6 +51950,7 @@ class Annotation {
             dir
         };
     }
+
     setDefaultAppearance(params) {
         const {
             dict,
@@ -49792,30 +51963,38 @@ class Annotation {
         this._defaultAppearance = typeof defaultAppearance === "string" ? defaultAppearance : "";
         this.data.defaultAppearanceData = parseDefaultAppearance(this._defaultAppearance);
     }
+
     setTitle(title) {
         this._title = this._parseStringHelper(title);
     }
+
     setContents(contents) {
         this._contents = this._parseStringHelper(contents);
     }
+
     setModificationDate(modificationDate) {
         this.modificationDate = typeof modificationDate === "string" ? modificationDate : null;
     }
+
     setFlags(flags) {
         this.flags = Number.isInteger(flags) && flags > 0 ? flags : 0;
         if (this.flags & AnnotationFlag.INVISIBLE && this.constructor.name !== "Annotation") {
             this.flags ^= AnnotationFlag.INVISIBLE;
         }
     }
+
     hasFlag(flag) {
         return this._hasFlag(this.flags, flag);
     }
+
     setRectangle(rectangle) {
         this.rectangle = lookupNormalRect(rectangle, [0, 0, 0, 0]);
     }
+
     setColor(color) {
         this.color = getRgbColor(color);
     }
+
     setLineEndings(lineEndings) {
         this.lineEndings = ["None", "None"];
         if (Array.isArray(lineEndings) && lineEndings.length === 2) {
@@ -49842,6 +52021,7 @@ class Annotation {
             }
         }
     }
+
     setRotation(mk, dict) {
         this.rotation = 0;
         let angle = mk instanceof Dict ? mk.get("R") || 0 : dict.get("Rotate") || 0;
@@ -49855,6 +52035,7 @@ class Annotation {
             }
         }
     }
+
     setBorderAndBackgroundColors(mk) {
         if (mk instanceof Dict) {
             this.borderColor = getRgbColor(mk.getArray("BC"), null);
@@ -49863,6 +52044,7 @@ class Annotation {
             this.borderColor = this.backgroundColor = null;
         }
     }
+
     setBorderStyle(borderStyle) {
         this.borderStyle = new AnnotationBorderStyle();
         if (!(borderStyle instanceof Dict)) {
@@ -49892,6 +52074,7 @@ class Annotation {
             this.borderStyle.setWidth(0);
         }
     }
+
     setAppearance(dict) {
         this.appearance = null;
         const appearanceStates = dict.get("AP");
@@ -49915,6 +52098,7 @@ class Annotation {
             this.appearance = appearance;
         }
     }
+
     setOptionalContent(dict) {
         this.oc = null;
         const oc = dict.get("OC");
@@ -49924,6 +52108,7 @@ class Annotation {
             this.oc = oc;
         }
     }
+
     async loadResources(keys, appearance) {
         const resources = await appearance.dict.getAsync("Resources");
         if (resources) {
@@ -49931,6 +52116,7 @@ class Annotation {
         }
         return resources;
     }
+
     async getOperatorList(evaluator, task, intent, annotationStorage) {
         const {
             hasOwnCanvas,
@@ -49990,15 +52176,19 @@ class Annotation {
             separateCanvas: isUsingOwnCanvas
         };
     }
+
     async save(evaluator, task, annotationStorage, changes) {
         return null;
     }
+
     get overlaysTextContent() {
         return false;
     }
+
     get hasTextContent() {
         return false;
     }
+
     async extractTextContent(evaluator, task, viewBox) {
         if (!this.appearance) {
             return;
@@ -50045,6 +52235,7 @@ class Annotation {
             this.data.textContent = text;
         }
     }
+
     _transformPoint(coords, bbox, matrix) {
         const {
             rect
@@ -50059,6 +52250,7 @@ class Annotation {
         Util.applyTransform(p, matrix);
         return p;
     }
+
     getFieldObject() {
         if (this.data.kidIds) {
             return {
@@ -50075,11 +52267,13 @@ class Annotation {
         }
         return null;
     }
+
     reset() {
         for (const stream of this._streams) {
             stream.reset();
         }
     }
+
     _constructFieldName(dict) {
         if (!dict.has("T") && !dict.has("Parent")) {
             warn("Unknown field name, falling back to empty field name.");
@@ -50111,13 +52305,16 @@ class Annotation {
         }
         return fieldName.join(".");
     }
+
     get width() {
         return this.data.rect[2] - this.data.rect[0];
     }
+
     get height() {
         return this.data.rect[3] - this.data.rect[1];
     }
 }
+
 class AnnotationBorderStyle {
     constructor() {
         this.width = 1;
@@ -50127,6 +52324,7 @@ class AnnotationBorderStyle {
         this.horizontalCornerRadius = 0;
         this.verticalCornerRadius = 0;
     }
+
     setWidth(width, rect = [0, 0, 0, 0]) {
         if (width instanceof Name) {
             this.width = 0;
@@ -50145,6 +52343,7 @@ class AnnotationBorderStyle {
             this.width = width;
         }
     }
+
     setStyle(style) {
         if (!(style instanceof Name)) {
             return;
@@ -50169,6 +52368,7 @@ class AnnotationBorderStyle {
                 break;
         }
     }
+
     setDashArray(dashArray, forceStyle = false) {
         if (Array.isArray(dashArray)) {
             let isValid = true;
@@ -50194,17 +52394,20 @@ class AnnotationBorderStyle {
             this.width = 0;
         }
     }
+
     setHorizontalCornerRadius(radius) {
         if (Number.isInteger(radius)) {
             this.horizontalCornerRadius = radius;
         }
     }
+
     setVerticalCornerRadius(radius) {
         if (Number.isInteger(radius)) {
             this.verticalCornerRadius = radius;
         }
     }
 }
+
 class MarkupAnnotation extends Annotation {
     constructor(params) {
         super(params);
@@ -50257,9 +52460,11 @@ class MarkupAnnotation extends Annotation {
             this.data.richText = XFAFactory.getRichTextAsHtml(dict.get("RC"));
         }
     }
+
     setCreationDate(creationDate) {
         this.creationDate = typeof creationDate === "string" ? creationDate : null;
     }
+
     _setDefaultAppearance({
                               xref,
                               extra,
@@ -50311,6 +52516,7 @@ class MarkupAnnotation extends Annotation {
         this.appearance.dict = appearanceDict;
         this._streams.push(this.appearance, appearanceStream);
     }
+
     static async createNewAnnotation(xref, annotation, changes, params) {
         const annotationRef = annotation.ref ||= xref.getNewTemporaryRef();
         const ap = await this.createNewAppearanceStream(annotation, xref, params);
@@ -50357,6 +52563,7 @@ class MarkupAnnotation extends Annotation {
         }
         return retRef;
     }
+
     static async createNewPrintAnnotation(annotationGlobals, xref, annotation, params) {
         const ap = await this.createNewAppearanceStream(annotation, xref, params);
         const annotationDict = this.createNewDict(annotation, xref, ap ? {
@@ -50374,6 +52581,7 @@ class MarkupAnnotation extends Annotation {
         return newAnnotation;
     }
 }
+
 class WidgetAnnotation extends Annotation {
     constructor(params) {
         super(params);
@@ -50449,6 +52657,7 @@ class WidgetAnnotation extends Annotation {
         data.required = this.hasFieldFlag(AnnotationFieldFlag.REQUIRED);
         data.hidden = this._hasFlag(data.annotationFlags, AnnotationFlag.HIDDEN) || this._hasFlag(data.annotationFlags, AnnotationFlag.NOVIEW);
     }
+
     _decodeFormValue(formValue) {
         if (Array.isArray(formValue)) {
             return formValue.filter(item => typeof item === "string").map(item => stringToPDFString(item));
@@ -50459,18 +52668,22 @@ class WidgetAnnotation extends Annotation {
         }
         return null;
     }
+
     hasFieldFlag(flag) {
         return !!(this.data.fieldFlags & flag);
     }
+
     _isViewable(flags) {
         return true;
     }
+
     mustBeViewed(annotationStorage, renderForms) {
         if (renderForms) {
             return this.viewable;
         }
         return super.mustBeViewed(annotationStorage, renderForms) && !this._hasFlag(this.flags, AnnotationFlag.NOVIEW);
     }
+
     getRotationMatrix(annotationStorage) {
         let rotation = annotationStorage?.get(this.data.id)?.rotation;
         if (rotation === undefined) {
@@ -50478,6 +52691,7 @@ class WidgetAnnotation extends Annotation {
         }
         return rotation === 0 ? IDENTITY_MATRIX : getRotationMatrix(rotation, this.width, this.height);
     }
+
     getBorderAndBackgroundAppearances(annotationStorage) {
         let rotation = annotationStorage?.get(this.data.id)?.rotation;
         if (rotation === undefined) {
@@ -50497,6 +52711,7 @@ class WidgetAnnotation extends Annotation {
         }
         return str;
     }
+
     async getOperatorList(evaluator, task, intent, annotationStorage) {
         if (intent & RenderingIntentFlag.ANNOTATIONS_FORMS && !(this instanceof SignatureWidgetAnnotation) && !this.data.noHTML && !this.data.hasOwnCanvas) {
             return {
@@ -50549,6 +52764,7 @@ class WidgetAnnotation extends Annotation {
             separateCanvas: isUsingOwnCanvas
         };
     }
+
     _getMKDict(rotation) {
         const mk = new Dict(null);
         if (rotation) {
@@ -50558,7 +52774,10 @@ class WidgetAnnotation extends Annotation {
         mk.setIfArray("BG", getPdfColorArray(this.backgroundColor));
         return mk.size > 0 ? mk : null;
     }
-    amendSavedDict(annotationStorage, dict) {}
+
+    amendSavedDict(annotationStorage, dict) {
+    }
+
     setValue(dict, value, xref, changes) {
         const {
             dict: parentDict,
@@ -50576,6 +52795,7 @@ class WidgetAnnotation extends Annotation {
         }
         return null;
     }
+
     async save(evaluator, task, annotationStorage, changes) {
         const storageEntry = annotationStorage?.get(this.data.id);
         const flags = this._buildFlags(storageEntry?.noView, storageEntry?.noPrint);
@@ -50599,7 +52819,8 @@ class WidgetAnnotation extends Annotation {
             if (appearance === null && flags === undefined) {
                 return;
             }
-        } else {}
+        } else {
+        }
         let needAppearances = false;
         if (appearance?.needAppearances) {
             needAppearances = true;
@@ -50666,6 +52887,7 @@ class WidgetAnnotation extends Annotation {
         }
         dict.set("M", `D:${getModificationDate()}`);
     }
+
     async _getAppearance(evaluator, task, intent, annotationStorage) {
         if (this.data.password) {
             return null;
@@ -50797,6 +53019,7 @@ class WidgetAnnotation extends Annotation {
         const renderedText = this._renderText(encodedLines[0], font, fontSize, totalWidth, alignment, prevInfo, defaultHPadding, bottomPadding);
         return `/Tx BMC q ${colors}BT ` + defaultAppearance + ` 1 0 0 1 0 0 Tm ${renderedText}` + " ET Q EMC";
     }
+
     static async _getFontData(evaluator, task, appearanceData, resources) {
         const operatorList = new OperatorList();
         const initialState = {
@@ -50812,9 +53035,11 @@ class WidgetAnnotation extends Annotation {
         await evaluator.handleSetFont(resources, [fontName && Name.get(fontName), fontSize], null, operatorList, task, initialState, null);
         return initialState.font;
     }
+
     _getTextWidth(text, font) {
         return Math.sumPrecise(font.charsToGlyphs(text).map(g => g.width)) / 1000;
     }
+
     _computeFontSize(height, width, text, font, lineCount) {
         let {
             fontSize
@@ -50874,6 +53099,7 @@ class WidgetAnnotation extends Annotation {
         }
         return [this._defaultAppearance, fontSize, height / numberOfLines];
     }
+
     _renderText(text, font, fontSize, totalWidth, alignment, prevInfo, hPadding, vPadding) {
         let shift;
         if (alignment === 1) {
@@ -50890,6 +53116,7 @@ class WidgetAnnotation extends Annotation {
         vPadding = numberToString(vPadding);
         return `${shiftStr} ${vPadding} Td (${escapeString(text)}) Tj`;
     }
+
     _getSaveFieldResources(xref) {
         const {
             localResources,
@@ -50924,10 +53151,12 @@ class WidgetAnnotation extends Annotation {
         }
         return localResources || Dict.empty;
     }
+
     getFieldObject() {
         return null;
     }
 }
+
 class TextWidgetAnnotation extends WidgetAnnotation {
     constructor(params) {
         super(params);
@@ -51016,9 +53245,11 @@ class TextWidgetAnnotation extends WidgetAnnotation {
             break;
         }
     }
+
     get hasTextContent() {
         return !!this.appearance && !this._needAppearances;
     }
+
     _getCombAppearance(defaultAppearance, font, text, fontSize, width, height, hPadding, vPadding, descent, lineHeight, annotationStorage) {
         const combWidth = width / this.data.maxLen;
         const colors = this.getBorderAndBackgroundAppearances(annotationStorage);
@@ -51030,6 +53261,7 @@ class TextWidgetAnnotation extends WidgetAnnotation {
         const renderedComb = buf.join(` ${numberToString(combWidth)} 0 Td `);
         return `/Tx BMC q ${colors}BT ` + defaultAppearance + ` 1 0 0 1 ${numberToString(hPadding)} ${numberToString(vPadding + descent)} Tm ${renderedComb}` + " ET Q EMC";
     }
+
     _getMultilineAppearance(defaultAppearance, lines, font, fontSize, width, height, alignment, hPadding, vPadding, descent, lineHeight, annotationStorage) {
         const buf = [];
         const totalWidth = width - 2 * hPadding;
@@ -51049,6 +53281,7 @@ class TextWidgetAnnotation extends WidgetAnnotation {
         const renderedText = buf.join("\n");
         return `/Tx BMC q ${colors}BT ` + defaultAppearance + ` 1 0 0 1 0 ${numberToString(height)} Tm ${renderedText}` + " ET Q EMC";
     }
+
     _splitLine(line, font, fontSize, width, cache = {}) {
         line = cache.line || line;
         const glyphs = cache.glyphs || font.charsToGlyphs(line);
@@ -51101,6 +53334,7 @@ class TextWidgetAnnotation extends WidgetAnnotation {
         }
         return chunks;
     }
+
     async extractTextContent(evaluator, task, viewBox) {
         await super.extractTextContent(evaluator, task, viewBox);
         const text = this.data.textContent;
@@ -51116,6 +53350,7 @@ class TextWidgetAnnotation extends WidgetAnnotation {
             this.data.textContent = this.data.fieldValue.split("\n");
         }
     }
+
     getFieldObject() {
         return {
             id: this.data.id,
@@ -51140,6 +53375,7 @@ class TextWidgetAnnotation extends WidgetAnnotation {
         };
     }
 }
+
 class ButtonWidgetAnnotation extends WidgetAnnotation {
     constructor(params) {
         super(params);
@@ -51163,6 +53399,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
             warn("Invalid field flags for button widget annotation");
         }
     }
+
     async getOperatorList(evaluator, task, intent, annotationStorage) {
         if (this.data.pushButton) {
             return super.getOperatorList(evaluator, task, intent, false, annotationStorage);
@@ -51199,6 +53436,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
             separateCanvas: false
         };
     }
+
     async save(evaluator, task, annotationStorage, changes) {
         if (this.data.checkBox) {
             this._saveCheckbox(evaluator, task, annotationStorage, changes);
@@ -51208,6 +53446,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
             this._saveRadioButton(evaluator, task, annotationStorage, changes);
         }
     }
+
     async _saveCheckbox(evaluator, task, annotationStorage, changes) {
         if (!annotationStorage) {
             return;
@@ -51257,6 +53496,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
             needAppearances: false
         });
     }
+
     async _saveRadioButton(evaluator, task, annotationStorage, changes) {
         if (!annotationStorage) {
             return;
@@ -51308,6 +53548,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
             needAppearances: false
         });
     }
+
     _getDefaultCheckedAppearance(params, type) {
         const {
             width,
@@ -51351,6 +53592,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
         this.checkedAppearance.dict = appearanceStreamDict;
         this._streams.push(this.checkedAppearance);
     }
+
     _processCheckBox(params) {
         const customAppearance = params.dict.get("AP");
         if (!(customAppearance instanceof Dict)) {
@@ -51403,6 +53645,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
             this.data.defaultFieldValue = "Off";
         }
     }
+
     _processRadioButton(params) {
         this.data.buttonValue = null;
         const fieldParent = params.dict.get("Parent");
@@ -51444,6 +53687,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
             this.data.defaultFieldValue = "Off";
         }
     }
+
     _processPushButton(params) {
         const {
             dict,
@@ -51461,6 +53705,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
             docAttachments: annotationGlobals.attachments
         });
     }
+
     getFieldObject() {
         let type = "button";
         let exportValues;
@@ -51488,6 +53733,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
             type
         };
     }
+
     get fallbackFontDict() {
         const dict = new Dict();
         dict.setIfName("BaseFont", "ZapfDingbats");
@@ -51497,6 +53743,7 @@ class ButtonWidgetAnnotation extends WidgetAnnotation {
         return shadow(this, "fallbackFontDict", dict);
     }
 }
+
 class ChoiceWidgetAnnotation extends WidgetAnnotation {
     constructor(params) {
         super(params);
@@ -51546,6 +53793,7 @@ class ChoiceWidgetAnnotation extends WidgetAnnotation {
         this.data.multiSelect = this.hasFieldFlag(AnnotationFieldFlag.MULTISELECT);
         this._hasText = true;
     }
+
     getFieldObject() {
         const type = this.data.combo ? "combobox" : "listbox";
         const value = this.data.fieldValue.length > 0 ? this.data.fieldValue[0] : null;
@@ -51568,6 +53816,7 @@ class ChoiceWidgetAnnotation extends WidgetAnnotation {
             type
         };
     }
+
     amendSavedDict(annotationStorage, dict) {
         if (!this.hasIndices) {
             return;
@@ -51588,6 +53837,7 @@ class ChoiceWidgetAnnotation extends WidgetAnnotation {
         }
         dict.set("I", indices);
     }
+
     async _getAppearance(evaluator, task, intent, annotationStorage) {
         if (this.data.combo) {
             return super._getAppearance(evaluator, task, intent, annotationStorage);
@@ -51687,6 +53937,7 @@ class ChoiceWidgetAnnotation extends WidgetAnnotation {
         return buf.join("\n");
     }
 }
+
 class SignatureWidgetAnnotation extends WidgetAnnotation {
     constructor(params) {
         super(params);
@@ -51694,6 +53945,7 @@ class SignatureWidgetAnnotation extends WidgetAnnotation {
         this.data.hasOwnCanvas = this.data.noRotate;
         this.data.noHTML = !this.data.hasOwnCanvas;
     }
+
     getFieldObject() {
         return {
             id: this.data.id,
@@ -51703,6 +53955,7 @@ class SignatureWidgetAnnotation extends WidgetAnnotation {
         };
     }
 }
+
 class TextAnnotation extends MarkupAnnotation {
     constructor(params) {
         const DEFAULT_ICON_SIZE = 22;
@@ -51730,6 +53983,7 @@ class TextAnnotation extends MarkupAnnotation {
         }
     }
 }
+
 class LinkAnnotation extends Annotation {
     constructor(params) {
         super(params);
@@ -51751,10 +54005,12 @@ class LinkAnnotation extends Annotation {
             docAttachments: annotationGlobals.attachments
         });
     }
+
     get overlaysTextContent() {
         return true;
     }
 }
+
 class PopupAnnotation extends Annotation {
     constructor(params) {
         super(params);
@@ -51804,6 +54060,7 @@ class PopupAnnotation extends Annotation {
         }
         this.data.open = !!dict.get("Open");
     }
+
     static createNewDict(annotation, xref, _params) {
         const {
             oldAnnotation,
@@ -51818,10 +54075,12 @@ class PopupAnnotation extends Annotation {
         popup.set("Parent", parent);
         return popup;
     }
+
     static async createNewAppearanceStream(annotation, xref, params) {
         return null;
     }
 }
+
 class FreeTextAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
@@ -51868,9 +54127,11 @@ class FreeTextAnnotation extends MarkupAnnotation {
             }
         }
     }
+
     get hasTextContent() {
         return this._hasAppearance;
     }
+
     static createNewDict(annotation, xref, {
         apRef,
         ap
@@ -51907,6 +54168,7 @@ class FreeTextAnnotation extends MarkupAnnotation {
         }
         return freetext;
     }
+
     static async createNewAppearanceStream(annotation, xref, params) {
         const {
             baseFontRef,
@@ -52021,6 +54283,7 @@ class FreeTextAnnotation extends MarkupAnnotation {
         return ap;
     }
 }
+
 class LineAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
@@ -52062,6 +54325,7 @@ class LineAnnotation extends MarkupAnnotation {
         }
     }
 }
+
 class SquareAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
@@ -52105,6 +54369,7 @@ class SquareAnnotation extends MarkupAnnotation {
         }
     }
 }
+
 class CircleAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
@@ -52151,6 +54416,7 @@ class CircleAnnotation extends MarkupAnnotation {
         }
     }
 }
+
 class PolylineAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
@@ -52215,18 +54481,21 @@ class PolylineAnnotation extends MarkupAnnotation {
         }
     }
 }
+
 class PolygonAnnotation extends PolylineAnnotation {
     constructor(params) {
         super(params);
         this.data.annotationType = AnnotationType.POLYGON;
     }
 }
+
 class CaretAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
         this.data.annotationType = AnnotationType.CARET;
     }
 }
+
 class InkAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
@@ -52291,6 +54560,7 @@ class InkAnnotation extends MarkupAnnotation {
             });
         }
     }
+
     static createNewDict(annotation, xref, {
         apRef,
         ap
@@ -52333,6 +54603,7 @@ class InkAnnotation extends MarkupAnnotation {
         }
         return ink;
     }
+
     static async createNewAppearanceStream(annotation, xref, params) {
         if (annotation.outlines) {
             return this.createNewAppearanceStreamForHighlight(annotation, xref, params);
@@ -52387,6 +54658,7 @@ class InkAnnotation extends MarkupAnnotation {
         ap.dict = appearanceStreamDict;
         return ap;
     }
+
     static async createNewAppearanceStreamForHighlight(annotation, xref, params) {
         const {
             color,
@@ -52433,6 +54705,7 @@ class InkAnnotation extends MarkupAnnotation {
         return ap;
     }
 }
+
 class HighlightAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
@@ -52468,9 +54741,11 @@ class HighlightAnnotation extends MarkupAnnotation {
             this.data.popupRef = null;
         }
     }
+
     get overlaysTextContent() {
         return true;
     }
+
     static createNewDict(annotation, xref, {
         apRef,
         ap
@@ -52504,6 +54779,7 @@ class HighlightAnnotation extends MarkupAnnotation {
         }
         return highlight;
     }
+
     static async createNewAppearanceStream(annotation, xref, params) {
         const {
             color,
@@ -52549,6 +54825,7 @@ class HighlightAnnotation extends MarkupAnnotation {
         return ap;
     }
 }
+
 class UnderlineAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
@@ -52577,10 +54854,12 @@ class UnderlineAnnotation extends MarkupAnnotation {
             this.data.popupRef = null;
         }
     }
+
     get overlaysTextContent() {
         return true;
     }
 }
+
 class SquigglyAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
@@ -52620,10 +54899,12 @@ class SquigglyAnnotation extends MarkupAnnotation {
             this.data.popupRef = null;
         }
     }
+
     get overlaysTextContent() {
         return true;
     }
 }
+
 class StrikeOutAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
@@ -52652,12 +54933,15 @@ class StrikeOutAnnotation extends MarkupAnnotation {
             this.data.popupRef = null;
         }
     }
+
     get overlaysTextContent() {
         return true;
     }
 }
+
 class StampAnnotation extends MarkupAnnotation {
     #savedHasOwnCanvas = null;
+
     constructor(params) {
         super(params);
         this.data.annotationType = AnnotationType.STAMP;
@@ -52665,6 +54949,7 @@ class StampAnnotation extends MarkupAnnotation {
         this.data.isEditable = !this.data.noHTML;
         this.data.noHTML = false;
     }
+
     mustBeViewedWhenEditing(isEditing, modifiedIds = null) {
         if (isEditing) {
             if (!this.data.isEditable) {
@@ -52680,6 +54965,7 @@ class StampAnnotation extends MarkupAnnotation {
         }
         return !modifiedIds?.has(this.data.id);
     }
+
     static async createImage(bitmap, xref) {
         const {
             width,
@@ -52742,6 +55028,7 @@ class StampAnnotation extends MarkupAnnotation {
             height
         };
     }
+
     static createNewDict(annotation, xref, {
         apRef,
         ap
@@ -52769,6 +55056,7 @@ class StampAnnotation extends MarkupAnnotation {
         }
         return stamp;
     }
+
     static async #createNewAppearanceStreamForDrawing(annotation, xref) {
         const {
             areContours,
@@ -52807,6 +55095,7 @@ class StampAnnotation extends MarkupAnnotation {
         ap.dict = appearanceStreamDict;
         return ap;
     }
+
     static async createNewAppearanceStream(annotation, xref, params) {
         if (annotation.oldAnnotation) {
             return null;
@@ -52842,6 +55131,7 @@ class StampAnnotation extends MarkupAnnotation {
         return ap;
     }
 }
+
 class FileAttachmentAnnotation extends MarkupAnnotation {
     constructor(params) {
         super(params);
@@ -52861,7 +55151,7 @@ class FileAttachmentAnnotation extends MarkupAnnotation {
     }
 }
 
-;// ./src/core/calculate_md5.js
+// ./src/core/calculate_md5.js
 
 const PARAMS = {
     get r() {
@@ -52871,6 +55161,7 @@ const PARAMS = {
         return shadow(this, "k", new Int32Array([-680876936, -389564586, 606105819, -1044525330, -176418897, 1200080426, -1473231341, -45705983, 1770035416, -1958414417, -42063, -1990404162, 1804603682, -40341101, -1502002290, 1236535329, -165796510, -1069501632, 643717713, -373897302, -701558691, 38016083, -660478335, -405537848, 568446438, -1019803690, -187363961, 1163531501, -1444681467, -51403784, 1735328473, -1926607734, -378558, -2022574463, 1839030562, -35309556, -1530992060, 1272893353, -155497632, -1094730640, 681279174, -358537222, -722521979, 76029189, -640364487, -421815835, 530742520, -995338651, -198630844, 1126891415, -1416354905, -57434055, 1700485571, -1894986606, -1051523, -2054922799, 1873313359, -30611744, -1560198380, 1309151649, -145523070, -1120210379, 718787259, -343485551]));
     }
 };
+
 function calculateMD5(data, offset, length) {
     let h0 = 1732584193,
         h1 = -271733879,
@@ -52938,8 +55229,7 @@ function calculateMD5(data, offset, length) {
     return new Uint8Array([h0 & 0xFF, h0 >> 8 & 0xFF, h0 >> 16 & 0xFF, h0 >>> 24 & 0xFF, h1 & 0xFF, h1 >> 8 & 0xFF, h1 >> 16 & 0xFF, h1 >>> 24 & 0xFF, h2 & 0xFF, h2 >> 8 & 0xFF, h2 >> 16 & 0xFF, h2 >>> 24 & 0xFF, h3 & 0xFF, h3 >> 8 & 0xFF, h3 >> 16 & 0xFF, h3 >>> 24 & 0xFF]);
 }
 
-;// ./src/core/dataset_reader.js
-
+// ./src/core/dataset_reader.js
 
 
 function decodeString(str) {
@@ -52950,11 +55240,13 @@ function decodeString(str) {
         return str;
     }
 }
+
 class DatasetXMLParser extends SimpleXMLParser {
     constructor(options) {
         super(options);
         this.node = null;
     }
+
     onEndElement(name) {
         const node = super.onEndElement(name);
         if (node && name === "xfa:datasets") {
@@ -52963,6 +55255,7 @@ class DatasetXMLParser extends SimpleXMLParser {
         }
     }
 }
+
 class DatasetReader {
     constructor(data) {
         if (data.datasets) {
@@ -52975,10 +55268,12 @@ class DatasetReader {
             });
             try {
                 parser.parseFromString(data["xdp:xdp"]);
-            } catch {}
+            } catch {
+            }
             this.node = parser.node;
         }
     }
+
     getValue(path) {
         if (!this.node || !path) {
             return "";
@@ -52995,7 +55290,7 @@ class DatasetReader {
     }
 }
 
-;// ./src/core/intersector.js
+// ./src/core/intersector.js
 class SingleIntersector {
     #annotation;
     #minX = Infinity;
@@ -53007,6 +55302,7 @@ class SingleIntersector {
     #extraChars = [];
     #lastIntersectingQuadIndex = -1;
     #canTakeExtraChars = false;
+
     constructor(annotation) {
         this.#annotation = annotation;
         const quadPoints = annotation.data.quadPoints;
@@ -53024,9 +55320,11 @@ class SingleIntersector {
             this.#quadPoints = quadPoints;
         }
     }
+
     overlaps(other) {
         return !(this.#minX >= other.#maxX || this.#maxX <= other.#minX || this.#minY >= other.#maxY || this.#maxY <= other.#minY);
     }
+
     #intersects(x, y) {
         if (this.#minX >= x || this.#maxX <= x || this.#minY >= y || this.#maxY <= y) {
             return false;
@@ -53050,6 +55348,7 @@ class SingleIntersector {
         }
         return false;
     }
+
     addGlyph(x, y, glyph) {
         if (!this.#intersects(x, y)) {
             this.disableExtraChars();
@@ -53063,11 +55362,13 @@ class SingleIntersector {
         this.#canTakeExtraChars = true;
         return true;
     }
+
     addExtraChar(char) {
         if (this.#canTakeExtraChars) {
             this.#extraChars.push(char);
         }
     }
+
     disableExtraChars() {
         if (!this.#canTakeExtraChars) {
             return;
@@ -53075,12 +55376,15 @@ class SingleIntersector {
         this.#canTakeExtraChars = false;
         this.#extraChars.length = 0;
     }
+
     setText() {
         this.#annotation.data.overlaidText = this.#text.join("");
     }
 }
+
 class Intersector {
     #intersectors = new Map();
+
     constructor(annotations) {
         for (const annotation of annotations) {
             if (!annotation.data.quadPoints && !annotation.data.rect) {
@@ -53099,6 +55403,7 @@ class Intersector {
             this.#intersectors.set(intersector, null);
         }
     }
+
     addGlyph(transform, width, height, glyph) {
         const x = transform[4] + width / 2;
         const y = transform[5] + height / 2;
@@ -53118,11 +55423,13 @@ class Intersector {
             overlappingIntersectors = overlapping;
         }
     }
+
     addExtraChar(char) {
         for (const intersector of this.#intersectors.keys()) {
             intersector.addExtraChar(char);
         }
     }
+
     setText() {
         for (const intersector of this.#intersectors.keys()) {
             intersector.setText();
@@ -53130,21 +55437,24 @@ class Intersector {
     }
 }
 
-;// ./src/core/calculate_sha_other.js
+// ./src/core/calculate_sha_other.js
 
 class Word64 {
     constructor(highInteger, lowInteger) {
         this.high = highInteger | 0;
         this.low = lowInteger | 0;
     }
+
     and(word) {
         this.high &= word.high;
         this.low &= word.low;
     }
+
     xor(word) {
         this.high ^= word.high;
         this.low ^= word.low;
     }
+
     shiftRight(places) {
         if (places >= 32) {
             this.low = this.high >>> places - 32 | 0;
@@ -53154,6 +55464,7 @@ class Word64 {
             this.high = this.high >>> places | 0;
         }
     }
+
     rotateRight(places) {
         let low, high;
         if (places & 32) {
@@ -53167,10 +55478,12 @@ class Word64 {
         this.low = low >>> places | high << 32 - places;
         this.high = high >>> places | low << 32 - places;
     }
+
     not() {
         this.high = ~this.high;
         this.low = ~this.low;
     }
+
     add(word) {
         const lowAdd = (this.low >>> 0) + (word.low >>> 0);
         let highAdd = (this.high >>> 0) + (word.high >>> 0);
@@ -53180,6 +55493,7 @@ class Word64 {
         this.low = lowAdd | 0;
         this.high = highAdd | 0;
     }
+
     copyTo(bytes, offset) {
         bytes[offset] = this.high >>> 24 & 0xff;
         bytes[offset + 1] = this.high >> 16 & 0xff;
@@ -53190,16 +55504,19 @@ class Word64 {
         bytes[offset + 6] = this.low >> 8 & 0xff;
         bytes[offset + 7] = this.low & 0xff;
     }
+
     assign(word) {
         this.high = word.high;
         this.low = word.low;
     }
 }
+
 const calculate_sha_other_PARAMS = {
     get k() {
         return shadow(this, "k", [new Word64(0x428a2f98, 0xd728ae22), new Word64(0x71374491, 0x23ef65cd), new Word64(0xb5c0fbcf, 0xec4d3b2f), new Word64(0xe9b5dba5, 0x8189dbbc), new Word64(0x3956c25b, 0xf348b538), new Word64(0x59f111f1, 0xb605d019), new Word64(0x923f82a4, 0xaf194f9b), new Word64(0xab1c5ed5, 0xda6d8118), new Word64(0xd807aa98, 0xa3030242), new Word64(0x12835b01, 0x45706fbe), new Word64(0x243185be, 0x4ee4b28c), new Word64(0x550c7dc3, 0xd5ffb4e2), new Word64(0x72be5d74, 0xf27b896f), new Word64(0x80deb1fe, 0x3b1696b1), new Word64(0x9bdc06a7, 0x25c71235), new Word64(0xc19bf174, 0xcf692694), new Word64(0xe49b69c1, 0x9ef14ad2), new Word64(0xefbe4786, 0x384f25e3), new Word64(0x0fc19dc6, 0x8b8cd5b5), new Word64(0x240ca1cc, 0x77ac9c65), new Word64(0x2de92c6f, 0x592b0275), new Word64(0x4a7484aa, 0x6ea6e483), new Word64(0x5cb0a9dc, 0xbd41fbd4), new Word64(0x76f988da, 0x831153b5), new Word64(0x983e5152, 0xee66dfab), new Word64(0xa831c66d, 0x2db43210), new Word64(0xb00327c8, 0x98fb213f), new Word64(0xbf597fc7, 0xbeef0ee4), new Word64(0xc6e00bf3, 0x3da88fc2), new Word64(0xd5a79147, 0x930aa725), new Word64(0x06ca6351, 0xe003826f), new Word64(0x14292967, 0x0a0e6e70), new Word64(0x27b70a85, 0x46d22ffc), new Word64(0x2e1b2138, 0x5c26c926), new Word64(0x4d2c6dfc, 0x5ac42aed), new Word64(0x53380d13, 0x9d95b3df), new Word64(0x650a7354, 0x8baf63de), new Word64(0x766a0abb, 0x3c77b2a8), new Word64(0x81c2c92e, 0x47edaee6), new Word64(0x92722c85, 0x1482353b), new Word64(0xa2bfe8a1, 0x4cf10364), new Word64(0xa81a664b, 0xbc423001), new Word64(0xc24b8b70, 0xd0f89791), new Word64(0xc76c51a3, 0x0654be30), new Word64(0xd192e819, 0xd6ef5218), new Word64(0xd6990624, 0x5565a910), new Word64(0xf40e3585, 0x5771202a), new Word64(0x106aa070, 0x32bbd1b8), new Word64(0x19a4c116, 0xb8d2d0c8), new Word64(0x1e376c08, 0x5141ab53), new Word64(0x2748774c, 0xdf8eeb99), new Word64(0x34b0bcb5, 0xe19b48a8), new Word64(0x391c0cb3, 0xc5c95a63), new Word64(0x4ed8aa4a, 0xe3418acb), new Word64(0x5b9cca4f, 0x7763e373), new Word64(0x682e6ff3, 0xd6b2b8a3), new Word64(0x748f82ee, 0x5defb2fc), new Word64(0x78a5636f, 0x43172f60), new Word64(0x84c87814, 0xa1f0ab72), new Word64(0x8cc70208, 0x1a6439ec), new Word64(0x90befffa, 0x23631e28), new Word64(0xa4506ceb, 0xde82bde9), new Word64(0xbef9a3f7, 0xb2c67915), new Word64(0xc67178f2, 0xe372532b), new Word64(0xca273ece, 0xea26619c), new Word64(0xd186b8c7, 0x21c0c207), new Word64(0xeada7dd6, 0xcde0eb1e), new Word64(0xf57d4f7f, 0xee6ed178), new Word64(0x06f067aa, 0x72176fba), new Word64(0x0a637dc5, 0xa2c898a6), new Word64(0x113f9804, 0xbef90dae), new Word64(0x1b710b35, 0x131c471b), new Word64(0x28db77f5, 0x23047d84), new Word64(0x32caab7b, 0x40c72493), new Word64(0x3c9ebe0a, 0x15c9bebc), new Word64(0x431d67c4, 0x9c100d4c), new Word64(0x4cc5d4be, 0xcb3e42b6), new Word64(0x597f299c, 0xfc657e2a), new Word64(0x5fcb6fab, 0x3ad6faec), new Word64(0x6c44198c, 0x4a475817)]);
     }
 };
+
 function ch(result, x, y, z, tmp) {
     result.assign(x);
     result.and(y);
@@ -53208,6 +55525,7 @@ function ch(result, x, y, z, tmp) {
     tmp.and(z);
     result.xor(tmp);
 }
+
 function maj(result, x, y, z, tmp) {
     result.assign(x);
     result.and(y);
@@ -53218,6 +55536,7 @@ function maj(result, x, y, z, tmp) {
     tmp.and(z);
     result.xor(tmp);
 }
+
 function sigma(result, x, tmp) {
     result.assign(x);
     result.rotateRight(28);
@@ -53228,6 +55547,7 @@ function sigma(result, x, tmp) {
     tmp.rotateRight(39);
     result.xor(tmp);
 }
+
 function sigmaPrime(result, x, tmp) {
     result.assign(x);
     result.rotateRight(14);
@@ -53238,6 +55558,7 @@ function sigmaPrime(result, x, tmp) {
     tmp.rotateRight(41);
     result.xor(tmp);
 }
+
 function littleSigma(result, x, tmp) {
     result.assign(x);
     result.rotateRight(1);
@@ -53248,6 +55569,7 @@ function littleSigma(result, x, tmp) {
     tmp.shiftRight(7);
     result.xor(tmp);
 }
+
 function littleSigmaPrime(result, x, tmp) {
     result.assign(x);
     result.rotateRight(19);
@@ -53258,6 +55580,7 @@ function littleSigmaPrime(result, x, tmp) {
     tmp.shiftRight(6);
     result.xor(tmp);
 }
+
 function calculateSHA512(data, offset, length, mode384 = false) {
     let h0, h1, h2, h3, h4, h5, h6, h7;
     if (!mode384) {
@@ -53393,38 +55716,47 @@ function calculateSHA512(data, offset, length, mode384 = false) {
     }
     return result;
 }
+
 function calculateSHA384(data, offset, length) {
     return calculateSHA512(data, offset, length, true);
 }
 
-;// ./src/core/calculate_sha256.js
+// ./src/core/calculate_sha256.js
 
 const calculate_sha256_PARAMS = {
     get k() {
         return shadow(this, "k", [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2]);
     }
 };
+
 function rotr(x, n) {
     return x >>> n | x << 32 - n;
 }
+
 function calculate_sha256_ch(x, y, z) {
     return x & y ^ ~x & z;
 }
+
 function calculate_sha256_maj(x, y, z) {
     return x & y ^ x & z ^ y & z;
 }
+
 function calculate_sha256_sigma(x) {
     return rotr(x, 2) ^ rotr(x, 13) ^ rotr(x, 22);
 }
+
 function calculate_sha256_sigmaPrime(x) {
     return rotr(x, 6) ^ rotr(x, 11) ^ rotr(x, 25);
 }
+
 function calculate_sha256_littleSigma(x) {
     return rotr(x, 7) ^ rotr(x, 18) ^ x >>> 3;
 }
+
 function calculate_sha256_littleSigmaPrime(x) {
     return rotr(x, 17) ^ rotr(x, 19) ^ x >>> 10;
 }
+
 function calculateSHA256(data, offset, length) {
     let h0 = 0x6a09e667,
         h1 = 0xbb67ae85,
@@ -53497,9 +55829,10 @@ function calculateSHA256(data, offset, length) {
     return new Uint8Array([h0 >> 24 & 0xFF, h0 >> 16 & 0xFF, h0 >> 8 & 0xFF, h0 & 0xFF, h1 >> 24 & 0xFF, h1 >> 16 & 0xFF, h1 >> 8 & 0xFF, h1 & 0xFF, h2 >> 24 & 0xFF, h2 >> 16 & 0xFF, h2 >> 8 & 0xFF, h2 & 0xFF, h3 >> 24 & 0xFF, h3 >> 16 & 0xFF, h3 >> 8 & 0xFF, h3 & 0xFF, h4 >> 24 & 0xFF, h4 >> 16 & 0xFF, h4 >> 8 & 0xFF, h4 & 0xFF, h5 >> 24 & 0xFF, h5 >> 16 & 0xFF, h5 >> 8 & 0xFF, h5 & 0xFF, h6 >> 24 & 0xFF, h6 >> 16 & 0xFF, h6 >> 8 & 0xFF, h6 & 0xFF, h7 >> 24 & 0xFF, h7 >> 16 & 0xFF, h7 >> 8 & 0xFF, h7 & 0xFF]);
 }
 
-;// ./src/core/decrypt_stream.js
+// ./src/core/decrypt_stream.js
 
 const chunkSize = 512;
+
 class DecryptStream extends DecodeStream {
     constructor(str, maybeLength, decrypt) {
         super(maybeLength);
@@ -53509,6 +55842,7 @@ class DecryptStream extends DecodeStream {
         this.nextChunk = null;
         this.initialized = false;
     }
+
     readBlock() {
         let chunk;
         if (this.initialized) {
@@ -53533,11 +55867,7 @@ class DecryptStream extends DecodeStream {
     }
 }
 
-;// ./src/core/crypto.js
-
-
-
-
+// ./src/core/crypto.js
 
 
 class ARCFourCipher {
@@ -53557,6 +55887,7 @@ class ARCFourCipher {
         }
         this.s = s;
     }
+
     encryptBlock(data) {
         let a = this.a,
             b = this.b;
@@ -53576,33 +55907,41 @@ class ARCFourCipher {
         this.b = b;
         return output;
     }
+
     decryptBlock(data) {
         return this.encryptBlock(data);
     }
+
     encrypt(data) {
         return this.encryptBlock(data);
     }
 }
+
 class NullCipher {
     decryptBlock(data) {
         return data;
     }
+
     encrypt(data) {
         return data;
     }
 }
+
 class AESBaseCipher {
     _s = new Uint8Array([0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76, 0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0, 0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15, 0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75, 0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84, 0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf, 0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8, 0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2, 0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73, 0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb, 0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79, 0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08, 0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a, 0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e, 0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf, 0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16]);
     _inv_s = new Uint8Array([0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb, 0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb, 0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e, 0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2, 0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25, 0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16, 0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92, 0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda, 0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84, 0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a, 0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06, 0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02, 0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b, 0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea, 0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73, 0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85, 0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e, 0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89, 0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b, 0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20, 0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4, 0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31, 0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f, 0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d, 0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef, 0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61, 0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d]);
     _mix = new Uint32Array([0x00000000, 0x0e090d0b, 0x1c121a16, 0x121b171d, 0x3824342c, 0x362d3927, 0x24362e3a, 0x2a3f2331, 0x70486858, 0x7e416553, 0x6c5a724e, 0x62537f45, 0x486c5c74, 0x4665517f, 0x547e4662, 0x5a774b69, 0xe090d0b0, 0xee99ddbb, 0xfc82caa6, 0xf28bc7ad, 0xd8b4e49c, 0xd6bde997, 0xc4a6fe8a, 0xcaaff381, 0x90d8b8e8, 0x9ed1b5e3, 0x8ccaa2fe, 0x82c3aff5, 0xa8fc8cc4, 0xa6f581cf, 0xb4ee96d2, 0xbae79bd9, 0xdb3bbb7b, 0xd532b670, 0xc729a16d, 0xc920ac66, 0xe31f8f57, 0xed16825c, 0xff0d9541, 0xf104984a, 0xab73d323, 0xa57ade28, 0xb761c935, 0xb968c43e, 0x9357e70f, 0x9d5eea04, 0x8f45fd19, 0x814cf012, 0x3bab6bcb, 0x35a266c0, 0x27b971dd, 0x29b07cd6, 0x038f5fe7, 0x0d8652ec, 0x1f9d45f1, 0x119448fa, 0x4be30393, 0x45ea0e98, 0x57f11985, 0x59f8148e, 0x73c737bf, 0x7dce3ab4, 0x6fd52da9, 0x61dc20a2, 0xad766df6, 0xa37f60fd, 0xb16477e0, 0xbf6d7aeb, 0x955259da, 0x9b5b54d1, 0x894043cc, 0x87494ec7, 0xdd3e05ae, 0xd33708a5, 0xc12c1fb8, 0xcf2512b3, 0xe51a3182, 0xeb133c89, 0xf9082b94, 0xf701269f, 0x4de6bd46, 0x43efb04d, 0x51f4a750, 0x5ffdaa5b, 0x75c2896a, 0x7bcb8461, 0x69d0937c, 0x67d99e77, 0x3daed51e, 0x33a7d815, 0x21bccf08, 0x2fb5c203, 0x058ae132, 0x0b83ec39, 0x1998fb24, 0x1791f62f, 0x764dd68d, 0x7844db86, 0x6a5fcc9b, 0x6456c190, 0x4e69e2a1, 0x4060efaa, 0x527bf8b7, 0x5c72f5bc, 0x0605bed5, 0x080cb3de, 0x1a17a4c3, 0x141ea9c8, 0x3e218af9, 0x302887f2, 0x223390ef, 0x2c3a9de4, 0x96dd063d, 0x98d40b36, 0x8acf1c2b, 0x84c61120, 0xaef93211, 0xa0f03f1a, 0xb2eb2807, 0xbce2250c, 0xe6956e65, 0xe89c636e, 0xfa877473, 0xf48e7978, 0xdeb15a49, 0xd0b85742, 0xc2a3405f, 0xccaa4d54, 0x41ecdaf7, 0x4fe5d7fc, 0x5dfec0e1, 0x53f7cdea, 0x79c8eedb, 0x77c1e3d0, 0x65daf4cd, 0x6bd3f9c6, 0x31a4b2af, 0x3fadbfa4, 0x2db6a8b9, 0x23bfa5b2, 0x09808683, 0x07898b88, 0x15929c95, 0x1b9b919e, 0xa17c0a47, 0xaf75074c, 0xbd6e1051, 0xb3671d5a, 0x99583e6b, 0x97513360, 0x854a247d, 0x8b432976, 0xd134621f, 0xdf3d6f14, 0xcd267809, 0xc32f7502, 0xe9105633, 0xe7195b38, 0xf5024c25, 0xfb0b412e, 0x9ad7618c, 0x94de6c87, 0x86c57b9a, 0x88cc7691, 0xa2f355a0, 0xacfa58ab, 0xbee14fb6, 0xb0e842bd, 0xea9f09d4, 0xe49604df, 0xf68d13c2, 0xf8841ec9, 0xd2bb3df8, 0xdcb230f3, 0xcea927ee, 0xc0a02ae5, 0x7a47b13c, 0x744ebc37, 0x6655ab2a, 0x685ca621, 0x42638510, 0x4c6a881b, 0x5e719f06, 0x5078920d, 0x0a0fd964, 0x0406d46f, 0x161dc372, 0x1814ce79, 0x322bed48, 0x3c22e043, 0x2e39f75e, 0x2030fa55, 0xec9ab701, 0xe293ba0a, 0xf088ad17, 0xfe81a01c, 0xd4be832d, 0xdab78e26, 0xc8ac993b, 0xc6a59430, 0x9cd2df59, 0x92dbd252, 0x80c0c54f, 0x8ec9c844, 0xa4f6eb75, 0xaaffe67e, 0xb8e4f163, 0xb6edfc68, 0x0c0a67b1, 0x02036aba, 0x10187da7, 0x1e1170ac, 0x342e539d, 0x3a275e96, 0x283c498b, 0x26354480, 0x7c420fe9, 0x724b02e2, 0x605015ff, 0x6e5918f4, 0x44663bc5, 0x4a6f36ce, 0x587421d3, 0x567d2cd8, 0x37a10c7a, 0x39a80171, 0x2bb3166c, 0x25ba1b67, 0x0f853856, 0x018c355d, 0x13972240, 0x1d9e2f4b, 0x47e96422, 0x49e06929, 0x5bfb7e34, 0x55f2733f, 0x7fcd500e, 0x71c45d05, 0x63df4a18, 0x6dd64713, 0xd731dcca, 0xd938d1c1, 0xcb23c6dc, 0xc52acbd7, 0xef15e8e6, 0xe11ce5ed, 0xf307f2f0, 0xfd0efffb, 0xa779b492, 0xa970b999, 0xbb6bae84, 0xb562a38f, 0x9f5d80be, 0x91548db5, 0x834f9aa8, 0x8d4697a3]);
     _mixCol = new Uint8Array(256).map((_, i) => i < 128 ? i << 1 : i << 1 ^ 0x1b);
+
     constructor() {
         this.buffer = new Uint8Array(16);
         this.bufferPosition = 0;
     }
+
     _expandKey(cipherKey) {
         unreachable("Cannot call `_expandKey` on the base class");
     }
+
     _decrypt(input, key) {
         let t, u, v;
         const state = new Uint8Array(16);
@@ -53671,6 +56010,7 @@ class AESBaseCipher {
         }
         return state;
     }
+
     _encrypt(input, key) {
         const s = this._s;
         let t, u, v;
@@ -53742,6 +56082,7 @@ class AESBaseCipher {
         }
         return state;
     }
+
     _decryptBlock2(data, finalize) {
         const sourceLength = data.length;
         let buffer = this.buffer,
@@ -53790,6 +56131,7 @@ class AESBaseCipher {
         }
         return output;
     }
+
     decryptBlock(data, finalize, iv = null) {
         const sourceLength = data.length;
         const buffer = this.buffer;
@@ -53812,6 +56154,7 @@ class AESBaseCipher {
         this.decryptBlock = this._decryptBlock2;
         return this.decryptBlock(data, finalize);
     }
+
     encrypt(data, iv) {
         const sourceLength = data.length;
         let buffer = this.buffer,
@@ -53847,14 +56190,17 @@ class AESBaseCipher {
         return output;
     }
 }
+
 class AES128Cipher extends AESBaseCipher {
     _rcon = new Uint8Array([0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d]);
+
     constructor(key) {
         super();
         this._cyclesOfRepetition = 10;
         this._keySize = 160;
         this._key = this._expandKey(key);
     }
+
     _expandKey(cipherKey) {
         const b = 176;
         const s = this._s;
@@ -53885,6 +56231,7 @@ class AES128Cipher extends AESBaseCipher {
         return result;
     }
 }
+
 class AES256Cipher extends AESBaseCipher {
     constructor(key) {
         super();
@@ -53892,6 +56239,7 @@ class AES256Cipher extends AESBaseCipher {
         this._keySize = 224;
         this._key = this._expandKey(key);
     }
+
     _expandKey(cipherKey) {
         const b = 240;
         const s = this._s;
@@ -53933,10 +56281,12 @@ class AES256Cipher extends AESBaseCipher {
         return result;
     }
 }
+
 class PDFBase {
     _hash(password, input, userBytes) {
         unreachable("Abstract method `_hash` called");
     }
+
     checkOwnerPassword(password, ownerValidationSalt, userBytes, ownerPassword) {
         const hashData = new Uint8Array(password.length + 56);
         hashData.set(password, 0);
@@ -53945,6 +56295,7 @@ class PDFBase {
         const result = this._hash(password, hashData, userBytes);
         return isArrayEqual(result, ownerPassword);
     }
+
     checkUserPassword(password, userValidationSalt, userPassword) {
         const hashData = new Uint8Array(password.length + 8);
         hashData.set(password, 0);
@@ -53952,6 +56303,7 @@ class PDFBase {
         const result = this._hash(password, hashData, []);
         return isArrayEqual(result, userPassword);
     }
+
     getOwnerKey(password, ownerKeySalt, userBytes, ownerEncryption) {
         const hashData = new Uint8Array(password.length + 56);
         hashData.set(password, 0);
@@ -53961,6 +56313,7 @@ class PDFBase {
         const cipher = new AES256Cipher(key);
         return cipher.decryptBlock(ownerEncryption, false, new Uint8Array(16));
     }
+
     getUserKey(password, userKeySalt, userEncryption) {
         const hashData = new Uint8Array(password.length + 8);
         hashData.set(password, 0);
@@ -53970,11 +56323,13 @@ class PDFBase {
         return cipher.decryptBlock(userEncryption, false, new Uint8Array(16));
     }
 }
+
 class PDF17 extends PDFBase {
     _hash(password, input, userBytes) {
         return calculateSHA256(input, 0, input.length);
     }
 }
+
 class PDF20 extends PDFBase {
     _hash(password, input, userBytes) {
         let k = calculateSHA256(input, 0, input.length).subarray(0, 32);
@@ -54008,23 +56363,27 @@ class PDF20 extends PDFBase {
         return k.subarray(0, 32);
     }
 }
+
 class CipherTransform {
     constructor(stringCipherConstructor, streamCipherConstructor) {
         this.StringCipherConstructor = stringCipherConstructor;
         this.StreamCipherConstructor = streamCipherConstructor;
     }
+
     createStream(stream, length) {
         const cipher = new this.StreamCipherConstructor();
         return new DecryptStream(stream, length, function cipherTransformDecryptStream(data, finalize) {
             return cipher.decryptBlock(data, finalize);
         });
     }
+
     decryptString(s) {
         const cipher = new this.StringCipherConstructor();
         let data = stringToBytes(s);
         data = cipher.decryptBlock(data, true);
         return bytesToString(data);
     }
+
     encryptString(s) {
         const cipher = new this.StringCipherConstructor();
         if (cipher instanceof AESBaseCipher) {
@@ -54045,10 +56404,12 @@ class CipherTransform {
         return bytesToString(data);
     }
 }
+
 class CipherTransformFactory {
     static get _defaultPasswordBytes() {
         return shadow(this, "_defaultPasswordBytes", new Uint8Array([0x28, 0xbf, 0x4e, 0x5e, 0x4e, 0x75, 0x8a, 0x41, 0x64, 0x00, 0x4e, 0x56, 0xff, 0xfa, 0x01, 0x08, 0x2e, 0x2e, 0x00, 0xb6, 0xd0, 0x68, 0x3e, 0x80, 0x2f, 0x0c, 0xa9, 0xfe, 0x64, 0x53, 0x69, 0x7a]));
     }
+
     #createEncryptionKey20(revision, password, ownerPassword, ownerValidationSalt, ownerKeySalt, uBytes, userPassword, userValidationSalt, userKeySalt, ownerEncryption, userEncryption, perms) {
         if (password) {
             const passwordLength = Math.min(127, password.length);
@@ -54064,6 +56425,7 @@ class CipherTransformFactory {
         }
         return null;
     }
+
     #prepareKeyData(fileId, password, ownerPassword, userPassword, flags, revision, keyLength, encryptMetadata) {
         const hashDataSize = 40 + ownerPassword.length + fileId.length;
         const hashData = new Uint8Array(hashDataSize);
@@ -54124,6 +56486,7 @@ class CipherTransformFactory {
         }
         return checkData.every((data, k) => userPassword[k] === data) ? encryptionKey : null;
     }
+
     #decodeUserPassword(password, ownerPassword, revision, keyLength) {
         const hashData = new Uint8Array(32);
         let i = 0;
@@ -54159,6 +56522,7 @@ class CipherTransformFactory {
         }
         return userPassword;
     }
+
     #buildObjectKey(num, gen, encryptionKey, isAes = false) {
         const n = encryptionKey.length;
         const key = new Uint8Array(n + 9);
@@ -54178,6 +56542,7 @@ class CipherTransformFactory {
         const hash = calculateMD5(key, 0, i);
         return hash.subarray(0, Math.min(n + 5, 16));
     }
+
     #buildCipherConstructor(cf, name, num, gen, key) {
         if (!(name instanceof Name)) {
             throw new FormatError("Invalid crypt filter name.");
@@ -54207,6 +56572,7 @@ class CipherTransformFactory {
         }
         throw new FormatError("Unknown crypto method");
     }
+
     constructor(dict, fileId, password) {
         const filter = dict.get("Filter");
         if (!isName(filter, "Standard")) {
@@ -54300,6 +56666,7 @@ class CipherTransformFactory {
             this.eff = dict.get("EFF") || this.stmf;
         }
     }
+
     createCipherTransform(num, gen) {
         if (this.algorithm === 4 || this.algorithm === 5) {
             return new CipherTransform(this.#buildCipherConstructor(this.cf, this.strf, num, gen, this.encryptionKey), this.#buildCipherConstructor(this.cf, this.stmf, num, gen, this.encryptionKey));
@@ -54312,15 +56679,12 @@ class CipherTransformFactory {
     }
 }
 
-;// ./src/core/xref.js
-
-
-
-
+// ./src/core/xref.js
 
 
 class XRef {
     #firstXRefStmPos = null;
+
     constructor(stream, pdfManager) {
         this.stream = stream;
         this.pdfManager = pdfManager;
@@ -54332,6 +56696,7 @@ class XRef {
         this._newTemporaryRefNum = null;
         this._persistentRefsCache = null;
     }
+
     getNewPersistentRef(obj) {
         if (this._newPersistentRefNum === null) {
             this._newPersistentRefNum = this.entries.length || 1;
@@ -54340,6 +56705,7 @@ class XRef {
         this._cacheMap.set(num, obj);
         return Ref.get(num, 0);
     }
+
     getNewTemporaryRef() {
         if (this._newTemporaryRefNum === null) {
             this._newTemporaryRefNum = this.entries.length || 1;
@@ -54353,6 +56719,7 @@ class XRef {
         }
         return Ref.get(this._newTemporaryRefNum++, 0);
     }
+
     resetNewTemporaryRef() {
         this._newTemporaryRefNum = null;
         if (this._persistentRefsCache) {
@@ -54362,9 +56729,11 @@ class XRef {
         }
         this._persistentRefsCache = null;
     }
+
     setStartXRef(startXRef) {
         this.startXRefQueue = [startXRef];
     }
+
     parse(recoveryMode = false) {
         let trailerDict;
         if (!recoveryMode) {
@@ -54418,6 +56787,7 @@ class XRef {
         }
         throw new InvalidPDFException("Invalid Root reference.");
     }
+
     processXRefTable(parser) {
         if (!("tableState" in this)) {
             this.tableState = {
@@ -54441,6 +56811,7 @@ class XRef {
         delete this.tableState;
         return dict;
     }
+
     readXRefTable(parser) {
         const stream = parser.lexer.stream;
         const tableState = this.tableState;
@@ -54502,6 +56873,7 @@ class XRef {
         }
         return obj;
     }
+
     processXRefStream(stream) {
         if (!("streamState" in this)) {
             const {
@@ -54521,6 +56893,7 @@ class XRef {
         delete this.streamState;
         return stream.dict;
     }
+
     readXRefStream(stream) {
         const streamState = this.streamState;
         stream.pos = streamState.streamPos;
@@ -54588,6 +56961,7 @@ class XRef {
             entryRanges.splice(0, 2);
         }
     }
+
     indexObjects() {
         const TAB = 0x9,
             LF = 0xa,
@@ -54595,6 +56969,7 @@ class XRef {
             SPACE = 0x20;
         const PERCENT = 0x25,
             LT = 0x3c;
+
         function readToken(data, offset) {
             let token = "",
                 ch = data[offset];
@@ -54607,6 +56982,7 @@ class XRef {
             }
             return token;
         }
+
         function skipUntil(data, offset, what) {
             const length = what.length,
                 dataLength = data.length;
@@ -54624,6 +57000,7 @@ class XRef {
             }
             return skipped;
         }
+
         const gEndobjRegExp = /\b(endobj|\d+\s+\d+\s+obj|xref|trailer\s*<<)\b/g;
         const gStartxrefRegExp = /\b(startxref|\d+\s+\d+\s+obj)\b/g;
         const objRegExp = /^(\d+)\s+(\d+)\s+obj\b/;
@@ -54819,6 +57196,7 @@ class XRef {
         }
         throw new InvalidPDFException("Invalid PDF structure.");
     }
+
     readXRef(recoveryMode = false) {
         const stream = this.stream;
         const startXRefParsedCache = new Set();
@@ -54886,9 +57264,11 @@ class XRef {
         }
         throw new XRefParseException();
     }
+
     get lastXRefStreamPos() {
         return this.#firstXRefStmPos ?? (this._xrefStms.size > 0 ? Math.max(...this._xrefStms) : null);
     }
+
     getEntry(i) {
         const xrefEntry = this.entries[i];
         if (xrefEntry && !xrefEntry.free && xrefEntry.offset) {
@@ -54896,12 +57276,14 @@ class XRef {
         }
         return null;
     }
+
     fetchIfRef(obj, suppressEncryption = false) {
         if (obj instanceof Ref) {
             return this.fetch(obj, suppressEncryption);
         }
         return obj;
     }
+
     fetch(ref, suppressEncryption = false) {
         if (!(ref instanceof Ref)) {
             throw new Error("ref object is not a reference");
@@ -54938,6 +57320,7 @@ class XRef {
         }
         return xrefEntry;
     }
+
     fetchUncompressed(ref, xrefEntry, suppressEncryption = false) {
         const gen = ref.gen;
         let num = ref.num;
@@ -54976,6 +57359,7 @@ class XRef {
         }
         return xrefEntry;
     }
+
     fetchCompressed(ref, xrefEntry, suppressEncryption = false) {
         const tableOffset = xrefEntry.offset;
         const stream = this.fetch(Ref.get(tableOffset, 0));
@@ -55039,12 +57423,14 @@ class XRef {
         }
         return xrefEntry;
     }
+
     async fetchIfRefAsync(obj, suppressEncryption) {
         if (obj instanceof Ref) {
             return this.fetchAsync(obj, suppressEncryption);
         }
         return obj;
     }
+
     async fetchAsync(ref, suppressEncryption) {
         try {
             return this.fetch(ref, suppressEncryption);
@@ -55056,35 +57442,20 @@ class XRef {
             return this.fetchAsync(ref, suppressEncryption);
         }
     }
+
     getCatalogObj() {
         return this.root;
     }
 }
 
-;// ./src/core/document.js
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// ./src/core/document.js
 
 
 const LETTER_SIZE_MEDIABOX = [0, 0, 612, 792];
+
 class Page {
     #resourcesPromise = null;
+
     constructor({
                     pdfManager,
                     xref,
@@ -55122,11 +57493,13 @@ class Page {
             static createObjId() {
                 return `p${pageIndex}_${++idCounters.obj}`;
             }
+
             static getPageObjId() {
                 return `p${ref.toString()}`;
             }
         };
     }
+
     #createPartialEvaluator(handler) {
         return new PartialEvaluator({
             xref: this.xref,
@@ -55142,6 +57515,7 @@ class Page {
             options: this.evaluatorOptions
         });
     }
+
     #getInheritableProperty(key, getArray = false) {
         const value = getInheritableProperty({
             dict: this.pageDict,
@@ -55160,13 +57534,16 @@ class Page {
             dictArray: value
         });
     }
+
     get content() {
         return this.pageDict.getArray("Contents");
     }
+
     get resources() {
         const resources = this.#getInheritableProperty("Resources");
         return shadow(this, "resources", resources instanceof Dict ? resources : Dict.empty);
     }
+
     #getBoundingBox(name) {
         if (this.xfaData) {
             return this.xfaData.bbox;
@@ -55180,16 +57557,20 @@ class Page {
         }
         return null;
     }
+
     get mediaBox() {
         return shadow(this, "mediaBox", this.#getBoundingBox("MediaBox") || LETTER_SIZE_MEDIABOX);
     }
+
     get cropBox() {
         return shadow(this, "cropBox", this.#getBoundingBox("CropBox") || this.mediaBox);
     }
+
     get userUnit() {
         const obj = this.pageDict.get("UserUnit");
         return shadow(this, "userUnit", typeof obj === "number" && obj > 0 ? obj : 1.0);
     }
+
     get view() {
         const {
             cropBox,
@@ -55204,6 +57585,7 @@ class Page {
         }
         return shadow(this, "view", mediaBox);
     }
+
     get rotate() {
         let rotate = this.#getInheritableProperty("Rotate") || 0;
         if (rotate % 90 !== 0) {
@@ -55215,6 +57597,7 @@ class Page {
         }
         return shadow(this, "rotate", rotate);
     }
+
     #onSubStreamError(reason, objId) {
         if (this.evaluatorOptions.ignoreErrors) {
             warn(`getContentStream - ignoring sub-stream (${objId}): "${reason}".`);
@@ -55222,6 +57605,7 @@ class Page {
         }
         throw reason;
     }
+
     async getContentStream() {
         const content = await this.pdfManager.ensure(this, "content");
         if (content instanceof BaseStream) {
@@ -55232,11 +57616,13 @@ class Page {
         }
         return new NullStream();
     }
+
     get xfaData() {
         return shadow(this, "xfaData", this.xfaFactory ? {
             bbox: this.xfaFactory.getBoundingBox(this.pageIndex)
         } : null);
     }
+
     async #replaceIdByRef(annotations, deletedAnnotations, existingAnnotations) {
         const promises = [];
         for (const annotation of annotations) {
@@ -55276,6 +57662,7 @@ class Page {
         }
         await Promise.all(promises);
     }
+
     async saveNewAnnotations(handler, task, annotations, imagePromises, changes) {
         if (this.xfaFactory) {
             throw new Error("XFA: Cannot save new annotations.");
@@ -55305,6 +57692,7 @@ class Page {
             });
         }
     }
+
     async save(handler, task, annotationStorage, changes) {
         const partialEvaluator = this.#createPartialEvaluator(handler);
         const annotations = await this._parsedAnnotations;
@@ -55317,10 +57705,12 @@ class Page {
         }
         return Promise.all(promises);
     }
+
     async loadResources(keys) {
         await (this.#resourcesPromise ??= this.pdfManager.ensure(this, "resources"));
         await ObjectLoader.load(this.resources, keys, this.xref);
     }
+
     async #getMergedResources(streamDict, keys) {
         const localResources = streamDict?.get("Resources");
         if (!(localResources instanceof Dict && localResources.size)) {
@@ -55333,6 +57723,7 @@ class Page {
             mergeSubDicts: true
         });
     }
+
     async getOperatorList({
                               handler,
                               sink,
@@ -55462,6 +57853,7 @@ class Page {
             length: pageOpList.totalLength
         };
     }
+
     async extractTextContent({
                                  handler,
                                  task,
@@ -55473,7 +57865,7 @@ class Page {
         const contentStreamPromise = this.getContentStream();
         const resourcesPromise = this.loadResources(RESOURCES_KEYS_TEXT_CONTENT);
         const langPromise = this.pdfManager.ensureCatalog("lang");
-        const [contentStream,, lang] = await Promise.all([contentStreamPromise, resourcesPromise, langPromise]);
+        const [contentStream, , lang] = await Promise.all([contentStreamPromise, resourcesPromise, langPromise]);
         const resources = await this.#getMergedResources(contentStream.dict, RESOURCES_KEYS_TEXT_CONTENT);
         const partialEvaluator = this.#createPartialEvaluator(handler);
         return partialEvaluator.getTextContent({
@@ -55488,6 +57880,7 @@ class Page {
             intersector
         });
     }
+
     async getStructTree() {
         const structTreeRoot = await this.pdfManager.ensureCatalog("structTreeRoot");
         if (!structTreeRoot) {
@@ -55503,11 +57896,13 @@ class Page {
             return null;
         }
     }
+
     _parseStructTree(structTreeRoot) {
         const tree = new StructTreePage(structTreeRoot, this.pageDict);
         tree.parse(this.ref);
         return tree;
     }
+
     async getAnnotationsData(handler, task, intent) {
         const annotations = await this._parsedAnnotations;
         if (annotations.length === 0) {
@@ -55552,10 +57947,12 @@ class Page {
         await Promise.all(textContentPromises);
         return annotationsData;
     }
+
     get annotations() {
         const annots = this.#getInheritableProperty("Annots");
         return shadow(this, "annotations", Array.isArray(annots) ? annots : []);
     }
+
     get _parsedAnnotations() {
         const promise = this.pdfManager.ensure(this, "annotations").then(async annots => {
             if (annots.length === 0) {
@@ -55599,14 +57996,17 @@ class Page {
         });
         return shadow(this, "_parsedAnnotations", promise);
     }
+
     get jsActions() {
         const actions = collectActions(this.xref, this.pageDict, PageActionEventType);
         return shadow(this, "jsActions", actions);
     }
 }
+
 const PDF_HEADER_SIGNATURE = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]);
 const STARTXREF_SIGNATURE = new Uint8Array([0x73, 0x74, 0x61, 0x72, 0x74, 0x78, 0x72, 0x65, 0x66]);
 const ENDOBJ_SIGNATURE = new Uint8Array([0x65, 0x6e, 0x64, 0x6f, 0x62, 0x6a]);
+
 function find(stream, signature, limit = 1024, backwards = false) {
     const signatureLength = signature.length;
     const scanBytes = stream.peekBytes(limit);
@@ -55644,9 +58044,11 @@ function find(stream, signature, limit = 1024, backwards = false) {
     }
     return false;
 }
+
 class PDFDocument {
     #pagePromises = new Map();
     #version = null;
+
     constructor(pdfManager, stream) {
         if (stream.length <= 0) {
             throw new InvalidPDFException("The PDF file is empty, i.e. its size is zero bytes.");
@@ -55661,21 +58063,26 @@ class PDFDocument {
             static getDocId() {
                 return `g_${pdfManager.docId}`;
             }
+
             static createFontId() {
                 return `f${++idCounters.font}`;
             }
+
             static createObjId() {
                 unreachable("Abstract method `createObjId` called.");
             }
+
             static getPageObjId() {
                 unreachable("Abstract method `getPageObjId` called.");
             }
         };
     }
+
     parse(recoveryMode) {
         this.xref.parse(recoveryMode);
         this.catalog = new Catalog(this.pdfManager, this.xref);
     }
+
     get linearization() {
         let linearization = null;
         try {
@@ -55688,6 +58095,7 @@ class PDFDocument {
         }
         return shadow(this, "linearization", linearization);
     }
+
     get startXRef() {
         const stream = this.stream;
         let startXRef = 0;
@@ -55734,6 +58142,7 @@ class PDFDocument {
         }
         return shadow(this, "startXRef", startXRef);
     }
+
     checkHeader() {
         const stream = this.stream;
         stream.reset();
@@ -55753,9 +58162,11 @@ class PDFDocument {
             warn(`Invalid PDF header version: ${version}`);
         }
     }
+
     parseStartXRef() {
         this.xref.setStartXRef(this.startXRef);
     }
+
     get numPages() {
         let num = 0;
         if (this.catalog.hasActualNumPages) {
@@ -55769,6 +58180,7 @@ class PDFDocument {
         }
         return shadow(this, "numPages", num);
     }
+
     #hasOnlyDocumentSignatures(fields, recursionDepth = 0) {
         const RECURSION_LIMIT = 10;
         if (!Array.isArray(fields)) {
@@ -55792,6 +58204,7 @@ class PDFDocument {
             return isSignature && isInvisible;
         });
     }
+
     #collectSignatureCertificates(fields, collectedSignatureCertificates, visited = new RefSet()) {
         if (!Array.isArray(fields)) {
             return;
@@ -55826,6 +58239,7 @@ class PDFDocument {
             collectedSignatureCertificates.add(subFilter.name);
         }
     }
+
     get _xfaStreams() {
         const {
             acroForm
@@ -55862,6 +58276,7 @@ class PDFDocument {
         }
         return entries;
     }
+
     get xfaDatasets() {
         const streams = this._xfaStreams;
         if (!streams) {
@@ -55885,6 +58300,7 @@ class PDFDocument {
         }
         return shadow(this, "xfaDatasets", null);
     }
+
     get xfaData() {
         const streams = this._xfaStreams;
         if (!streams) {
@@ -55904,6 +58320,7 @@ class PDFDocument {
         }
         return data;
     }
+
     get xfaFactory() {
         let data;
         if (this.pdfManager.enableXfa && this.catalog.needsRendering && this.formInfo.hasXfa && !this.formInfo.hasAcroForm) {
@@ -55911,12 +58328,15 @@ class PDFDocument {
         }
         return shadow(this, "xfaFactory", data ? new XFAFactory(data) : null);
     }
+
     get isPureXfa() {
         return this.xfaFactory ? this.xfaFactory.isValid() : false;
     }
+
     get htmlForXfa() {
         return this.xfaFactory ? this.xfaFactory.getPages() : null;
     }
+
     async #loadXfaImages() {
         const xfaImages = await this.pdfManager.ensureCatalog("xfaImages");
         if (!xfaImages) {
@@ -55924,6 +58344,7 @@ class PDFDocument {
         }
         this.xfaFactory.setImages(xfaImages);
     }
+
     async #loadXfaFonts(handler, task) {
         const acroForm = await this.pdfManager.ensureCatalog("acroForm");
         if (!acroForm) {
@@ -56042,15 +58463,20 @@ class PDFDocument {
         await Promise.all(promises);
         this.xfaFactory.appendFonts(pdfFonts, reallyMissingFonts);
     }
+
     loadXfaResources(handler, task) {
-        return Promise.all([this.#loadXfaFonts(handler, task).catch(() => {}), this.#loadXfaImages()]);
+        return Promise.all([this.#loadXfaFonts(handler, task).catch(() => {
+        }), this.#loadXfaImages()]);
     }
+
     serializeXfaData(annotationStorage) {
         return this.xfaFactory ? this.xfaFactory.serializeData(annotationStorage) : null;
     }
+
     get version() {
         return this.catalog.version || this.#version;
     }
+
     get formInfo() {
         const formInfo = {
             hasFields: false,
@@ -56083,6 +58509,7 @@ class PDFDocument {
         }
         return shadow(this, "formInfo", formInfo);
     }
+
     get documentInfo() {
         const {
             catalog,
@@ -56160,12 +58587,15 @@ class PDFDocument {
         }
         return shadow(this, "documentInfo", docInfo);
     }
+
     get fingerprints() {
         const FINGERPRINT_FIRST_BYTES = 1024;
         const EMPTY_FINGERPRINT = "\x00".repeat(16);
+
         function validate(data) {
             return typeof data === "string" && data.length === 16 && data !== EMPTY_FINGERPRINT;
         }
+
         const id = this.xref.trailer.get("ID");
         let hashOriginal, hashModified;
         if (Array.isArray(id) && validate(id[0])) {
@@ -56178,6 +58608,7 @@ class PDFDocument {
         }
         return shadow(this, "fingerprints", [toHexUtil(hashOriginal), hashModified ? toHexUtil(hashModified) : null]);
     }
+
     async #getLinearizationPage(pageIndex) {
         const {
             catalog,
@@ -56208,6 +58639,7 @@ class PDFDocument {
             return catalog.getPageDict(pageIndex);
         }
     }
+
     getPage(pageIndex) {
         const cachedPromise = this.#pagePromises.get(pageIndex);
         if (cachedPromise) {
@@ -56245,6 +58677,7 @@ class PDFDocument {
         this.#pagePromises.set(pageIndex, promise);
         return promise;
     }
+
     async checkFirstPage(recoveryMode = false) {
         if (recoveryMode) {
             return;
@@ -56259,6 +58692,7 @@ class PDFDocument {
             }
         }
     }
+
     async checkLastPage(recoveryMode = false) {
         const {
             catalog,
@@ -56302,7 +58736,8 @@ class PDFDocument {
                 let promise;
                 if (pageDict instanceof Error) {
                     promise = Promise.reject(pageDict);
-                    promise.catch(() => {});
+                    promise.catch(() => {
+                    });
                 } else {
                     promise = Promise.resolve(new Page({
                         pdfManager,
@@ -56326,6 +58761,7 @@ class PDFDocument {
             catalog.setActualNumPages(pagesTree.size);
         }
     }
+
     async fontFallback(id, handler) {
         const {
             catalog,
@@ -56338,9 +58774,11 @@ class PDFDocument {
             }
         }
     }
+
     async cleanup(manuallyTriggered = false) {
         return this.catalog ? this.catalog.cleanup(manuallyTriggered) : clearGlobalCaches();
     }
+
     async #collectFieldObjects(name, parentRef, fieldRef, promises, annotationGlobals, visitedRefs, orphanFields) {
         const {
             xref
@@ -56402,6 +58840,7 @@ class PDFDocument {
             }
         }
     }
+
     get fieldObjects() {
         const promise = this.pdfManager.ensureDoc("formInfo").then(async formInfo => {
             if (!formInfo.hasFields) {
@@ -56438,10 +58877,12 @@ class PDFDocument {
         });
         return shadow(this, "fieldObjects", promise);
     }
+
     get hasJSActions() {
         const promise = this.pdfManager.ensureDoc("_parseHasJSActions");
         return shadow(this, "hasJSActions", promise);
     }
+
     async _parseHasJSActions() {
         const [catalogJsActions, fieldObjects] = await Promise.all([this.pdfManager.ensureCatalog("jsActions"), this.pdfManager.ensureDoc("fieldObjects")]);
         if (catalogJsActions) {
@@ -56452,6 +58893,7 @@ class PDFDocument {
         }
         return false;
     }
+
     get calculationOrderIds() {
         const calculationOrder = this.catalog.acroForm?.get("CO");
         if (!Array.isArray(calculationOrder) || calculationOrder.length === 0) {
@@ -56465,20 +58907,13 @@ class PDFDocument {
         }
         return shadow(this, "calculationOrderIds", ids.length ? ids : null);
     }
+
     get annotationGlobals() {
         return shadow(this, "annotationGlobals", AnnotationFactory.createGlobals(this.pdfManager));
     }
 }
 
-;// ./src/core/pdf_manager.js
-
-
-
-
-
-
-
-
+// ./src/core/pdf_manager.js
 
 
 function parseDocBaseUrl(url) {
@@ -56491,6 +58926,7 @@ function parseDocBaseUrl(url) {
     }
     return null;
 }
+
 class BasePdfManager {
     constructor({
                     docBaseUrl,
@@ -56518,52 +58954,68 @@ class BasePdfManager {
         IccColorSpace.setOptions(options);
         CmykICCBasedCS.setOptions(options);
     }
+
     get docId() {
         return this._docId;
     }
+
     get password() {
         return this._password;
     }
+
     get docBaseUrl() {
         return this._docBaseUrl;
     }
+
     ensureDoc(prop, args) {
         return this.ensure(this.pdfDocument, prop, args);
     }
+
     ensureXRef(prop, args) {
         return this.ensure(this.pdfDocument.xref, prop, args);
     }
+
     ensureCatalog(prop, args) {
         return this.ensure(this.pdfDocument.catalog, prop, args);
     }
+
     getPage(pageIndex) {
         return this.pdfDocument.getPage(pageIndex);
     }
+
     fontFallback(id, handler) {
         return this.pdfDocument.fontFallback(id, handler);
     }
+
     cleanup(manuallyTriggered = false) {
         return this.pdfDocument.cleanup(manuallyTriggered);
     }
+
     async ensure(obj, prop, args) {
         unreachable("Abstract method `ensure` called");
     }
+
     requestRange(begin, end) {
         unreachable("Abstract method `requestRange` called");
     }
+
     requestLoadedStream(noFetch = false) {
         unreachable("Abstract method `requestLoadedStream` called");
     }
+
     sendProgressiveData(chunk) {
         unreachable("Abstract method `sendProgressiveData` called");
     }
+
     updatePassword(password) {
         this._password = password;
     }
+
     terminate(reason) {
         unreachable("Abstract method `terminate` called");
     }
 }
+
 class LocalPdfManager extends BasePdfManager {
     constructor(args) {
         super(args);
@@ -56571,6 +59023,7 @@ class LocalPdfManager extends BasePdfManager {
         this.pdfDocument = new PDFDocument(this, stream);
         this._loadedStreamPromise = Promise.resolve(stream);
     }
+
     async ensure(obj, prop, args) {
         const value = obj[prop];
         if (typeof value === "function") {
@@ -56578,14 +59031,19 @@ class LocalPdfManager extends BasePdfManager {
         }
         return value;
     }
+
     requestRange(begin, end) {
         return Promise.resolve();
     }
+
     requestLoadedStream(noFetch = false) {
         return this._loadedStreamPromise;
     }
-    terminate(reason) {}
+
+    terminate(reason) {
+    }
 }
+
 class NetworkPdfManager extends BasePdfManager {
     constructor(args) {
         super(args);
@@ -56597,6 +59055,7 @@ class NetworkPdfManager extends BasePdfManager {
         });
         this.pdfDocument = new PDFDocument(this, this.streamManager.getStream());
     }
+
     async ensure(obj, prop, args) {
         try {
             const value = obj[prop];
@@ -56612,23 +59071,27 @@ class NetworkPdfManager extends BasePdfManager {
             return this.ensure(obj, prop, args);
         }
     }
+
     requestRange(begin, end) {
         return this.streamManager.requestRange(begin, end);
     }
+
     requestLoadedStream(noFetch = false) {
         return this.streamManager.requestAllChunks(noFetch);
     }
+
     sendProgressiveData(chunk) {
         this.streamManager.onReceiveData({
             chunk
         });
     }
+
     terminate(reason) {
         this.streamManager.abort(reason);
     }
 }
 
-;// ./src/shared/message_handler.js
+// ./src/shared/message_handler.js
 
 const CallbackKind = {
     DATA: 1,
@@ -56644,7 +59107,10 @@ const StreamKind = {
     PULL_COMPLETE: 7,
     START_COMPLETE: 8
 };
-function onFn() {}
+
+function onFn() {
+}
+
 function wrapReason(ex) {
     if (ex instanceof AbortException || ex instanceof InvalidPDFException || ex instanceof PasswordException || ex instanceof ResponseException || ex instanceof UnknownErrorException) {
         return ex;
@@ -56666,8 +59132,10 @@ function wrapReason(ex) {
     }
     return new UnknownErrorException(ex.message, ex.toString());
 }
+
 class MessageHandler {
     #messageAC = new AbortController();
+
     constructor(sourceName, targetName, comObj) {
         this.sourceName = sourceName;
         this.targetName = targetName;
@@ -56682,6 +59150,7 @@ class MessageHandler {
             signal: this.#messageAC.signal
         });
     }
+
     #onMessage({
                    data
                }) {
@@ -56741,6 +59210,7 @@ class MessageHandler {
         }
         action(data.data);
     }
+
     on(actionName, handler) {
         const ah = this.actionHandler;
         if (ah[actionName]) {
@@ -56748,6 +59218,7 @@ class MessageHandler {
         }
         ah[actionName] = handler;
     }
+
     send(actionName, data, transfers) {
         this.comObj.postMessage({
             sourceName: this.sourceName,
@@ -56756,6 +59227,7 @@ class MessageHandler {
             data
         }, transfers);
     }
+
     sendWithPromise(actionName, data, transfers) {
         const callbackId = this.callbackId++;
         const capability = Promise.withResolvers();
@@ -56773,6 +59245,7 @@ class MessageHandler {
         }
         return capability.promise;
     }
+
     sendWithStream(actionName, data, queueingStrategy, transfers) {
         const streamId = this.streamId++,
             sourceName = this.sourceName,
@@ -56826,6 +59299,7 @@ class MessageHandler {
             }
         }, queueingStrategy);
     }
+
     #createStreamSink(data) {
         const streamId = data.streamId,
             sourceName = this.sourceName,
@@ -56907,6 +59381,7 @@ class MessageHandler {
             });
         });
     }
+
     #processStreamMessage(data) {
         const streamId = data.streamId,
             sourceName = this.sourceName,
@@ -57021,22 +59496,19 @@ class MessageHandler {
                 throw new Error("Unexpected stream case");
         }
     }
+
     async #deleteStreamController(streamController, streamId) {
         await Promise.allSettled([streamController.startCall?.promise, streamController.pullCall?.promise, streamController.cancelCall?.promise]);
         delete this.streamControllers[streamId];
     }
+
     destroy() {
         this.#messageAC?.abort();
         this.#messageAC = null;
     }
 }
 
-;// ./src/core/writer.js
-
-
-
-
-
+// ./src/core/writer.js
 
 
 async function writeObject(ref, obj, buffer, {
@@ -57053,6 +59525,7 @@ async function writeObject(ref, obj, buffer, {
     }
     buffer.push("\nendobj\n");
 }
+
 async function writeDict(dict, buffer, transform) {
     buffer.push("<<");
     for (const key of dict.getKeys()) {
@@ -57061,6 +59534,7 @@ async function writeDict(dict, buffer, transform) {
     }
     buffer.push(">>");
 }
+
 async function writeStream(stream, buffer, transform) {
     let bytes = stream.getBytes();
     const {
@@ -57078,7 +59552,8 @@ async function writeStream(stream, buffer, transform) {
             writer.write(bytes).then(async () => {
                 await writer.ready;
                 await writer.close();
-            }).catch(() => {});
+            }).catch(() => {
+            });
             const buf = await new Response(cs.readable).arrayBuffer();
             bytes = new Uint8Array(buf);
             let newFilter, newParams;
@@ -57108,6 +59583,7 @@ async function writeStream(stream, buffer, transform) {
     await writeDict(dict, buffer, transform);
     buffer.push(" stream\n", string, "\nendstream");
 }
+
 async function writeArray(array, buffer, transform) {
     buffer.push("[");
     let first = true;
@@ -57121,6 +59597,7 @@ async function writeArray(array, buffer, transform) {
     }
     buffer.push("]");
 }
+
 async function writeValue(value, buffer, transform) {
     if (value instanceof Name) {
         buffer.push(`/${escapePDFName(value.name)}`);
@@ -57147,6 +59624,7 @@ async function writeValue(value, buffer, transform) {
         warn(`Unhandled value in writer: ${typeof value}, please file a bug.`);
     }
 }
+
 function writeInt(number, size, offset, buffer) {
     for (let i = size + offset - 1; i > offset - 1; i--) {
         buffer[i] = number & 0xff;
@@ -57154,6 +59632,7 @@ function writeInt(number, size, offset, buffer) {
     }
     return offset + size;
 }
+
 function writeString(string, offset, buffer) {
     const ii = string.length;
     for (let i = 0; i < ii; i++) {
@@ -57161,6 +59640,7 @@ function writeString(string, offset, buffer) {
     }
     return offset + ii;
 }
+
 function computeMD5(filesize, xrefInfo) {
     const time = Math.floor(Date.now() / 1000);
     const filename = xrefInfo.filename || "";
@@ -57173,6 +59653,7 @@ function computeMD5(filesize, xrefInfo) {
     }
     return bytesToString(calculateMD5(array, 0, array.length));
 }
+
 function writeXFADataForAcroform(str, changes) {
     const xml = new SimpleXMLParser({
         hasAttributes: true
@@ -57205,6 +59686,7 @@ function writeXFADataForAcroform(str, changes) {
     xml.documentElement.dump(buffer);
     return buffer.join("");
 }
+
 async function updateAcroform({
                                   xref,
                                   acroForm,
@@ -57235,6 +59717,7 @@ async function updateAcroform({
         data: dict
     });
 }
+
 function updateXFA({
                        xfaData,
                        xfaDatasetsRef,
@@ -57252,6 +59735,7 @@ function updateXFA({
         data: xfaDataStream
     });
 }
+
 async function getXRefTable(xrefInfo, baseOffset, newRefs, newXref, buffer) {
     buffer.push("xref\n");
     const indexes = getIndexes(newRefs);
@@ -57276,6 +59760,7 @@ async function getXRefTable(xrefInfo, baseOffset, newRefs, newXref, buffer) {
     await writeDict(newXref, buffer);
     buffer.push("\nstartxref\n", baseOffset.toString(), "\n%%EOF\n");
 }
+
 function getIndexes(newRefs) {
     const indexes = [];
     for (const {
@@ -57289,6 +59774,7 @@ function getIndexes(newRefs) {
     }
     return indexes;
 }
+
 async function getXRefStreamTable(xrefInfo, baseOffset, newRefs, newXref, buffer) {
     const xrefTableData = [];
     let maxOffset = 0;
@@ -57328,12 +59814,14 @@ async function getXRefStreamTable(xrefInfo, baseOffset, newRefs, newXref, buffer
     await writeObject(xrefInfo.newRef, stream, buffer, {});
     buffer.push("startxref\n", baseOffset.toString(), "\n%%EOF\n");
 }
+
 function computeIDs(baseOffset, xrefInfo, newXref) {
     if (Array.isArray(xrefInfo.fileIds) && xrefInfo.fileIds.length > 0) {
         const md5 = computeMD5(baseOffset, xrefInfo);
         newXref.set("ID", [xrefInfo.fileIds[0], md5]);
     }
 }
+
 function getTrailerDict(xrefInfo, changes, useXrefStream) {
     const newXref = new Dict(null);
     newXref.set("Prev", xrefInfo.startXRef);
@@ -57358,6 +59846,7 @@ function getTrailerDict(xrefInfo, changes, useXrefStream) {
     }
     return newXref;
 }
+
 async function writeChanges(changes, xref, buffer = []) {
     const newRefs = [];
     for (const [ref, {
@@ -57379,6 +59868,7 @@ async function writeChanges(changes, xref, buffer = []) {
     }
     return newRefs.sort((a, b) => a.ref.num - b.ref.num);
 }
+
 async function incrementalUpdate({
                                      originalData,
                                      xrefInfo,
@@ -57438,7 +59928,7 @@ async function incrementalUpdate({
     return array;
 }
 
-;// ./src/core/worker_stream.js
+// ./src/core/worker_stream.js
 
 class PDFWorkerStream {
     constructor(msgHandler) {
@@ -57447,16 +59937,19 @@ class PDFWorkerStream {
         this._fullRequestReader = null;
         this._rangeRequestReaders = [];
     }
+
     getFullReader() {
         assert(!this._fullRequestReader, "PDFWorkerStream.getFullReader can only be called once.");
         this._fullRequestReader = new PDFWorkerStreamReader(this._msgHandler);
         return this._fullRequestReader;
     }
+
     getRangeReader(begin, end) {
         const reader = new PDFWorkerStreamRangeReader(begin, end, this._msgHandler);
         this._rangeRequestReaders.push(reader);
         return reader;
     }
+
     cancelAllRequests(reason) {
         this._fullRequestReader?.cancel(reason);
         for (const reader of this._rangeRequestReaders.slice(0)) {
@@ -57464,6 +59957,7 @@ class PDFWorkerStream {
         }
     }
 }
+
 class PDFWorkerStreamReader {
     constructor(msgHandler) {
         this._msgHandler = msgHandler;
@@ -57479,18 +59973,23 @@ class PDFWorkerStreamReader {
             this._contentLength = data.contentLength;
         });
     }
+
     get headersReady() {
         return this._headersReady;
     }
+
     get contentLength() {
         return this._contentLength;
     }
+
     get isStreamingSupported() {
         return this._isStreamingSupported;
     }
+
     get isRangeSupported() {
         return this._isRangeSupported;
     }
+
     async read() {
         const {
             value,
@@ -57507,10 +60006,12 @@ class PDFWorkerStreamReader {
             done: false
         };
     }
+
     cancel(reason) {
         this._reader.cancel(reason);
     }
 }
+
 class PDFWorkerStreamRangeReader {
     constructor(begin, end, msgHandler) {
         this._msgHandler = msgHandler;
@@ -57521,9 +60022,11 @@ class PDFWorkerStreamRangeReader {
         });
         this._reader = readableStream.getReader();
     }
+
     get isStreamingSupported() {
         return false;
     }
+
     async read() {
         const {
             value,
@@ -57540,20 +60043,13 @@ class PDFWorkerStreamRangeReader {
             done: false
         };
     }
+
     cancel(reason) {
         this._reader.cancel(reason);
     }
 }
 
-;// ./src/core/worker.js
-
-
-
-
-
-
-
-
+// ./src/core/worker.js
 
 
 class WorkerTask {
@@ -57562,27 +60058,33 @@ class WorkerTask {
         this.terminated = false;
         this._capability = Promise.withResolvers();
     }
+
     get finished() {
         return this._capability.promise;
     }
+
     finish() {
         this._capability.resolve();
     }
+
     terminate() {
         this.terminated = true;
     }
+
     ensureNotTerminated() {
         if (this.terminated) {
             throw new Error("Worker task was terminated");
         }
     }
 }
+
 class WorkerMessageHandler {
     static {
         if (typeof window === "undefined" && !isNodeJS && typeof self !== "undefined" && typeof self.postMessage === "function" && "onmessage" in self) {
             this.initializeFromPort(self);
         }
     }
+
     static setup(handler, port) {
         let testMessageProcessed = false;
         handler.on("test", data => {
@@ -57597,6 +60099,7 @@ class WorkerMessageHandler {
         });
         handler.on("GetDocRequest", data => this.createDocumentHandler(data, port));
     }
+
     static createDocumentHandler(docParams, port) {
         let pdfManager;
         let terminated = false;
@@ -57620,18 +60123,22 @@ class WorkerMessageHandler {
         }
         const workerHandlerName = docId + "_worker";
         let handler = new MessageHandler(workerHandlerName, docId, port);
+
         function ensureNotTerminated() {
             if (terminated) {
                 throw new Error("Worker was terminated");
             }
         }
+
         function startWorkerTask(task) {
             WorkerTasks.add(task);
         }
+
         function finishWorkerTask(task) {
             task.finish();
             WorkerTasks.delete(task);
         }
+
         async function loadDocument(recoveryMode) {
             await pdfManager.ensureDoc("checkHeader");
             await pdfManager.ensureDoc("parseStartXRef");
@@ -57653,6 +60160,7 @@ class WorkerMessageHandler {
                 htmlForXfa
             };
         }
+
         async function getPdfManager({
                                          data,
                                          password,
@@ -57751,6 +60259,7 @@ class WorkerMessageHandler {
             };
             return pdfManagerCapability.promise;
         }
+
         function setupDoc(data) {
             function onSuccess(doc) {
                 ensureNotTerminated();
@@ -57758,6 +60267,7 @@ class WorkerMessageHandler {
                     pdfInfo: doc
                 });
             }
+
             function onFailure(ex) {
                 ensureNotTerminated();
                 if (ex instanceof PasswordException) {
@@ -57777,6 +60287,7 @@ class WorkerMessageHandler {
                     handler.send("DocException", wrapReason(ex));
                 }
             }
+
             function pdfManagerReady() {
                 ensureNotTerminated();
                 loadDocument(false).then(onSuccess, function (reason) {
@@ -57791,6 +60302,7 @@ class WorkerMessageHandler {
                     });
                 });
             }
+
             ensureNotTerminated();
             getPdfManager(data).then(function (newPdfManager) {
                 if (terminated) {
@@ -57805,6 +60317,7 @@ class WorkerMessageHandler {
                 });
             }).then(pdfManagerReady, onFailure);
         }
+
         handler.on("GetPage", function (data) {
             return pdfManager.getPage(data.pageIndex).then(function (page) {
                 return Promise.all([pdfManager.ensure(page, "rotate"), pdfManager.ensure(page, "ref"), pdfManager.ensure(page, "userUnit"), pdfManager.ensure(page, "view")]).then(function ([rotate, ref, userUnit, view]) {
@@ -58131,6 +60644,7 @@ class WorkerMessageHandler {
         });
         return workerHandlerName;
     }
+
     static initializeFromPort(port) {
         const handler = new MessageHandler("worker", "main", port);
         this.setup(handler, port);
@@ -58138,12 +60652,12 @@ class WorkerMessageHandler {
     }
 }
 
-;// ./src/pdf.worker.js
+// ./src/pdf.worker.js
 
 globalThis.pdfjsWorker = {
     WorkerMessageHandler: WorkerMessageHandler
 };
 
-export { WorkerMessageHandler };
+export {WorkerMessageHandler};
 
 //# sourceMappingURL=pdf.worker.mjs.map

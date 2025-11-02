@@ -106,7 +106,9 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                                 .from(bucket)
                                 .createSignedUrl(path, 60 * 60);
 
-                            if (!signedError) setSignedUrl(signed.signedUrl);
+                            if (!signedError) if (signed) {
+                                setSignedUrl(signed.signedUrl);
+                            }
                         } else {
                             setSignedUrl(data.supabase_url);
                         }
@@ -162,15 +164,17 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
             });
 
             const ingestData = await ingestRes.json();
-            if (!ingestRes.ok || !ingestData.pdf_id) throw new Error("Failed to process paper");
+            if (!ingestRes.ok || !ingestData.pdf_id)
+                throw new Error("Failed to process paper");
 
             setPdfId(ingestData.pdf_id);
         } catch (err) {
             console.error("Fetch arXiv paper error:", err);
-            setMessages([{role: "ai", text: "Error fetching or processing arXiv paper."}]);
+            setMessages([
+                {role: "ai", text: "Error fetching or processing arXiv paper."},
+            ]);
         }
     }, [paperId]);
-
 
     // --- Initialize paper
     useEffect(() => {
@@ -298,48 +302,65 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                           className="flex flex-col h-full overflow-hidden">
                         <TabsList
                             className="shrink-0 mt-4 w-full justify-start rounded-none border-b bg-transparent p-0">
-                            {[
-                                {key: "summary", label: "Summary"},
-                                {key: "keypoints", label: "Key Points"},
-                                {key: "ask", label: "Ask Paper"},
-                                {key: "related", label: "Related Papers"},
-                            ].map(({key, label}) => (
-                                <TabsTrigger key={key} value={key}
-                                             className="relative rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none focus-visible:ring-0 data-[state=active]:border-b-blue-600 data-[state=active]:text-blue-600 data-[state=active]:shadow-none">
-                                    {label}
-                                </TabsTrigger>
-                            ))}
+                            <>
+                                {[
+                                    {key: "summary", label: "Summary"},
+                                    {key: "keypoints", label: "Key Points"},
+                                    {key: "ask", label: "Ask Paper"},
+                                    {key: "related", label: "Related Papers"},
+                                ].map(({key, label}) => (
+                                    <TabsTrigger
+                                        key={key}
+                                        value={key}
+                                        className="relative rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-muted-foreground shadow-none transition-none focus-visible:ring-0 data-[state=active]:border-b-blue-600 data-[state=active]:text-blue-600 data-[state=active]:shadow-none"
+                                    >
+                                        {label}
+                                    </TabsTrigger>
+                                ))}
+                            </>
                         </TabsList>
 
                         <div className="flex-1 min-h-0 overflow-y-auto p-4">
                             <TabsContent className="h-full flex flex-col" value="summary">
-                                {paper && <SummaryTab paper={paper}/>}
+                                <>
+                                    {paper && <SummaryTab paper={paper}/>}
+                                </>
                             </TabsContent>
+
                             <TabsContent className="h-full flex flex-col" value="keypoints">
-                                {paper && pdfId && <KeypointsTab pdfId={pdfId}/>}
+                                <>
+                                    {paper && pdfId && <KeypointsTab pdfId={pdfId}/>}
+                                </>
                             </TabsContent>
+
                             <TabsContent className="h-full flex flex-col" value="ask">
-                                {paper && (
-                                    <AskPaperTab
-                                        paper={paper}
-                                        pdfId={pdfId}
-                                        messages={messages}
-                                        setMessagesAction={setMessages}
-                                        userPaperId={userPaperId}
-                                        isSaved={isSaved}
-                                        onUserPaperIdChangeAction={setUserPaperId}
-                                        processing={processing}
-                                        checkpoint={checkpoint}
-                                    />
-                                )}
+                                <>
+                                    {paper && (
+                                        <AskPaperTab
+                                            paper={paper}
+                                            pdfId={pdfId}
+                                            messages={messages}
+                                            setMessagesAction={setMessages}
+                                            userPaperId={userPaperId}
+                                            isSaved={isSaved}
+                                            onUserPaperIdChangeAction={setUserPaperId}
+                                            processing={processing}
+                                            checkpoint={checkpoint}
+                                        />
+                                    )}
+                                </>
                             </TabsContent>
+
                             <TabsContent className="h-full flex flex-col" value="related">
-                                <RelatedTab
-                                    recommendations={recommendations}
-                                    loading={loadingRecommendations}
-                                    hasSupabaseUrl={!!paper?.supabaseUrl}
-                                />
+                                <>
+                                    <RelatedTab
+                                        recommendations={recommendations}
+                                        loading={loadingRecommendations}
+                                        hasSupabaseUrl={!!paper?.supabaseUrl}
+                                    />
+                                </>
                             </TabsContent>
+
                         </div>
                     </Tabs>
                 </div>

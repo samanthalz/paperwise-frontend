@@ -39,7 +39,7 @@ export default function RegisterPage() {
         const password = formData.get('password') as string
         const confirmPassword = formData.get('confirmPassword') as string
 
-        // ✅ Full name validation
+        // Full name validation
         if (!fullName || fullName.trim().length < 3) {
             setClientError('Please enter your full name.')
             return

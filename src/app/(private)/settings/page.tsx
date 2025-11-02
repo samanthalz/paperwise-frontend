@@ -83,10 +83,35 @@ export default function SettingsPage() {
         setLoadingProfile(true);
         setMessage("");
 
+        // Validate empty fields
         if (!fullName.trim() || !email.trim()) {
             toast.error("Missing information", {
                 description: "Field cannot be empty.",
             });
+            setLoadingProfile(false);
+            return;
+        }
+
+        // ✅ Validate that full name only contains letters and spaces
+        const nameRegex = /^[A-Za-z\s]+$/;
+        if (!nameRegex.test(fullName)) {
+            toast.error("Invalid name", {
+                description: "Full name can only contain letters and spaces.",
+            });
+            // Revert to original
+            setFullName(originalFullName);
+            setLoadingProfile(false);
+            return;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            toast.error("Invalid email", {
+                description: "Please enter a valid email address.",
+            });
+            // Revert to original
+            setEmail(originalEmail);
             setLoadingProfile(false);
             return;
         }
@@ -99,7 +124,6 @@ export default function SettingsPage() {
         }
 
         const noChanges = fullName === originalFullName && email === originalEmail;
-
         if (noChanges) {
             toast.success("Profile updated successfully", {
                 description: "No changes were made, but your profile is up to date.",
@@ -142,6 +166,7 @@ export default function SettingsPage() {
                         toast.error("Email already in use", {
                             description: "Please choose a different email.",
                         });
+                        // Revert to original email
                         setEmail(originalEmail);
                         setLoadingProfile(false);
                         return;
@@ -151,7 +176,8 @@ export default function SettingsPage() {
 
                 if (authUpdateData?.user?.email !== email) {
                     toast.success("Email change requested", {
-                        description: "Check your new email to confirm the change.",
+                        description: "To protect your account, we’ve sent verification links to both your old and new emails. Please confirm both to complete the change.",
+                        duration: 8000,
                     });
                 } else {
                     toast.success("Profile updated successfully", {
@@ -174,9 +200,14 @@ export default function SettingsPage() {
                     description: "Something went wrong.",
                 });
             }
+            // On any unexpected error, revert both fields
+            setFullName(originalFullName);
+            setEmail(originalEmail);
         } finally {
             setLoadingProfile(false);
         }
+
+        // Save updated originals after success
         setOriginalFullName(fullName);
         setOriginalEmail(email);
     };
@@ -292,6 +323,7 @@ export default function SettingsPage() {
                     description: result.error ?? "Something went wrong.",
                 });
             }
+
         } catch (err) {
             console.error(err);
             toast.error("Unexpected error", {

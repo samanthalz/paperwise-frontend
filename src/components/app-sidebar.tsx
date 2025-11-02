@@ -38,7 +38,7 @@ export function AppSidebar() {
         null
     );
 
-    // ✅ Close sidebar on first load only
+    // Close sidebar on the first load only
     useEffect(() => {
         if (!initialized) {
             setOpen(false);
@@ -46,37 +46,40 @@ export function AppSidebar() {
         }
     }, [initialized, setOpen]);
 
-    // ✅ Fetch user info and listen for realtime updates
+    // Fetch user info and listen for realtime updates
     useEffect(() => {
         let channel: ReturnType<typeof supabase.channel> | null = null;
 
         const fetchUserAndSubscribe = async () => {
+            // Get the logged-in user from Supabase Auth
             const {
                 data: {user},
                 error,
             } = await supabase.auth.getUser();
 
-            if (error || !user) return;
+            if (error || !user) {
+                console.error("Error getting user:", error);
+                return;
+            }
 
-            // Fetch initial profile
             const {data: profile, error: profileError} = await supabase
                 .from("users")
                 .select("full_name")
                 .eq("id", user.id)
-                .single();
+                .maybeSingle();
 
             if (profileError) {
                 console.error("Error fetching profile:", profileError);
             }
 
             setUser({
-                fullName: profile?.full_name ?? "User",
-                email: user.email ?? "",
+                fullName: (profile as { full_name?: string })?.full_name || "User",
+                email: user.email || "",
             });
 
-            // ✅ Setup realtime subscription
+            // Subscribe to real-time updates for user's full_name
             channel = supabase
-                .channel(`user-profile-listener-${user.id}`) // unique per user
+                .channel(`user-profile-listener-${user.id}`)
                 .on(
                     "postgres_changes",
                     {
@@ -87,6 +90,7 @@ export function AppSidebar() {
                     },
                     (payload) => {
                         const updatedName = payload.new.full_name;
+                        console.log("🔄 Full name updated:", updatedName);
                         setUser((prev) =>
                             prev ? {...prev, fullName: updatedName ?? prev.fullName} : prev
                         );
@@ -101,7 +105,7 @@ export function AppSidebar() {
 
         fetchUserAndSubscribe();
 
-        // ✅ Cleanup channel properly on unmount
+        // Cleanup on unmount
         return () => {
             if (channel) supabase.removeChannel(channel);
         };

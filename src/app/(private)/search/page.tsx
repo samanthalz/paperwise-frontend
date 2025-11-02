@@ -7,10 +7,14 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import SearchTopbar from "@/components/topbars/search-topbar";
 import {useSidebar} from "@/components/ui/sidebar";
+import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
 
 export default function SearchPage() {
     const [query, setQuery] = useState("");
+    const [isGuest, setIsGuest] = useState(true);
     const router = useRouter();
+    const supabase = createClientComponentClient();
+    const {setOpen} = useSidebar();
 
     const suggestions = [
         "Large Language Model",
@@ -25,15 +29,25 @@ export default function SearchPage() {
         }
     };
 
-    const {setOpen} = useSidebar();
-    const [initialized, setInitialized] = useState(false);
-
     useEffect(() => {
-        if (!initialized) {
-            setOpen(false);
-            setInitialized(true);
-        }
-    }, [initialized, setOpen]);
+        const checkUser = async () => {
+            try {
+                const {data: {user}} = await supabase.auth.getUser();
+                if (user) {
+                    setIsGuest(false);
+                    setOpen(true);  // allow sidebar for logged-in users
+                } else {
+                    setIsGuest(true);
+                    setOpen(false); // close sidebar for guests
+                }
+            } catch (err: any) {
+                // guest mode — no session
+                setIsGuest(true);
+                setOpen(false);
+            }
+        };
+        checkUser();
+    }, [supabase, setOpen]);
 
     return (
         <div className="flex flex-col h-full">
@@ -43,7 +57,6 @@ export default function SearchPage() {
             {/* Search UI */}
             <div className="flex-1 overflow-y-auto px-6 py-6">
                 <div className="flex flex-col items-center w-full mt-10">
-                    {/* Prompt */}
                     <h1 className="text-2xl font-semibold mb-6 text-center">
                         What research are you looking for today?
                     </h1>
@@ -56,9 +69,7 @@ export default function SearchPage() {
                                 placeholder="Article name or keywords..."
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleSearch();
-                                }}
+                                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                                 className="border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                             />
                         </div>
