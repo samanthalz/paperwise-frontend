@@ -6,7 +6,7 @@ import {Button} from "@/components/ui/button";
 import {Dropzone} from "@/components/ui/dropzone";
 import {FileText, Upload} from "lucide-react";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
-import {toast} from "sonner"; // ✅ ShadCN toast system
+import {toast} from "sonner";
 import {RealtimeChannel} from "@supabase/supabase-js";
 
 interface UploadedPaper {
@@ -14,7 +14,7 @@ interface UploadedPaper {
 }
 
 interface UploadPdfDialogProps {
-    onUpload: (file: File) => Promise<UploadedPaper> | UploadedPaper;
+    onUpload: (file: File) => Promise<UploadedPaper>;
     onDuplicate?: (pdfId: string) => void;
     children?: React.ReactNode;
 }
@@ -46,14 +46,14 @@ export default function UploadPdfDialog({
         let channel: RealtimeChannel | null = null;
 
         try {
-            // Step 1: Upload file
+            // Upload file
             const uploadedPaper = await onUpload(file);
             const pdfId = uploadedPaper?.pdf_id;
             if (!pdfId) throw new Error("No pdf_id returned from upload");
 
             toast.info("Processing your PDF...");
 
-            // Step 2: Subscribe to realtime updates
+            // Subscribe to realtime updates
             channel = supabase
                 .channel(`realtime-papers-${pdfId}`)
                 .on(
@@ -92,7 +92,7 @@ export default function UploadPdfDialog({
                 )
                 .subscribe();
 
-            // Step 3: Trigger backend processing
+            // Trigger backend processing
             const backendUrl =
                 process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
 
@@ -151,7 +151,8 @@ export default function UploadPdfDialog({
                 <Dropzone
                     onDrop={handleFileSelect}
                     accept={{"application/pdf": [".pdf"]}}
-                    className="border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition hover:bg-[var(--popup-highlight)]"
+                    className="border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center
+                    cursor-pointer transition hover:bg-[var(--popup-highlight)]"
                 >
                     {file ? (
                         <div className="flex flex-col items-center space-y-2">

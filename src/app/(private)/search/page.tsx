@@ -15,6 +15,7 @@ export default function SearchPage() {
     const router = useRouter();
     const supabase = createClientComponentClient();
     const {setOpen} = useSidebar();
+    const [initialized, setInitialized] = useState(false);
 
     const suggestions = [
         "Large Language Model",
@@ -29,25 +30,13 @@ export default function SearchPage() {
         }
     };
 
+    // Sidebar initially closed
     useEffect(() => {
-        const checkUser = async () => {
-            try {
-                const {data: {user}} = await supabase.auth.getUser();
-                if (user) {
-                    setIsGuest(false);
-                    setOpen(true);  // allow sidebar for logged-in users
-                } else {
-                    setIsGuest(true);
-                    setOpen(false); // close sidebar for guests
-                }
-            } catch (err: any) {
-                // guest mode — no session
-                setIsGuest(true);
-                setOpen(false);
-            }
-        };
-        checkUser();
-    }, [supabase, setOpen]);
+        if (!initialized) {
+            setOpen(false);
+            setInitialized(true);
+        }
+    }, [initialized, setOpen]);
 
     return (
         <div className="flex flex-col h-full">
