@@ -51,7 +51,6 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
     const [showNotes, setShowNotes] = useState(false);
     const pdfUrlToRender = signedUrl || paper?.pdfUrl || null;
     const CACHE_EXPIRY_MS = 60 * 60 * 1000;
-
     const canonicalArxivId = paper?.id?.replace(/v\d+$/i, "");
 
     // --- Close sidebar on mount
@@ -147,15 +146,19 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
             const authors = Array.from(entry.querySelectorAll("author name")).map(
                 (n) => n.textContent ?? ""
             );
-            const pdfUrl =
+
+            let pdfUrl =
                 Array.from(entry.querySelectorAll("link"))
                     .find((l) => l.getAttribute("title") === "pdf")
                     ?.getAttribute("href") ?? "";
 
+            // Force HTTPS
+            pdfUrl = pdfUrl.replace(/^http:\/\//i, "https://");
+            
             setPaper({id, title, summary, authors, published, pdfUrl});
             setArxivId(id);
 
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
             const ingestRes = await fetch(`${backendUrl}/process_pdf/`, {
                 method: "POST",
@@ -232,7 +235,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
 
         const fetchRecommendations = async () => {
             try {
-                const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+                const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
                 const res = await fetch(`${backendUrl}/recommendations`, {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},

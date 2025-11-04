@@ -41,7 +41,7 @@ export default function SettingsPage() {
         }
     }, [initialized, setOpen]);
 
-    // ✅ Fetch user info
+    // Fetch user info
     useEffect(() => {
         const fetchUserData = async () => {
             setLoading(true);
@@ -92,7 +92,7 @@ export default function SettingsPage() {
             return;
         }
 
-        // ✅ Validate that full name only contains letters and spaces
+        // Validate that full name only contains letters and spaces
         const nameRegex = /^[A-Za-z\s]+$/;
         if (!nameRegex.test(fullName)) {
             toast.error("Invalid name", {
@@ -133,13 +133,19 @@ export default function SettingsPage() {
         }
 
         try {
-            // Update full name in your users table
+            // Update full name in users table
             const {error: updateUserError} = await supabase
                 .from("users")
                 .update({full_name: fullName})
                 .eq("id", user.id);
 
             if (updateUserError) throw updateUserError;
+
+            const {error: updateAuthError} = await supabase.auth.updateUser({
+                data: {full_name: fullName},
+            });
+
+            if (updateAuthError) throw updateAuthError;
 
             // Handle email update if changed
             if (provider === "email" && email !== user.email) {

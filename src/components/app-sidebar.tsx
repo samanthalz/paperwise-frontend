@@ -17,7 +17,7 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {Avatar, AvatarFallback} from "@/components/ui/avatar";
 import {Button} from "@/components/ui/button";
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,} from "@/components/ui/dialog";
 
@@ -90,16 +90,12 @@ export function AppSidebar() {
                     },
                     (payload) => {
                         const updatedName = payload.new.full_name;
-                        console.log("🔄 Full name updated:", updatedName);
                         setUser((prev) =>
                             prev ? {...prev, fullName: updatedName ?? prev.fullName} : prev
                         );
                     }
                 )
-                .subscribe((status) => {
-                    if (status === "SUBSCRIBED") {
-                        console.log(`✅ Listening for name updates for user ${user.id}`);
-                    }
+                .subscribe(() => {
                 });
         };
 
@@ -168,8 +164,7 @@ export function AppSidebar() {
                             <div className="mt-4 flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-3">
                                     <Avatar>
-                                        <AvatarImage src="/avatar.jpg" alt="@user"/>
-                                        <AvatarFallback>
+                                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                                             {user?.fullName?.[0]?.toUpperCase() ?? "U"}
                                         </AvatarFallback>
                                     </Avatar>
