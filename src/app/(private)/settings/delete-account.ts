@@ -23,13 +23,13 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
 
         const supabaseAdmin = createSupabaseAdmin(SUPABASE_URL, SERVICE_ROLE_KEY)
 
-        // 1️⃣ Delete user from Supabase Auth
+        // Delete user from Supabase Auth
         const {error: deleteAuthError} = await supabaseAdmin.auth.admin.deleteUser(userId)
         if (deleteAuthError) {
             throw new Error(`Auth deletion failed: ${deleteAuthError.message}`)
         }
 
-        // 2️⃣ Delete user data from your 'users' table
+        // Delete user data from your 'users' table
         const {error: deleteUserError} = await supabaseAdmin
             .from('users')
             .delete()

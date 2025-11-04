@@ -42,9 +42,6 @@ export default function SummaryTab({paper}: { paper: ArxivPaper }) {
                         </a>
                     </p>
 
-                    <p className="text-sm">
-                        <span className="font-semibold">Citation Count:</span> 462
-                    </p>
                 </>
             )}
 

@@ -12,8 +12,7 @@ export default function SocialLoginButtons() {
             // preserve the redirect param
             const redirectParam = searchParams.get('redirectTo') || '/dashboard'
 
-            // Use environment variable for site URL first
-            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
 
             const redirectTo = `${siteUrl}/auth/callback?redirectTo=${encodeURIComponent(redirectParam)}`
 

@@ -182,7 +182,8 @@ export default function SettingsPage() {
 
                 if (authUpdateData?.user?.email !== email) {
                     toast.success("Email change requested", {
-                        description: "To protect your account, we’ve sent verification links to both your old and new emails. Please confirm both to complete the change.",
+                        description: "To protect your account, we’ve sent verification links to both your old and new emails. " +
+                            "Please confirm both to complete the change.",
                         duration: 8000,
                     });
                 } else {
@@ -251,7 +252,7 @@ export default function SettingsPage() {
         }
 
         try {
-            // Step 1: Verify current password
+            // Verify current password
             const {error: verifyError} = await supabase.auth.signInWithPassword({
                 email: user.email!,
                 password: currentPassword,
@@ -265,7 +266,7 @@ export default function SettingsPage() {
                 return;
             }
 
-            // Step 2: Update new password
+            // Update new password
             const {error: updateError} = await supabase.auth.updateUser({
                 password: newPassword,
             });
@@ -404,7 +405,7 @@ export default function SettingsPage() {
                                         value={currentPassword}
                                         onChange={(e) => setCurrentPassword(e.target.value)}
                                         placeholder="Enter current password"
-                                        className="pr-10" // Add right padding for the icon
+                                        className="pr-10"
                                     />
                                     <button
                                         type="button"

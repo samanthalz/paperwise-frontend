@@ -106,7 +106,7 @@ export function CitationPopup({open, onCloseAction, title, authors, arxivId, pub
                                 <Button
                                     size="icon"
                                     variant="outline"
-                                    onClick={() => handleCopy(currentCitation.fullText, "full")}
+                                    onClick={() => handleCopy(currentCitation?.fullText, "full")}
                                     style={{
                                         borderColor: copiedFull ? "oklch(65% 0.15 280)" : "var(--popup-border)",
                                         backgroundColor: copiedFull ? "oklch(90% 0.08 280)" : "var(--popup-highlight)",
@@ -140,7 +140,7 @@ export function CitationPopup({open, onCloseAction, title, authors, arxivId, pub
                                 <Button
                                     size="icon"
                                     variant="outline"
-                                    onClick={() => handleCopy(currentCitation.inText, "inText")}
+                                    onClick={() => handleCopy(currentCitation?.inText, "inText")}
                                     style={{
                                         borderColor: copiedInText ? "oklch(65% 0.15 280)" : "var(--popup-border)",
                                         backgroundColor: copiedInText ? "oklch(90% 0.08 280)" : "var(--popup-highlight)",

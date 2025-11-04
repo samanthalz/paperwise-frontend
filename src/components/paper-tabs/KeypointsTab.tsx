@@ -19,7 +19,7 @@ export default function KeypointsTab({pdfId}: KeypointsTabProps) {
 
     useEffect(() => {
         if (sections.length > 0) {
-            // Open all by default *after* sections are loaded
+            // Open all by default after sections are loaded
             setOpenItems(sections.map((_, i) => `item-${i}`));
         }
     }, [sections]);
@@ -60,7 +60,7 @@ export default function KeypointsTab({pdfId}: KeypointsTabProps) {
 
     useEffect(() => {
         const fetchKeypoints = async () => {
-            console.log("🔍 Fetching keypoints for paper.id:", pdfId);
+            console.log("Fetching keypoints for paper.id:", pdfId);
 
             // Fetch initial keypoints
             const {data, error} = await supabase
@@ -68,11 +68,11 @@ export default function KeypointsTab({pdfId}: KeypointsTabProps) {
                 .select(
                     "problem_statement, objectives, methodology, results, discussions, limitations"
                 )
-                .eq("pdf_id", pdfId) // <-- changed
+                .eq("pdf_id", pdfId)
                 .single();
 
             if (error && error.code !== "PGRST116") {
-                console.error("❌ Error fetching keypoints:", error);
+                console.error("Error fetching keypoints:", error);
                 return;
             }
 
@@ -90,8 +90,6 @@ export default function KeypointsTab({pdfId}: KeypointsTabProps) {
                 return;
             }
 
-            console.log("✅ Raw data from Supabase:", data);
-
             const mappedSections = [
                 {title: "Problem Statement", content: data.problem_statement},
                 {title: "Objectives", content: data.objectives},
@@ -101,12 +99,11 @@ export default function KeypointsTab({pdfId}: KeypointsTabProps) {
                 {title: "Limitations", content: data.limitations},
             ];
 
-            console.log("📌 Mapped sections:", mappedSections);
             setSections(mappedSections);
         };
 
         if (pdfId) fetchKeypoints();
-        else console.warn("⚠️ No paper.id provided to KeypointsTab");
+        else console.warn("No paper.id provided to KeypointsTab");
     }, [pdfId, supabase]);
 
     return (

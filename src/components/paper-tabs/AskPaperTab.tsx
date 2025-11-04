@@ -42,13 +42,13 @@ export default function AskPaperTab({
     const scrollRef = useRef<HTMLDivElement>(null);
     const aiMessageIndexRef = useRef<number | null>(null);
 
-    /** Sync props from parent */
+    // Sync props from parent 
     useEffect(() => setUserPaperId(propUserPaperId || null), [propUserPaperId]);
     useEffect(() => {
         if (typeof propIsSaved === "boolean") setIsSaved(propIsSaved);
     }, [propIsSaved]);
 
-    /** Load existing messages from DB or sessionStorage */
+    // Load existing messages from DB or sessionStorage 
     useEffect(() => {
         const init = async () => {
             if (!pdfId) return;
@@ -61,7 +61,7 @@ export default function AskPaperTab({
                 .select("id")
                 .eq("user_id", userData.user.id)
                 .eq("pdf_id", pdfId)
-                .maybeSingle();
+                .maybeSingle<{ id: number }>();
 
             if (existingPaper?.id) {
                 setUserPaperId(existingPaper.id);
@@ -88,17 +88,17 @@ export default function AskPaperTab({
         init();
     }, [pdfId, paper.id, supabase, setMessagesAction, onUserPaperIdChangeAction]);
 
-    /** Persist locally if paper not saved */
+    // Persist locally if paper not saved 
     useEffect(() => {
         if (!isSaved) sessionStorage.setItem(`askpaper_${paper.id}`, JSON.stringify(messages));
     }, [messages, paper.id, isSaved]);
 
-    /** Scroll to bottom on new messages */
+    // Scroll to bottom on new messages 
     useEffect(() => {
         scrollRef.current?.scrollIntoView({behavior: "smooth"});
     }, [messages]);
 
-    /** Handle sending question */
+    // Handle sending question 
     const handleAsk = async () => {
         if (!question.trim() || isSendingRef.current || processing) return;
         isSendingRef.current = true;

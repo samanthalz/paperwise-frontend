@@ -85,38 +85,33 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
                 .select("content")
                 .eq("user_id", userId)
                 .eq("pdf_id", pdfId)
-                .maybeSingle();
+                .maybeSingle<{ content: Descendant[] | null }>();
 
-            if (error) return console.error(error);
+            if (error) {
+                console.error("Error loading notes:", error);
+                return;
+            }
 
-            if (data?.content) {
-                try {
-                    const content =
-                        typeof data.content === "string"
-                            ? JSON.parse(data.content)
-                            : data.content;
-
-                    if (!Array.isArray(content) || content.length === 0) {
-                        setValue([{type: "paragraph", children: [{text: ""}]}]);
-                    } else {
-                        setValue(content);
-                        setEditorKey((prev) => prev + 1); // Force re-mount
-                    }
-                } catch {
-                    console.warn("Invalid content in DB, using default paragraph");
-                }
+            if (data?.content && Array.isArray(data.content)) {
+                setValue(data.content);
             } else {
                 setValue([{type: "paragraph", children: [{text: ""}]}]);
             }
+
+            // Force the Slate editor to refresh its internal state
+            setEditorKey((prev) => prev + 1);
         };
 
         loadNotes();
     }, [userId, pdfId, supabase]);
 
+
     // Manual save
     const saveNotes = useCallback(async () => {
         if (!userId || !pdfId) return;
+
         setSaving(true);
+
         const {error} = await supabase.from("notes").upsert(
             {
                 user_id: userId,
@@ -126,9 +121,14 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
             },
             {onConflict: "user_id,pdf_id"}
         );
-        if (error) console.error("Save error:", error);
+
+        if (error) {
+            console.error("Save error:", error);
+        }
+
         setSaving(false);
     }, [supabase, userId, pdfId, value]);
+
 
     // Toolbar helpers
     const isMarkActive = (
@@ -308,7 +308,9 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
                                 {icon: ListOrdered, format: "numbered-list", label: "Numbered List"},
                                 {icon: List, format: "bulleted-list", label: "Bulleted List"},
                             ].map(({icon, format, label}) => (
-                                <ToolbarButton key={format} format={format} Icon={icon} label={label}/>
+                                <React.Fragment key={format}>
+                                    <ToolbarButton format={format} Icon={icon} label={label}/>
+                                </React.Fragment>
                             ))}
                         </div>
 

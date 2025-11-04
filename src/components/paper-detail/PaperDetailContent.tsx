@@ -53,7 +53,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
     const CACHE_EXPIRY_MS = 60 * 60 * 1000;
     const canonicalArxivId = paper?.id?.replace(/v\d+$/i, "");
 
-    // --- Close sidebar on mount
+    // Close sidebar on mount
     useEffect(() => {
         if (!initialized) {
             setOpen(false);
@@ -61,12 +61,12 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
         }
     }, [initialized, setOpen]);
 
-    // --- Check login
+    // Check login
     useEffect(() => {
         supabase.auth.getSession().then(({data}) => setIsLoggedIn(!!data.session));
     }, [supabase]);
 
-    // --- Fetch user paper
+    // Fetch user paper
     const fetchUserPaper = useCallback(
         async (id: string) => {
             try {
@@ -125,7 +125,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
         [supabase]
     );
 
-    // --- Fetch arXiv paper
+    // Fetch arXiv paper
     const fetchArxivPaper = useCallback(async () => {
         try {
             const res = await fetch(
@@ -154,7 +154,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
 
             // Force HTTPS
             pdfUrl = pdfUrl.replace(/^http:\/\//i, "https://");
-            
+
             setPaper({id, title, summary, authors, published, pdfUrl});
             setArxivId(id);
 
@@ -179,7 +179,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
         }
     }, [paperId]);
 
-    // --- Initialize paper
+    // Initialize paper
     useEffect(() => {
         let mounted = true;
 
@@ -198,7 +198,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
         };
     }, [paperId, fetchUserPaper, fetchArxivPaper]);
 
-    // --- Poll arXiv processing
+    // Poll arXiv processing
     useEffect(() => {
         if (!pdfId) return;
         const interval = setInterval(async () => {
@@ -215,7 +215,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
         return () => clearInterval(interval);
     }, [pdfId, paper?.supabaseUrl]);
 
-    // --- Fetch recommendations
+    // Fetch recommendations
     useEffect(() => {
         if (!canonicalArxivId || !paper || paper.supabaseUrl) return;
 
@@ -258,7 +258,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
         fetchRecommendations();
     }, [canonicalArxivId, paper, CACHE_EXPIRY_MS]);
 
-    // --- Render
+    // Render
     return (
         <div className="flex flex-col h-screen overflow-hidden">
             {/* Topbar */}
