@@ -141,7 +141,7 @@ export default function Dashboard() {
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [deleteFolderOpen, setDeleteFolderOpen] = useState(false);
     const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
-    const moveInProgressRef = useRef(false);
+    const moveInProgressRef = useRef<{ [pdfId: string]: string | null }>({});
 
     // Sidebar initially closed
     useEffect(() => {
@@ -193,47 +193,54 @@ export default function Dashboard() {
         fetchUserData();
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    const activeFolderRef = useRef<Folder | null>(null);
+    useEffect(() => {
+        activeFolderRef.current = activeFolder;
+    }, [activeFolder]);
+
     // --- Realtime subscriptions ---
     useEffect(() => {
         if (!userId) return;
 
         // --- Shared refetch function ---
         const refetchPapers = async () => {
-            const {data, error} = await supabase
-                .from('user_papers')
-                .select(`
-          *,
-          papers!user_papers_pdf_id_fkey (
-            pdf_id,
-            title,
-            arxiv_id,
-            date_added,
-            filename,
-            thumbnail_url,
-            supabase_url
-          )
-        `)
-                .eq('user_id', userId);
+            if (!userId) return;
 
-            if (error) {
-                console.error('Error refetching papers:', error);
+            // If inside a folder, only fetch that folder's papers
+            if (activeFolder) {
+                await fetchFolderPapers(activeFolder.id);
                 return;
             }
 
-            if (data) {
-                setPapers(
-                    data.map((up: any) => ({
-                        pdf_id: up.pdf_id,
-                        title: up.papers?.title || up.papers?.filename?.replace(/\.pdf$/i, '') || 'Untitled',
-                        arxiv_id: up.papers?.arxiv_id ?? 'Unknown',
-                        date_added: up.papers?.date_added ?? null,
-                        saved_at: up.saved_at,
-                        filename: up.papers?.filename,
-                        preview_url: up.papers?.thumbnail_url,
-                        supabase_url: up.papers?.supabase_url,
-                    }))
-                );
+            // Otherwise main view
+            const {data: papersRes, error} = await supabase
+                .from('user_papers')
+                .select(`
+            *,
+            papers!user_papers_pdf_id_fkey (
+                pdf_id, title, arxiv_id, date_added, filename, thumbnail_url, supabase_url
+            )
+        `)
+                .eq('user_id', userId)
+                .is('folder_id', null);
+
+            if (error) return;
+
+            if (papersRes) {
+                const formatted = papersRes.map((up: any) => ({
+                    pdf_id: up.pdf_id,
+                    title: up.papers?.title || up.papers?.filename?.replace(/\.pdf$/i, '') || 'Untitled',
+                    arxiv_id: up.papers?.arxiv_id ?? null,
+                    date_added: up.papers?.date_added ?? null,
+                    saved_at: up.saved_at,
+                    filename: up.papers?.filename,
+                    preview_url: up.papers?.thumbnail_url,
+                    supabase_url: up.papers?.supabase_url,
+                }));
+
+                setPapers(formatted);
             }
+
         };
 
         // --- Subscribe to user_papers changes using postgres_changes ---
@@ -248,8 +255,29 @@ export default function Dashboard() {
                     filter: `user_id=eq.${userId}`
                 },
                 async (payload) => {
-                    console.log('User papers change:', payload);
-                    await refetchPapers();
+                    const pdfId = payload.new?.pdf_id;
+                    if (pdfId && moveInProgressRef.current[pdfId]) {
+                        const targetFolder = moveInProgressRef.current[pdfId]; // folder paper moved to
+                        const currentFolder = activeFolderRef.current?.id ?? "root";
+
+                        // If the paper was moved out of the current view, skip update entirely
+                        if (targetFolder !== currentFolder) {
+                            delete moveInProgressRef.current[pdfId];
+                            return;
+                        }
+
+                        // Otherwise, remove tracking and allow update
+                        delete moveInProgressRef.current[pdfId];
+                    }
+
+// Refetch only for current view
+                    if (activeFolderRef.current) {
+                        await fetchFolderPapers(activeFolderRef.current.id);
+                    } else {
+                        // main view
+                        await fetchUserData();
+                    }
+
                 }
             )
             .subscribe();
@@ -316,6 +344,8 @@ export default function Dashboard() {
     const removePaper = async (pdfId: string) => {
         setPapers((prev) => prev.filter((p) => p.pdf_id !== pdfId));
         await supabase.from('user_papers').delete().eq('pdf_id', pdfId);
+        if (activeFolder) await fetchFolderPapers(activeFolder.id);
+        else await fetchUserData();
         await supabase.from('papers').delete().eq('pdf_id', pdfId);
     };
 
@@ -408,8 +438,9 @@ export default function Dashboard() {
                                 <p className="text-sm text-muted-foreground mt-2">No files in this folder.</p>
                             ) : (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                                    {papers.map((paper) => (
+                                    {papers.map((paper, index) => (
                                         <PaperCard
+                                            key={paper.pdf_id || paper.filename || `active-paper-${index}`}
                                             paper={paper}
                                             openMenuId={openMenuId}
                                             setOpenMenuId={setOpenMenuId}
@@ -449,19 +480,18 @@ export default function Dashboard() {
                         pdfId={selectedPaper.pdf_id}
                         open={moveOpen}
                         folders={folders}
+                        currentFolderId={activeFolder?.id || null}
                         onCloseAction={() => setMoveOpen(false)}
                         onMovedAction={async (folderId) => {
                             if (!selectedPaper) return;
-                            moveInProgressRef.current = true;
-                            setPapers((prev) => prev.filter((p) => p.pdf_id !== selectedPaper.pdf_id));
-                            if (!folderId) {
-                                if (!activeFolder) await fetchUserData();
-                            } else if (activeFolder?.id === folderId) {
-                                await fetchFolderPapers(folderId);
-                            }
-                            setTimeout(() => {
-                                moveInProgressRef.current = false;
-                            }, 1000);
+
+                            const movedPdfId = selectedPaper.pdf_id;
+                            const prevFolderId = activeFolder?.id ?? null;
+
+                            // Track move to prevent re-appearing
+                            moveInProgressRef.current[selectedPaper.pdf_id] = folderId ?? "root";
+                            setPapers(prev => prev.filter(p => p.pdf_id !== selectedPaper.pdf_id));
+
                             setSelectedPaper(null);
                         }}
                     />

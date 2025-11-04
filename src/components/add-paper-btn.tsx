@@ -24,6 +24,7 @@ type AddPaperButtonProps = {
     disabled?: boolean;
 };
 
+
 export function AddPaperButton({
                                    pdfId,
                                    messages,
@@ -37,7 +38,7 @@ export function AddPaperButton({
     const [isSaved, setIsSaved] = useState(false);
     const [showLoginDialog, setShowLoginDialog] = useState(false);
 
-    /** Check if user has saved paper */
+    // Check if user has saved paper
     useEffect(() => {
         if (!pdfId) return;
 
@@ -52,19 +53,21 @@ export function AddPaperButton({
                 .eq("pdf_id", pdfId)
                 .maybeSingle();
 
-            if (existing?.id) {
-                setUserPaperId(existing.id);
+            const paper = existing as { id?: number } | null;
+
+            if (paper?.id) {
+                setUserPaperId(paper.id);
                 setIsSaved(true);
-                onChangeAction(existing.id, true);
+                onChangeAction(paper.id, true);
             }
         };
 
         init();
     }, [pdfId, supabase, onChangeAction]);
 
-    /** Save/Delete paper */
+    // Save/Delete paper
     const handleSavePaper = async () => {
-        if (disabled) return; // ✅ prevents click when disabled
+        if (disabled) return; // prevents click when disabled
 
         const {data: userData} = await supabase.auth.getUser();
         if (!userData?.user) {
@@ -83,11 +86,13 @@ export function AddPaperButton({
         }
 
         // save paper
-        const {data: insertData} = await supabase
+        const {data} = await supabase
             .from("user_papers")
             .insert({user_id: userData.user.id, pdf_id: pdfId})
             .select("id")
             .single();
+
+        const insertData = data as { id: number } | null;
 
         if (!insertData?.id) return;
         setUserPaperId(insertData.id);

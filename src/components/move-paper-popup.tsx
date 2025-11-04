@@ -2,7 +2,7 @@
 
 import {useState} from "react";
 import {Button} from "@/components/ui/button";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import {FolderCode, X} from "lucide-react";
 
 export function MovePaperPopup({
@@ -11,12 +11,14 @@ export function MovePaperPopup({
                                    folders,
                                    onCloseAction,
                                    onMovedAction,
+                                   currentFolderId, // 🆕 add this prop
                                }: {
     pdfId: string;
     open: boolean;
     folders: { id: string; name: string }[];
     onCloseAction: () => void;
     onMovedAction: (folderId: string | null) => void;
+    currentFolderId?: string | null; // 🆕 optional current folder id (null = main page)
 }) {
     const [folderId, setFolderId] = useState("");
     const [moving, setMoving] = useState(false);
@@ -78,6 +80,7 @@ export function MovePaperPopup({
                     <label className="text-sm font-medium" style={{color: "var(--popup-text)"}}>
                         Choose a folder:
                     </label>
+
                     <Select onValueChange={setFolderId} value={folderId}>
                         <SelectTrigger
                             className="w-full"
@@ -89,11 +92,21 @@ export function MovePaperPopup({
                         >
                             <SelectValue placeholder="Select folder"/>
                         </SelectTrigger>
+
                         <SelectContent>
-                            <SelectItem value="root">Main Page</SelectItem> {/* Use "root" instead of "" */}
+                            {/* Main Page option */}
+                            <SelectItem value="root" disabled={!currentFolderId}>
+                                Main Page
+                            </SelectItem>
+
+                            {/* Folder list */}
                             {folders.length > 0 ? (
                                 folders.map((f) => (
-                                    <SelectItem key={f.id} value={f.id}>
+                                    <SelectItem
+                                        key={f.id}
+                                        value={f.id}
+                                        disabled={currentFolderId === f.id}
+                                    >
                                         {f.name}
                                     </SelectItem>
                                 ))
@@ -120,6 +133,7 @@ export function MovePaperPopup({
                     >
                         Cancel
                     </Button>
+
                     <Button
                         onClick={handleMove}
                         disabled={!folderId || moving}
