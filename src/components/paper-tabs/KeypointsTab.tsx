@@ -36,7 +36,7 @@ export default function KeypointsTab({pdfId}: KeypointsTabProps) {
                     event: "UPDATE",
                     schema: "public",
                     table: "papers",
-                    filter: `pdf_id=eq.${pdfId}`, // <-- changed
+                    filter: `pdf_id=eq.${pdfId}`,
                 },
                 (payload) => {
                     const data = payload.new;

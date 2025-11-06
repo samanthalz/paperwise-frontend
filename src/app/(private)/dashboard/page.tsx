@@ -485,10 +485,7 @@ export default function Dashboard() {
                         onMovedAction={async (folderId) => {
                             if (!selectedPaper) return;
 
-                            const movedPdfId = selectedPaper.pdf_id;
-                            const prevFolderId = activeFolder?.id ?? null;
-
-                            // Track move to prevent re-appearing
+                            // Track move
                             moveInProgressRef.current[selectedPaper.pdf_id] = folderId ?? "root";
                             setPapers(prev => prev.filter(p => p.pdf_id !== selectedPaper.pdf_id));
 
