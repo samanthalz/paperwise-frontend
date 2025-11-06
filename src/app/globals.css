@@ -46,7 +46,7 @@
     --topbar-border: oklch(88% 0.02 269.35);
 
     --editor-bg: oklch(98% 0.01 280);
-    --toolbar-bg: rgba(231, 231, 255, 0.35);
+    --toolbar-bg: rgba(227, 227, 255, 0.35);
     --toolbar-border: #d5cfff;
     --toolbar-heading: oklch(40% 0.07 280);
 
@@ -55,7 +55,7 @@
     --popup-header-bg: oklch(93% 0.02 280 / 0.87);
     --popup-text: oklch(28% 0.04 280);
     --popup-heading: oklch(40% 0.07 280);
-    --popup-highlight: rgba(231, 231, 255, 0.35);
+    --popup-highlight: rgba(216, 216, 253, 0.74);
     --popup-shadow: 0 4px 16px oklch(0% 0 0 / 0.12);
 
 }

@@ -31,7 +31,7 @@ export function RenamePaperPopup({
     }, [open, currentTitle]);
 
     const handleRename = async () => {
-        if (!newTitle.trim()) return;
+        if (!newTitle?.trim()) return;
         setSaving(true);
 
         try {
@@ -87,25 +87,13 @@ export function RenamePaperPopup({
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     style={{
-                        backgroundColor: "var(--popup-highlight)",
+                        backgroundColor: "var(--popup-header-bg)",
                         borderColor: "var(--popup-border)",
                         color: "var(--popup-text)",
                     }}
                 />
 
                 <div className="flex justify-end gap-2 mt-3">
-                    <Button
-                        variant="outline"
-                        onClick={onCloseAction}
-                        disabled={saving}
-                        style={{
-                            borderColor: "var(--popup-border)",
-                            color: "var(--popup-text)",
-                            backgroundColor: "var(--popup-highlight)",
-                        }}
-                    >
-                        Cancel
-                    </Button>
                     <Button
                         onClick={handleRename}
                         disabled={saving}

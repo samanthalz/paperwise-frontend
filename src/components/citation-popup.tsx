@@ -61,7 +61,6 @@ export function CitationPopup({open, onCloseAction, title, authors, arxivId, pub
                     className="absolute top-2 right-2"
                     onClick={onCloseAction}
                     style={{
-                        backgroundColor: "var(--popup-header-bg)",
                         color: "var(--popup-text)",
                     }}
                 >
@@ -81,7 +80,7 @@ export function CitationPopup({open, onCloseAction, title, authors, arxivId, pub
                         className="w-full"
                         style={{
                             backgroundColor: "var(--popup-highlight)",
-                            borderColor: "var(--popup-border)",
+                            borderColor: "var(--popup-shadow)",
                             color: "var(--popup-text)",
                         }}
                     >
@@ -109,7 +108,7 @@ export function CitationPopup({open, onCloseAction, title, authors, arxivId, pub
                                     onClick={() => handleCopy(currentCitation?.fullText, "full")}
                                     style={{
                                         borderColor: copiedFull ? "oklch(65% 0.15 280)" : "var(--popup-border)",
-                                        backgroundColor: copiedFull ? "oklch(90% 0.08 280)" : "var(--popup-highlight)",
+                                        backgroundColor: copiedFull ? "oklch(90% 0.08 280)" : "var(--popup-header-bg)",
                                         transition: "all 0.1s ease",
                                     }}
                                 >
@@ -143,7 +142,7 @@ export function CitationPopup({open, onCloseAction, title, authors, arxivId, pub
                                     onClick={() => handleCopy(currentCitation?.inText, "inText")}
                                     style={{
                                         borderColor: copiedInText ? "oklch(65% 0.15 280)" : "var(--popup-border)",
-                                        backgroundColor: copiedInText ? "oklch(90% 0.08 280)" : "var(--popup-highlight)",
+                                        backgroundColor: copiedInText ? "oklch(90% 0.08 280)" : "var(--popup-header-bg)",
                                         transition: "all 0.1s ease",
                                     }}
                                 >

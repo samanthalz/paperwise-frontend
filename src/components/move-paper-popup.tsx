@@ -11,14 +11,14 @@ export function MovePaperPopup({
                                    folders,
                                    onCloseAction,
                                    onMovedAction,
-                                   currentFolderId, // 🆕 add this prop
+                                   currentFolderId,
                                }: {
     pdfId: string;
     open: boolean;
     folders: { id: string; name: string }[];
     onCloseAction: () => void;
     onMovedAction: (folderId: string | null) => void;
-    currentFolderId?: string | null; // 🆕 optional current folder id (null = main page)
+    currentFolderId?: string | null;
 }) {
     const [folderId, setFolderId] = useState("");
     const [moving, setMoving] = useState(false);
@@ -85,7 +85,7 @@ export function MovePaperPopup({
                         <SelectTrigger
                             className="w-full"
                             style={{
-                                backgroundColor: "var(--popup-highlight)",
+                                backgroundColor: "var(--popup-header-bg)",
                                 borderColor: "var(--popup-border)",
                                 color: "var(--popup-text)",
                             }}
@@ -121,19 +121,6 @@ export function MovePaperPopup({
 
                 {/* Footer buttons */}
                 <div className="flex justify-end gap-2 mt-4">
-                    <Button
-                        variant="outline"
-                        onClick={onCloseAction}
-                        disabled={moving}
-                        style={{
-                            backgroundColor: "var(--popup-highlight)",
-                            borderColor: "var(--popup-border)",
-                            color: "var(--popup-text)",
-                        }}
-                    >
-                        Cancel
-                    </Button>
-
                     <Button
                         onClick={handleMove}
                         disabled={!folderId || moving}

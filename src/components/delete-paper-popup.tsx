@@ -68,9 +68,6 @@ export function DeletePaperPopup({
                 </p>
 
                 <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" onClick={onCloseAction}>
-                        Cancel
-                    </Button>
                     <Button variant="destructive" onClick={handleDelete}>
                         Delete
                     </Button>

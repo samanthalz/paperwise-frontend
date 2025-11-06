@@ -64,9 +64,6 @@ export function DeleteFolderPopup({
                 </p>
 
                 <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" onClick={onCloseAction} disabled={deleting}>
-                        Cancel
-                    </Button>
                     <Button className="bg-red-600 text-white" onClick={handleDelete} disabled={deleting}>
                         {deleting ? "Deleting..." : "Delete"}
                     </Button>

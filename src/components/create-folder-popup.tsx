@@ -69,7 +69,7 @@ export function CreateFolderPopup({open, onCloseAction, onCreateAction}: CreateF
                     value={folderName}
                     onChange={(e) => setFolderName(e.target.value)}
                     style={{
-                        backgroundColor: "var(--popup-highlight)",
+                        backgroundColor: "var(--popup-header-bg)",
                         borderColor: "var(--popup-border)",
                         color: "var(--popup-text)",
                     }}
@@ -77,18 +77,6 @@ export function CreateFolderPopup({open, onCloseAction, onCreateAction}: CreateF
 
                 {/* Footer buttons */}
                 <div className="flex justify-end gap-2 mt-3">
-                    <Button
-                        variant="outline"
-                        onClick={onCloseAction}
-                        disabled={saving}
-                        style={{
-                            borderColor: "var(--popup-border)",
-                            color: "var(--popup-text)",
-                            backgroundColor: "var(--popup-highlight)",
-                        }}
-                    >
-                        Cancel
-                    </Button>
                     <Button
                         onClick={handleCreate}
                         disabled={saving || !folderName.trim()}
