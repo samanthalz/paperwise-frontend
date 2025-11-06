@@ -14,7 +14,7 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
         }
 
         const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-        const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+        const SERVICE_ROLE_KEY = process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY
 
         if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
             console.error('Missing Supabase environment variables.')
@@ -29,7 +29,7 @@ export async function deleteAccount(userId: string): Promise<DeleteAccountResult
             throw new Error(`Auth deletion failed: ${deleteAuthError.message}`)
         }
 
-        // Delete user data from your 'users' table
+        // Delete user data from 'users' table
         const {error: deleteUserError} = await supabaseAdmin
             .from('users')
             .delete()

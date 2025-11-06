@@ -11,7 +11,7 @@ import {useSidebar} from "@/components/ui/sidebar";
 import {toast} from "sonner";
 import {AuthApiError, AuthError} from "@supabase/supabase-js";
 import {Eye, EyeOff} from "lucide-react";
-import {deleteAccount} from "@/app/(private)/settings/delete-account";
+import {DeleteAccountPopup} from "@/components/delete-account-popup";
 
 export default function SettingsPage() {
     const supabase = createClientComponentClient();
@@ -32,8 +32,9 @@ export default function SettingsPage() {
 
     const {setOpen} = useSidebar();
     const [initialized, setInitialized] = useState(false);
+    const [openPopup, setOpenPopup] = useState(false);
 
-    // ✅ Close sidebar on mount
+    // Close sidebar on mount
     useEffect(() => {
         if (!initialized) {
             setOpen(false);
@@ -295,50 +296,8 @@ export default function SettingsPage() {
         }
     };
 
-    const handleDeleteAccount = async () => {
-        setLoading(true);
-
-        try {
-            const {
-                data: {user},
-            } = await supabase.auth.getUser();
-
-            if (!user) {
-                toast.error("You are not logged in");
-                setLoading(false);
-                return;
-            }
-
-            // Confirm first
-            const confirmed = confirm("Are you sure you want to permanently delete your account?");
-            if (!confirmed) {
-                setLoading(false);
-                return;
-            }
-
-            // Call the server action
-            const result = await deleteAccount(user.id);
-
-            if (result.success) {
-                toast.success("Account deleted", {
-                    description: "Your account has been permanently removed.",
-                });
-                await supabase.auth.signOut();
-                window.location.href = "/";
-            } else {
-                toast.error("Failed to delete account", {
-                    description: result.error ?? "Something went wrong.",
-                });
-            }
-
-        } catch (err) {
-            console.error(err);
-            toast.error("Unexpected error", {
-                description: "Could not delete your account.",
-            });
-        } finally {
-            setLoading(false);
-        }
+    const handleOpenPopup = () => {
+        setOpenPopup(true);
     };
 
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -454,15 +413,21 @@ export default function SettingsPage() {
                         <CardTitle>Danger Zone</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Button
-                            variant="destructive"
-                            onClick={handleDeleteAccount}
-                            disabled={loading}
-                        >
+                        <Button variant="destructive" onClick={handleOpenPopup}>
                             Delete Account
                         </Button>
                     </CardContent>
                 </Card>
+
+                <DeleteAccountPopup
+                    open={openPopup}
+                    onCloseAction={() => setOpenPopup(false)}
+                    onDeletedAction={async () => {
+                        await supabase.auth.signOut();
+                        window.location.href = "/";
+                    }}
+                />
+
             </div>
         </div>
     );
