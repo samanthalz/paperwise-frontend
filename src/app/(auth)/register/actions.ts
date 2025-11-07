@@ -16,7 +16,7 @@ export async function registerUser(
     const email = formData.get('email')
     const password = formData.get('password')
 
-    // 🧩 Validate types before using them
+    // Validate types before using them
     if (
         typeof fullName !== 'string' ||
         typeof email !== 'string' ||
@@ -28,11 +28,12 @@ export async function registerUser(
     try {
         const supabase = await createClient()
 
-        // 1️⃣ Create auth user
+        // Create auth user
         const {data, error} = await supabase.auth.signUp({
             email,
             password,
             options: {
+                emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
                 data: {full_name: fullName},
             },
         })
@@ -46,9 +47,9 @@ export async function registerUser(
 
         const userId = data.user.id
 
-        // 2️⃣ Insert into "users" table using service role key
+        // Insert into "users" table using service role key
         const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-        const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY // ⚠️ Correct env var name
+        const SERVICE_ROLE_KEY = process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY
 
         if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
             console.error('Missing Supabase environment variables.')
@@ -60,7 +61,6 @@ export async function registerUser(
         const {error: dbError} = await supabaseAdmin.from('users').insert({
             id: userId,
             full_name: fullName,
-            email, // optional but recommended to store
         })
 
         if (dbError) {
@@ -68,7 +68,11 @@ export async function registerUser(
             return {error: 'Failed to create user profile.'}
         }
 
-        return {success: true}
+        return {
+            success: true,
+            message: 'Registration successful! Please verify your email before logging in.',
+        };
+
     } catch (err) {
         console.error('Unexpected error in registerUser:', err)
         return {error: 'Something went wrong. Please try again.'}

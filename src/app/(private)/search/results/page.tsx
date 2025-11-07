@@ -66,7 +66,7 @@ export default function SearchResultsPage() {
         setLoading(true);
 
         try {
-            // Build the raw (unencoded) search query first
+            // Build the raw (unencoded) search query
             let searchQuery = `(ti:"${query}" OR abs:"${query}")`;
 
             const effectiveRange = customRangeValue || appliedYearRange;
@@ -91,7 +91,7 @@ export default function SearchResultsPage() {
             // encode the entire query once at the end
             const encodedQuery = encodeURIComponent(searchQuery);
 
-            // choose sort mode (use submittedDate for “recent” instead of lastUpdatedDate for consistency)
+            // choose sort mode
             const sortBy = sort === "recent" ? "submittedDate" : "relevance";
             const start = reset ? 0 : page * RESULTS_PER_PAGE;
 
@@ -151,11 +151,11 @@ export default function SearchResultsPage() {
     const handleSearch = async () => {
         if (!query.trim()) return;
 
-        // reset paging and run the search right away
+        // reset paging and run the search
         setPage(0);
         await fetchArxivResults(true);
 
-        // then update the URL so the search is shareable/bookmarkable
+        // update the URL
         const params = new URLSearchParams({query});
         if (year !== "any") params.append("year", year);
         if (sort) params.append("sort", sort);
@@ -198,7 +198,7 @@ export default function SearchResultsPage() {
                             setIsCustomMode(newValue === "custom");
 
                             if (newValue !== "custom") {
-                                // ✅ Clear all custom range states
+                                // Clear all custom range states
                                 setCustomRange({start: "", end: ""});
                                 setAppliedYearRange(null);
 
@@ -261,7 +261,7 @@ export default function SearchResultsPage() {
                                     const startYear = start ? parseInt(start) : 1900;
                                     const endYear = end ? parseInt(end) : currentYear;
 
-                                    // ✅ Validate years are valid integers
+                                    // Validate years are valid integers
                                     if (
                                         isNaN(startYear) ||
                                         isNaN(endYear) ||
@@ -272,7 +272,7 @@ export default function SearchResultsPage() {
                                         return;
                                     }
 
-                                    // ✅ Validate chronological order
+                                    // Validate chronological order
                                     if (startYear > endYear) {
                                         toast.error("Start year cannot be after end year.");
                                         return;

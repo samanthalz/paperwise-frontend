@@ -9,7 +9,7 @@ import {Button} from "@/components/ui/button";
 import SettingsTopbar from "@/components/topbars/settings-topbar";
 import {useSidebar} from "@/components/ui/sidebar";
 import {toast} from "sonner";
-import {AuthApiError, AuthError} from "@supabase/supabase-js";
+import {AuthApiError} from "@supabase/supabase-js";
 import {Eye, EyeOff} from "lucide-react";
 import {DeleteAccountPopup} from "@/components/delete-account-popup";
 
@@ -47,15 +47,23 @@ export default function SettingsPage() {
         const fetchUserData = async () => {
             setLoading(true);
             const {
-                data: {user},
-                error: authError,
-            } = await supabase.auth.getUser();
+                data: {session},
+                error: sessionError,
+            } = await supabase.auth.getSession();
 
-            if (authError) {
-                console.error("Auth error:", authError.message);
+            if (sessionError) {
+                console.error("Session fetch error:", sessionError.message);
                 setLoading(false);
                 return;
             }
+
+            if (!session?.user) {
+                console.warn("No user session found");
+                setLoading(false);
+                return;
+            }
+
+            const user = session.user;
 
             if (user) {
                 setEmail(user.email ?? "");
@@ -150,53 +158,42 @@ export default function SettingsPage() {
 
             // Handle email update if changed
             if (provider === "email" && email !== user.email) {
-                let authUpdateError: AuthError | null = null;
-                let authUpdateData = null;
-
                 try {
-                    const result = await supabase.auth.updateUser({email});
-                    authUpdateError = result.error;
-                    authUpdateData = result.data;
-                } catch (e) {
-                    if (
-                        e instanceof AuthApiError &&
-                        e.message.includes("already been registered")
-                    ) {
-                        authUpdateError = e;
-                    } else {
-                        console.error("Unexpected Supabase error:", e);
-                    }
-                }
+                    const {data: authUpdateData, error: authUpdateError} = await supabase.auth.updateUser({email});
 
-                if (authUpdateError) {
-                    if (authUpdateError.message.includes("already been registered")) {
-                        toast.error("Email already in use", {
-                            description: "Please choose a different email.",
-                        });
-                        // Revert to original email
-                        setEmail(originalEmail);
-                        setLoadingProfile(false);
-                        return;
+                    if (authUpdateError) {
+                        if (authUpdateError.message.includes("already been registered")) {
+                            toast.error("Email already in use", {
+                                description: "Please choose a different email.",
+                            });
+                            setEmail(originalEmail);
+                            setLoadingProfile(false);
+                            return;
+                        }
+                        throw authUpdateError;
                     }
-                    throw authUpdateError;
-                }
 
-                if (authUpdateData?.user?.email !== email) {
-                    toast.success("Email change requested", {
-                        description: "To protect your account, we’ve sent verification links to both your old and new emails. " +
-                            "Please confirm both to complete the change.",
+                    // Supabase sends verification email — no change yet
+                    toast.success("Verification email sent", {
+                        description:
+                            "We've sent a verification link to your new email. Please verify to complete the update.",
                         duration: 8000,
                     });
-                } else {
-                    toast.success("Profile updated successfully", {
-                        description: "Your profile has been updated.",
-                    });
+
+                    // Revert UI to show old email until verified
+                    setEmail(originalEmail);
+                    setLoadingProfile(false);
+                    return;
+
+                } catch (e) {
+                    console.error("Email update failed:", e);
+                    toast.error("Error updating email", {description: "Something went wrong."});
+                    setEmail(originalEmail);
+                    setLoadingProfile(false);
+                    return;
                 }
-            } else {
-                toast.success("Profile updated successfully", {
-                    description: "Your profile has been updated.",
-                });
             }
+
         } catch (err: unknown) {
             console.error(err);
             if (err instanceof AuthApiError) {

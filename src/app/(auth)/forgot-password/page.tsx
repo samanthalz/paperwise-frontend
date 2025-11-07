@@ -1,6 +1,6 @@
 'use client'
 
-import {useState} from 'react'
+import React, {useState} from 'react'
 import {createClientComponentClient} from '@supabase/auth-helpers-nextjs'
 import {useRouter} from 'next/navigation'
 import Link from 'next/link'
@@ -19,6 +19,19 @@ export default function ForgotPasswordPage() {
         setError('')
         setMessage('')
         setLoading(true)
+
+        const res = await fetch('/api/check-email', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email}),
+        })
+        const {exists} = await res.json()
+
+        if (!exists) {
+            setError('No account found with this email.')
+            setLoading(false)
+            return
+        }
 
         const {error} = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${location.origin}/reset-password`, // page user will go to after clicking email link

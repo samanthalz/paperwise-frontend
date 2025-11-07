@@ -1,3 +1,4 @@
+// app/api/check-email/route.ts
 import {createClient} from '@supabase/supabase-js'
 
 const supabaseAdmin = createClient(
@@ -11,34 +12,18 @@ export async function POST(req: Request) {
         if (!email) {
             return new Response(JSON.stringify({error: 'Email is required'}), {status: 400})
         }
+        
+        const {data, error} = await supabaseAdmin.auth.admin.listUsers()
 
-        // Check in auth.users
-        const {data, error} = await supabaseAdmin
-            .from('auth.users') // works only if you have auth schema exposed
-            .select('id')
-            .eq('email', email)
-            .maybeSingle()
-
-        if (error && !error.message.includes('permission')) {
-            console.error('check-email error:', error)
+        if (error) {
+            console.error('Supabase admin.listUsers error:', error)
             return new Response(JSON.stringify({error: error.message}), {status: 500})
         }
 
-        if (data) {
-            return new Response(JSON.stringify({exists: true}), {status: 200})
-        }
+        // Check if email exists in the list
+        const exists = data.users.some((user) => user.email === email)
 
-        // Check custom public users table too
-        const {data: userTable} = await supabaseAdmin
-            .from('users')
-            .select('id')
-            .eq('email', email)
-            .maybeSingle()
-
-        return new Response(
-            JSON.stringify({exists: !!userTable}),
-            {status: 200}
-        )
+        return new Response(JSON.stringify({exists}), {status: 200})
     } catch (err) {
         console.error('Unexpected error in /api/check-email:', err)
         return new Response(JSON.stringify({error: 'Internal Server Error'}), {status: 500})

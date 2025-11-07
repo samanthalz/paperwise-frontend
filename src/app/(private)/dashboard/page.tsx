@@ -270,7 +270,7 @@ export default function Dashboard() {
                         delete moveInProgressRef.current[pdfId];
                     }
 
-// Refetch only for current view
+                    // Refetch only for current view
                     if (activeFolderRef.current) {
                         await fetchFolderPapers(activeFolderRef.current.id);
                     } else {

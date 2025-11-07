@@ -21,11 +21,11 @@ export default function RegisterPage() {
     useEffect(() => {
         if (state.success) {
             const timeout = setTimeout(() => {
-                router.replace('/login')
-            }, 1000) // Delay for smoother UX
-            return () => clearTimeout(timeout)
+                router.replace('/login');
+            }, 4000); // Give user 4s to read message
+            return () => clearTimeout(timeout);
         }
-    }, [state.success, router])
+    }, [state.success, router]);
 
     // Handle form submission with client-side validation
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -108,13 +108,23 @@ export default function RegisterPage() {
     if (state.success) {
         return (
             <div className="flex items-center justify-center h-screen bg-white">
-                <div className="flex flex-col items-center gap-4">
+                <div className="flex flex-col items-center gap-4 text-center max-w-sm">
                     <div
                         className="h-12 w-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"/>
-                    <p className="text-base font-medium text-gray-600">Redirecting to login...</p>
+                    <p className="text-base font-medium text-gray-700">
+                        Registration successful!
+                    </p>
+                    <p className="text-sm text-gray-500">
+                        A verification link has been sent to your email.
+                        <br/>
+                        Please verify before logging in.
+                    </p>
+                    <p className="text-xs text-gray-400 mt-2">
+                        You’ll be redirected to the login page shortly…
+                    </p>
                 </div>
             </div>
-        )
+        );
     }
 
     return (

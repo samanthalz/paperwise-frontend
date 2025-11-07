@@ -3,6 +3,7 @@
 import {useState} from "react";
 import {Button} from "@/components/ui/button";
 import {Trash2, X} from "lucide-react";
+import {toast} from "sonner";
 
 export function DeleteFolderPopup({
                                       folderId,
@@ -32,8 +33,9 @@ export function DeleteFolderPopup({
         if (res.ok) {
             onDeletedAction();
             onCloseAction();
+            toast.success("Folder deleted successfully!");
         } else {
-            alert("Failed to delete folder");
+            toast.error("Failed to delete folder. Please try again.");
         }
     };
 

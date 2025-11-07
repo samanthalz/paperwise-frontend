@@ -54,7 +54,7 @@ export default function AuthCallback() {
         }
 
         handleAuth()
-    }, [router, supabase]) // <-- remove searchParams from dependency
+    }, [router, supabase])
 
     return (
         <div className="flex items-center justify-center h-screen">
