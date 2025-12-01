@@ -6,9 +6,7 @@ export type Citation = {
     inText: string;
 };
 
-// --- Format authors ---
-
-// Harvard: Last, F. and Last, F.
+// Format authors for Harvard
 function formatAuthorsHarvard(authors: string[]): string {
     const formatted = authors.map((a) => {
         const parts = a.split(" ");
@@ -22,7 +20,7 @@ function formatAuthorsHarvard(authors: string[]): string {
     return formatted.slice(0, -1).join(", ") + ", and " + formatted[formatted.length - 1];
 }
 
-// Format authors for APA7: Last, FirstInitial., & Last, FirstInitial.
+// Format authors for APA7
 function formatAuthorsAPA(authors: string[]): string {
     const formatName = (fullName: string) => {
         const parts = fullName.split(" ");
@@ -44,7 +42,7 @@ function formatAuthorsAPA(authors: string[]): string {
     return `${formatName(authors[0])}, et al.`;
 }
 
-// Chicago: Last, First for first author, then First Last for remaining authors
+// Format authors for Chicago
 function formatAuthorsChicago(authors: string[]): string {
     if (authors.length === 1) {
         const parts = authors[0].split(" ");
@@ -59,7 +57,7 @@ function formatAuthorsChicago(authors: string[]): string {
     return restAuthors ? `${firstFormatted}, and ${restAuthors}` : firstFormatted;
 }
 
-// MLA8: Last, First for first author, then First Last for remaining authors
+// Format authors for MLA8
 function formatAuthorsMLA(authors: string[]): string {
     if (authors.length === 1) return authors[0].split(" ").reverse().join(", "); // Last, First
     const firstAuthor = authors[0].split(" ");
@@ -69,7 +67,7 @@ function formatAuthorsMLA(authors: string[]): string {
 }
 
 
-// --- Generate all citations ---
+// Generate all citations
 export function generateCitations({
                                       title,
                                       authors,

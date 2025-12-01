@@ -81,7 +81,7 @@ export default function UploadPdfDialog({
 
                         // --- Handle successful processing ---
                         if (checkpoint.includes("Background processing started")) {
-                            toast.success("Upload successful! 🎉");
+                            toast.success("Upload successful!");
                             setIsUploading(false);
                             setFile(null);
                             setOpen(false);

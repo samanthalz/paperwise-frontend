@@ -7,13 +7,10 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import SearchTopbar from "@/components/topbars/search-topbar";
 import {useSidebar} from "@/components/ui/sidebar";
-import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
 
 export default function SearchPage() {
     const [query, setQuery] = useState("");
-    const [isGuest, setIsGuest] = useState(true);
     const router = useRouter();
-    const supabase = createClientComponentClient();
     const {setOpen} = useSidebar();
     const [initialized, setInitialized] = useState(false);
 

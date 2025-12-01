@@ -6,47 +6,47 @@ import {Input} from "@/components/ui/input";
 import {Edit3, X} from "lucide-react";
 import {toast} from "sonner";
 
-type RenamePaperPopupProps = {
+type RenameFolderPopupProps = {
     open: boolean;
     onCloseAction: () => void;
-    pdfId: string;
-    currentTitle?: string;
-    onRenamedAction: (newTitle: string) => void;
+    folderId: string;
+    currentName?: string;
+    onRenamedAction: (newName: string) => void;
 };
 
-export function RenamePaperPopup({
-                                     open,
-                                     onCloseAction,
-                                     pdfId,
-                                     currentTitle = "",
-                                     onRenamedAction,
-                                 }: RenamePaperPopupProps) {
-    const [newTitle, setNewTitle] = useState(currentTitle);
+export function RenameFolderPopup({
+                                      open,
+                                      onCloseAction,
+                                      folderId,
+                                      currentName = "",
+                                      onRenamedAction,
+                                  }: RenameFolderPopupProps) {
+    const [newName, setNewName] = useState(currentName);
     const [saving, setSaving] = useState(false);
 
-    // reset local state whenever the popup opens or the currentTitle changes
+    // Reset local state when popup opens or currentName changes
     useEffect(() => {
         if (open) {
-            setNewTitle(currentTitle ?? "");
+            setNewName(currentName ?? "");
         }
-    }, [open, currentTitle]);
+    }, [open, currentName]);
 
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
     const handleRename = async () => {
-        if (!newTitle?.trim()) return;
+        if (!newName?.trim()) return;
         setSaving(true);
 
         try {
-            const res = await fetch(`${backendUrl}/rename_pdf/`, {
+            const res = await fetch(`${backendUrl}/rename_folder/`, {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({pdf_id: pdfId, new_title: newTitle}),
+                body: JSON.stringify({folder_id: folderId, new_title: newName}),
             });
 
             if (res.ok) {
-                toast.success("Paper renamed successfully!");
-                onRenamedAction(newTitle);
+                toast.success("Folder renamed successfully!");
+                onRenamedAction(newName);
                 onCloseAction();
             } else {
                 const errorData = await res.json();
@@ -87,13 +87,13 @@ export function RenamePaperPopup({
                     style={{color: "var(--popup-heading)"}}
                 >
                     <Edit3 className="w-5 h-5 text-blue-600"/>
-                    Rename Paper
+                    Rename Folder
                 </h2>
 
                 <Input
-                    placeholder="Enter new title"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Enter new folder name"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
                     style={{
                         backgroundColor: "var(--popup-header-bg)",
                         borderColor: "var(--popup-border)",

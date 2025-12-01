@@ -30,7 +30,7 @@ export default function SearchTopbar() {
                     </>
                 )}
                 <h1 className="text-lg font-semibold" style={{color: "var(--popup-heading)"}}>
-                    Search
+                    {isLoggedIn ? "Search" : "PaperWise"}
                 </h1>
             </div>
 

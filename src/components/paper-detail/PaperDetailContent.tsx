@@ -35,7 +35,6 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
     const supabase = createClientComponentClient();
 
     const [paper, setPaper] = useState<ArxivPaper | null>(null);
-    const [signedUrl, setSignedUrl] = useState<string | null>(null);
     const [pdfId, setPdfId] = useState<string | null>(null);
     const [arxivId, setArxivId] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -49,7 +48,8 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
     const [processing, setProcessing] = useState(true);
     const [checkpoint, setCheckpoint] = useState("Starting...");
     const [showNotes, setShowNotes] = useState(false);
-    const pdfUrlToRender = signedUrl || paper?.pdfUrl || null;
+    const pdfUrlToRender = paper?.pdfUrl || null;
+
     const CACHE_EXPIRY_MS = 60 * 60 * 1000;
     const canonicalArxivId = paper?.id?.replace(/v\d+$/i, "");
 
@@ -66,15 +66,26 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
         supabase.auth.getSession().then(({data}) => setIsLoggedIn(!!data.session));
     }, [supabase]);
 
+
     // Fetch user paper
     const fetchUserPaper = useCallback(
         async (id: string) => {
             try {
-                const {data, error} = await supabase
-                    .from("papers")
-                    .select("supabase_url, title, authors, published, abstract, pdf_id, arxiv_id")
-                    .or(`pdf_id.eq.${id},arxiv_id.eq.${id}`)
-                    .single();
+                const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+
+                let query = supabase.from("papers").select(
+                    "supabase_url, title, authors, published, abstract, pdf_id, arxiv_id"
+                );
+
+                if (isUuid) {
+                    // For UUID, check pdf_id
+                    query = query.eq("pdf_id", id);
+                } else {
+                    // For arXiv ID, check arxiv_id
+                    query = query.eq("arxiv_id", id);
+                }
+
+                const {data, error} = await query.single();
 
                 if (error) {
                     console.log("Supabase fetch error:", error);
@@ -82,20 +93,10 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                 }
 
                 if (data) {
-                    setPaper({
-                        id: data.arxiv_id || data.pdf_id || id,
-                        title: data.title,
-                        authors: data.authors || [],
-                        published: data.published || new Date().toISOString(),
-                        summary: data.abstract || "",
-                        pdfUrl: data.supabase_url || "",
-                        supabaseUrl: data.supabase_url,
-                    });
-
-                    setPdfId(data.pdf_id || null);
-                    setArxivId(data.arxiv_id || null);
-
+                    // Compute final PDF URL
+                    let finalPdfUrl = "";
                     if (data.supabase_url) {
+                        // Try to re-sign if it's a supabase storage path
                         const match = data.supabase_url.match(/\/storage\/v1\/object\/sign\/([^/]+)\/(.+)/);
                         if (match) {
                             const bucket = match[1];
@@ -104,17 +105,30 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                                 .storage
                                 .from(bucket)
                                 .createSignedUrl(path, 60 * 60);
-
-                            if (!signedError) if (signed) {
-                                setSignedUrl(signed.signedUrl);
-                            }
+                            finalPdfUrl = !signedError && signed ? signed.signedUrl : data.supabase_url;
                         } else {
-                            setSignedUrl(data.supabase_url);
+                            finalPdfUrl = data.supabase_url;
                         }
+                    } else if (data.arxiv_id) {
+                        finalPdfUrl = `https://arxiv.org/pdf/${data.arxiv_id}`;
                     }
+
+                    setPaper({
+                        id: data.arxiv_id || data.pdf_id || id,
+                        title: data.title,
+                        authors: data.authors || [],
+                        published: data.published || new Date().toISOString(),
+                        summary: data.abstract || "",
+                        pdfUrl: finalPdfUrl,
+                        supabaseUrl: data.supabase_url || undefined,
+                    });
+
+                    setPdfId(data.pdf_id || null);
+                    setArxivId(data.arxiv_id || null);
 
                     return true;
                 }
+
 
                 return false;
             } catch (err) {
@@ -125,12 +139,11 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
         [supabase]
     );
 
+
     // Fetch arXiv paper
     const fetchArxivPaper = useCallback(async () => {
         try {
-            const res = await fetch(
-                `https://export.arxiv.org/api/query?id_list=${encodeURIComponent(paperId)}`
-            );
+            const res = await fetch(`/api/arxiv/paper?id=${encodeURIComponent(paperId)}`);
             if (!res.ok) throw new Error(`Failed to fetch arXiv: ${res.status}`);
 
             const xmlText = await res.text();
@@ -147,13 +160,7 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
                 (n) => n.textContent ?? ""
             );
 
-            let pdfUrl =
-                Array.from(entry.querySelectorAll("link"))
-                    .find((l) => l.getAttribute("title") === "pdf")
-                    ?.getAttribute("href") ?? "";
-
-            // Force HTTPS
-            pdfUrl = pdfUrl.replace(/^http:\/\//i, "https://");
+            const pdfUrl = `https://arxiv.org/pdf/${id}`;
 
             setPaper({id, title, summary, authors, published, pdfUrl});
             setArxivId(id);
@@ -201,19 +208,34 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
     // Poll arXiv processing
     useEffect(() => {
         if (!pdfId) return;
+
+        let cancelled = false;
+
         const interval = setInterval(async () => {
             try {
+                if (cancelled) return;
+
                 const res = await fetch(`/api/paper_status?pdfId=${pdfId}`);
                 if (!res.ok) return;
+
                 const data = await res.json();
+
                 setProcessing(data.processing);
                 setCheckpoint(data.checkpoint ?? "Starting...");
+
+                if (!data.processing) {
+                    clearInterval(interval);
+                }
             } catch (err) {
                 console.error("Status poll error:", err);
             }
         }, 2000);
-        return () => clearInterval(interval);
-    }, [pdfId, paper?.supabaseUrl]);
+
+        return () => {
+            cancelled = true;
+            clearInterval(interval);
+        };
+    }, [pdfId]);
 
     // Fetch recommendations
     useEffect(() => {
@@ -257,6 +279,69 @@ export default function PaperDetailContent({paperId}: { paperId: string }) {
 
         fetchRecommendations();
     }, [canonicalArxivId, paper, CACHE_EXPIRY_MS]);
+
+    // Realtime subscription for updated title/authors/summary
+    useEffect(() => {
+        const subs: Array<ReturnType<typeof supabase.channel>> = [];
+
+        const subscribeFor = (key: "pdf_id" | "arxiv_id", value: string) => {
+            const ch = supabase
+                .channel(`papers-realtime-${key}-${value}`)
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "UPDATE",
+                        schema: "public",
+                        table: "papers",
+                        filter: `${key}=eq.${value}`,
+                    },
+                    (payload) => {
+                        const updated = payload.new as any;
+                        // Only update fields that changed to avoid unnecessary re-renders
+                        setPaper((prev) => {
+                            if (!prev) return prev;
+                            const next = {...prev};
+                            let changed = false;
+
+                            const maybe = <K extends keyof typeof next>(k: K, v: any) => {
+                                if (v !== undefined && v !== (next as any)[k]) {
+                                    (next as any)[k] = v;
+                                    changed = true;
+                                }
+                            };
+
+                            maybe("title", updated.title);
+                            maybe("authors", updated.authors);
+                            maybe("summary", updated.abstract);
+                            maybe("published", updated.published);
+
+                            // If supabase_url changes, keep pdfUrl consistent
+                            if (updated.supabase_url !== undefined && updated.supabase_url !== prev.supabaseUrl) {
+                                maybe("supabaseUrl", updated.supabase_url);
+                            }
+
+                            // Optional sync id if arxiv_id arrives later
+                            if ((updated.arxiv_id || updated.pdf_id) && (updated.arxiv_id || updated.pdf_id) !== prev.id) {
+                                next.id = updated.arxiv_id || updated.pdf_id;
+                                changed = true;
+                            }
+
+                            return changed ? next : prev;
+                        });
+                    }
+                )
+                .subscribe();
+            subs.push(ch);
+        };
+
+        if (pdfId) subscribeFor("pdf_id", pdfId);
+        if (arxivId) subscribeFor("arxiv_id", arxivId);
+
+        return () => {
+            subs.forEach((ch) => supabase.removeChannel(ch));
+        };
+    }, [pdfId, arxivId, supabase]);
+
 
     // Render
     return (

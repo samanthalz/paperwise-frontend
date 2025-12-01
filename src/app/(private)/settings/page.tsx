@@ -173,7 +173,7 @@ export default function SettingsPage() {
                         throw authUpdateError;
                     }
 
-                    // Supabase sends verification email — no change yet
+                    // Supabase sends verification email
                     toast.success("Verification email sent", {
                         description:
                             "We've sent a verification link to your new email. Please verify to complete the update.",
@@ -305,7 +305,7 @@ export default function SettingsPage() {
             <SettingsTopbar/>
 
             <div className="flex-1 p-6 overflow-y-auto space-y-6">
-                {/* --- Account Info --- */}
+                {/*  Account Info  */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Account Settings</CardTitle>
@@ -344,7 +344,7 @@ export default function SettingsPage() {
                     </CardContent>
                 </Card>
 
-                {/* --- Change Password Section --- */}
+                {/*  Change Password Section  */}
                 {provider === "email" && (
                     <Card>
                         <CardHeader>
@@ -404,7 +404,25 @@ export default function SettingsPage() {
                     </Card>
                 )}
 
-                {/* --- Danger Zone --- */}
+                {/*  Support / Contact Admin */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Need Help?</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                            If you encounter a bug or need support, you can contact the admin via email.
+                        </p>
+                        <a
+                            href="mailto:support@example.com"
+                            className="text-blue-600 hover:underline"
+                        >
+                            support@example.com
+                        </a>
+                    </CardContent>
+                </Card>
+
+                {/*  Danger Zone  */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Danger Zone</CardTitle>

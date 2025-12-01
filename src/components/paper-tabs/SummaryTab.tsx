@@ -25,7 +25,9 @@ export default function SummaryTab({paper}: { paper: ArxivPaper }) {
 
             <p className="text-sm">
                 <span className="font-semibold">Authors:</span>{" "}
-                {paper?.authors.join(", ")}
+                {paper?.authors && paper.authors.length > 0
+                    ? paper.authors.join(", ")
+                    : "Unknown authors"}
             </p>
 
             {!paper.supabaseUrl && (

@@ -19,6 +19,18 @@ import {
 } from "lucide-react";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,} from "@/components/ui/tooltip";
+import {toast} from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle
+} from "@/components/ui/alert-dialog";
+import {useRouter} from "next/navigation";
 
 type NotesPopupProps = {
     open: boolean;
@@ -60,6 +72,8 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
     ]);
     const [userId, setUserId] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
+    const [showLoginDialog, setShowLoginDialog] = useState(false);
+    const router = useRouter();
 
     // Get user session
     useEffect(() => {
@@ -108,7 +122,11 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
 
     // Manual save
     const saveNotes = useCallback(async () => {
-        if (!userId || !pdfId) return;
+        if (!userId) {
+            setShowLoginDialog(true);
+            return;
+        }
+        if (!pdfId) return;
 
         setSaving(true);
 
@@ -123,7 +141,10 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
         );
 
         if (error) {
+            toast.error("Failed to save note.");
             console.error("Save error:", error);
+        } else {
+            toast.success("Note saved successfully!");
         }
 
         setSaving(false);
@@ -342,6 +363,30 @@ export default function NotesPopup({open, onCloseAction, pdfId}: NotesPopupProps
                     </div>
                 </div>
             </div>
+
+            <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Login Required</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You must be logged in to save this note. Would you like to log in now?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setShowLoginDialog(false)}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                const currentUrl = window.location.pathname + window.location.search;
+                                router.push(`/login?redirectTo=${encodeURIComponent(currentUrl)}`);
+                            }}
+                        >
+                            Go to Login
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </TooltipProvider>
     );
 }

@@ -4,6 +4,7 @@ import {useState} from "react";
 import {Button} from "@/components/ui/button";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
 import {FolderCode, X} from "lucide-react";
+import {toast} from "sonner";
 
 export function MovePaperPopup({
                                    pdfId,
@@ -22,25 +23,35 @@ export function MovePaperPopup({
 }) {
     const [folderId, setFolderId] = useState("");
     const [moving, setMoving] = useState(false);
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
     const handleMove = async () => {
         if (!folderId) return;
 
-        // Convert "root" to null before sending to backend
         const targetFolderId = folderId === "root" ? null : folderId;
 
         setMoving(true);
-        const res = await fetch(`http://127.0.0.1:8000/move_pdf/`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({pdf_id: pdfId, folder_id: targetFolderId}),
-        });
+        try {
+            const res = await fetch(`${backendUrl}/move_pdf/`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({pdf_id: pdfId, folder_id: targetFolderId}),
+            });
 
-        setMoving(false);
-        if (res.ok) {
-            onMovedAction(targetFolderId);
-            onCloseAction();
-            setFolderId("");
+            if (res.ok) {
+                toast.success("Paper moved successfully!");
+                onMovedAction(targetFolderId);
+                onCloseAction();
+                setFolderId("");
+            } else {
+                const errorData = await res.json();
+                toast.error(`Failed to move PDF: ${errorData.message || "Unknown error"}`);
+            }
+        } catch (err) {
+            console.error("Move PDF error:", err);
+            toast.error("Failed to move PDF. Please try again.");
+        } finally {
+            setMoving(false);
         }
     };
 

@@ -93,7 +93,7 @@ export default function RegisterPage() {
         })
     }
 
-    // Loading / redirecting UI
+    // UI
     if (isPending) {
         return (
             <div className="flex items-center justify-center h-screen bg-white">

@@ -5,6 +5,7 @@ import {Button} from "@/components/ui/button";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Copy, X} from "lucide-react";
 import {CitationStyle, generateCitations} from "@/utils/citation";
+import {toast} from "sonner";
 
 type CitationPopupProps = {
     open: boolean;
@@ -25,20 +26,31 @@ export function CitationPopup({open, onCloseAction, title, authors, arxivId, pub
     }), [title, authors, arxivId, publishedDate]);
     const currentCitation = citations.find((c) => c.style === selectedStyle);
 
+    // Detect failure: no citations OR no match for selected style
+    const citationFailed =
+        !citations ||
+        citations.length === 0 ||
+        !currentCitation ||
+        !currentCitation.fullText ||
+        !currentCitation.inText;
+
     // separate states for the two buttons
     const [copiedFull, setCopiedFull] = useState(false);
     const [copiedInText, setCopiedInText] = useState(false);
 
     const handleCopy = (text: string, type: "full" | "inText") => {
-        navigator.clipboard.writeText(text);
-
-        if (type === "full") {
-            setCopiedFull(true);
-            setTimeout(() => setCopiedFull(false), 1000);
-        } else {
-            setCopiedInText(true);
-            setTimeout(() => setCopiedInText(false), 1000);
-        }
+        // Copy to clipboard
+        navigator.clipboard.writeText(text).then(() => {
+            // Show Sonner toast based on type
+            if (type === "full") {
+                toast.success("Full text copied!");
+            } else {
+                toast.success("In-text copied!");
+            }
+        }).catch((err) => {
+            toast.error("Failed to copy!");
+            console.error(err);
+        });
     };
 
     if (!open) return null;
@@ -96,7 +108,15 @@ export function CitationPopup({open, onCloseAction, title, authors, arxivId, pub
                 </Select>
 
                 {/* Citations */}
-                {currentCitation && (
+                {citationFailed ? (
+                    <div className="text-sm text-red-500 p-3 border rounded"
+                         style={{backgroundColor: "var(--popup-highlight)", borderColor: "var(--popup-border)"}}
+                    >
+                        ⚠️ Unable to generate citation — the required paper information is missing.
+                        No title, authors, or publication date were found in the provided data, so a valid citation
+                        could not be created.
+                    </div>
+                ) : (
                     <div className="flex flex-col gap-3">
                         {/* Full Citation */}
                         <div className="flex flex-col gap-1">

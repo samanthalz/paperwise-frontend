@@ -23,7 +23,9 @@ export function DeleteFolderPopup({
     const handleDelete = async () => {
         setDeleting(true);
 
-        const res = await fetch(`http://127.0.0.1:8000/delete_folder/`, {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+        const res = await fetch(`${backendUrl}/delete_folder/`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({folder_id: folderId}),

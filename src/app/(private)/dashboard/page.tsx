@@ -5,7 +5,7 @@ import {useRouter} from 'next/navigation';
 import {createClientComponentClient} from '@supabase/auth-helpers-nextjs';
 import {Card} from '@/components/ui/card';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '@/components/ui/dropdown-menu';
-import {Edit3, Folder, MoreVertical, Trash2} from 'lucide-react';
+import {Edit2, Edit3, Folder, MoreVertical, Trash2} from 'lucide-react';
 import Image from 'next/image';
 import DocumentsTopbar from '@/components/topbars/documents-topbar';
 import {useSidebar} from '@/components/ui/sidebar';
@@ -14,6 +14,7 @@ import {MovePaperPopup} from '@/components/move-paper-popup';
 import {DeletePaperPopup} from '@/components/delete-paper-popup';
 import {DeleteFolderPopup} from '@/components/delete-folder-popup';
 import {toast} from 'sonner';
+import {RenameFolderPopup} from "@/components/rename-folder-popup";
 
 type Paper = {
     pdf_id: string;
@@ -60,7 +61,7 @@ function PaperCard({
                 className="w-full aspect-[4/3] relative overflow-hidden group cursor-pointer"
                 onClick={() => {
                     const idToUse = paper.arxiv_id ?? paper.pdf_id;
-                    router.push(`/${encodeURIComponent(idToUse)}`);
+                    router.push(`/dashboard/${encodeURIComponent(idToUse)}`);
                 }}
             >
                 <Image
@@ -122,7 +123,7 @@ function PaperCard({
     );
 }
 
-// --- Dashboard ---
+// Dashboard
 export default function Dashboard() {
     const supabase = createClientComponentClient();
     const router = useRouter();
@@ -140,6 +141,7 @@ export default function Dashboard() {
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [deleteFolderOpen, setDeleteFolderOpen] = useState(false);
+    const [renameFolderOpen, setRenameFolderOpen] = useState(false);
     const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
     const moveInProgressRef = useRef<{ [pdfId: string]: string | null }>({});
 
@@ -151,7 +153,7 @@ export default function Dashboard() {
         }
     }, [initialized, setOpen]);
 
-    // --- Fetch user data ---
+    //  Fetch user data
     const fetchUserData = async () => {
         const {data: {user}} = await supabase.auth.getUser();
         if (!user) return;
@@ -198,11 +200,11 @@ export default function Dashboard() {
         activeFolderRef.current = activeFolder;
     }, [activeFolder]);
 
-    // --- Realtime subscriptions ---
+    //  Realtime subscriptions
     useEffect(() => {
         if (!userId) return;
 
-        // --- Shared refetch function ---
+        //  Shared refetch function
         const refetchPapers = async () => {
             if (!userId) return;
 
@@ -243,7 +245,7 @@ export default function Dashboard() {
 
         };
 
-        // --- Subscribe to user_papers changes using postgres_changes ---
+        //  Subscribe to user_papers changes using postgres_changes
         const userPapersSub = supabase
             .channel('custom-user-papers-channel')
             .on(
@@ -282,7 +284,7 @@ export default function Dashboard() {
             )
             .subscribe();
 
-        // --- Subscribe to papers metadata changes ---
+        //  Subscribe to papers metadata changes
         const papersSub = supabase
             .channel('custom-papers-channel')
             .on(
@@ -308,7 +310,7 @@ export default function Dashboard() {
     }, [supabase, userId]);
 
 
-    // --- Folder functions ---
+    //  Folder functions
     const fetchFolderPapers = async (folderId: string) => {
         if (!userId) return;
         const {data, error} = await supabase
@@ -357,7 +359,7 @@ export default function Dashboard() {
         fetchFolderPapers(folder.id);
     };
 
-    // --- Render ---
+    //  Render
     return (
         <div className="flex flex-col h-full">
             <DocumentsTopbar onDuplicate={removePaper} onCreateFolder={handleCreateFolder}/>
@@ -379,6 +381,18 @@ export default function Dashboard() {
                                                     className="flex flex-col items-center justify-center">
                                                 <Folder className="w-7 h-7 text-amber-500"/>
                                                 <p className="mt-1 text-xs font-medium text-center">{folder.name}</p>
+                                            </button>
+
+                                            {/* Rename button */}
+                                            <button
+                                                className="absolute top-1 right-7 p-1 rounded-full hover:bg-gray-100"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedFolder(folder);
+                                                    setRenameFolderOpen(true);
+                                                }}
+                                            >
+                                                <Edit2 className="w-4 h-4 text-blue-600"/>
                                             </button>
 
                                             <button
@@ -529,6 +543,36 @@ export default function Dashboard() {
                     }}
                 />
             )}
+
+            {selectedFolder && (
+                <RenameFolderPopup
+                    folderId={selectedFolder.id}
+                    currentName={selectedFolder.name}
+                    open={renameFolderOpen}
+                    onCloseAction={() => setRenameFolderOpen(false)}
+                    onRenamedAction={async (newName) => {
+                        // Update local folder list
+                        if (selectedFolder) {
+                            setFolders((prev) =>
+                                prev.map((f) =>
+                                    f.id === selectedFolder.id ? {...f, name: newName} : f
+                                )
+                            );
+                        }
+
+                        // If the renamed folder is the active folder, update its name too
+                        if (!(selectedFolder) || activeFolder?.id === selectedFolder.id) {
+                            setActiveFolder((prev) => prev ? {...prev, name: newName} : null);
+                        }
+
+                        // Optionally refresh data
+                        await fetchUserData();
+
+                        setSelectedFolder(null);
+                    }}
+                />
+            )}
+
         </div>
     );
 }

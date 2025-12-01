@@ -27,20 +27,21 @@ export default function RelatedTab({recommendations, loading, hasSupabaseUrl}: R
     useRouter();
     if (hasSupabaseUrl) {
         return (
-            <div className="text-sm mb-6 relative">
-                <p className="mt-1 text-muted-foreground">
-                    This paper was uploaded manually and therefore does not have automatically generated related papers.
-                    Related recommendations are available only for publications sourced from the arXiv repository.
-                </p>
+            <div
+                className="mb-6 flex items-start gap-2 text-sm text-gray-700 bg-blue-50 border border-blue-100 p-3 rounded-md"
+            >
+                <Info className="w-5 h-5 text-blue-600 mt-0.5"/>
+                <span>
+                This paper was uploaded manually and therefore does not have automatically generated related papers. Related recommendations are available only for publications sourced from the <span
+                    className="font-medium text-blue-600">arXiv</span> repository.
+            </span>
             </div>
         );
     }
+
     const renderPaper = (p: SemanticPaper, index: number) => {
         const arxivId = p.externalIds?.ArXiv;
-        const pdfUrl = p.openAccessPdf?.url || (arxivId ? `https://arxiv.org/pdf/${arxivId}` : undefined);
         const link = p.url || (arxivId ? `https://arxiv.org/abs/${arxivId}` : undefined);
-
-        const pubYear = p.year ? `Published Year: ${p.year}` : undefined;
         const authors = p.authors
             ? p.authors.slice(0, 3).map(a => a.name).join(", ") + (p.authors.length > 3 ? " et al." : "")
             : undefined;
@@ -109,7 +110,7 @@ export default function RelatedTab({recommendations, loading, hasSupabaseUrl}: R
                     {/* Right side - Analyse button */}
                     {arxivId && (
                         <a
-                            href={`/${encodeURIComponent(arxivId)}`}
+                            href={`/dashboard/${encodeURIComponent(arxivId)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="ml-4 self-end"
@@ -138,7 +139,7 @@ export default function RelatedTab({recommendations, loading, hasSupabaseUrl}: R
                 <p className="mt-1 text-muted-foreground">No recommendations found.</p>
             ) : (
                 <>
-                    {/* 🔹 Info note */}
+                    {/* Info note */}
                     <div
                         className="mb-3 flex items-start gap-2 text-xs text-gray-500 bg-blue-50 border border-blue-100 p-2 rounded-md">
                         <Info className="w-4 h-4 text-blue-600 mt-0.5"/>

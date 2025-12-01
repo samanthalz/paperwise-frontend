@@ -1,4 +1,3 @@
-// app/api/check-email/route.ts
 import {createClient} from '@supabase/supabase-js'
 
 const supabaseAdmin = createClient(
@@ -12,7 +11,7 @@ export async function POST(req: Request) {
         if (!email) {
             return new Response(JSON.stringify({error: 'Email is required'}), {status: 400})
         }
-        
+
         const {data, error} = await supabaseAdmin.auth.admin.listUsers()
 
         if (error) {

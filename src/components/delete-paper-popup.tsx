@@ -16,7 +16,9 @@ export function DeletePaperPopup({
     onDeletedAction: () => void;
 }) {
     const handleDelete = async () => {
-        const res = await fetch(`http://127.0.0.1:8000/delete_pdf/`, {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+        const res = await fetch(`${backendUrl}/delete_pdf/`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({pdf_id: pdfId}),

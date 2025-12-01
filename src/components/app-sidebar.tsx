@@ -48,37 +48,32 @@ export function AppSidebar() {
 
     // Fetch user info and listen for realtime updates
     useEffect(() => {
-        let channel: ReturnType<typeof supabase.channel> | null = null;
+        let subscription: ReturnType<typeof supabase.channel> | null = null;
 
         const fetchUserAndSubscribe = async () => {
-            // Get the logged-in user from Supabase Auth
-            const {
-                data: {user},
-                error,
-            } = await supabase.auth.getUser();
-
+            // Get current user
+            const {data: {user}, error} = await supabase.auth.getUser();
             if (error || !user) {
-                console.error("Error getting user:", error);
+                console.error("Error fetching user:", error);
                 return;
             }
 
+            // Fetch initial profile
             const {data: profile, error: profileError} = await supabase
                 .from("users")
                 .select("full_name")
                 .eq("id", user.id)
                 .maybeSingle();
 
-            if (profileError) {
-                console.error("Error fetching profile:", profileError);
-            }
+            if (profileError) console.error("Profile fetch error:", profileError);
 
             setUser({
-                fullName: (profile as { full_name?: string })?.full_name || "User",
+                fullName: profile && profile.full_name ? profile.full_name : "User",
                 email: user.email || "",
             });
 
-            // Subscribe to real-time updates for user's full_name
-            channel = supabase
+            // Subscribe to realtime changes
+            subscription = supabase
                 .channel(`user-profile-listener-${user.id}`)
                 .on(
                     "postgres_changes",
@@ -89,21 +84,25 @@ export function AppSidebar() {
                         filter: `id=eq.${user.id}`,
                     },
                     (payload) => {
+                        console.log("Realtime payload:", payload);
                         const updatedName = payload.new.full_name;
                         setUser((prev) =>
                             prev ? {...prev, fullName: updatedName ?? prev.fullName} : prev
                         );
                     }
                 )
-                .subscribe(() => {
+                .subscribe((status) => {
+                    console.log("Subscription status:", status);
                 });
         };
 
         fetchUserAndSubscribe();
 
-        // Cleanup on unmount
         return () => {
-            if (channel) supabase.removeChannel(channel);
+            if (subscription) {
+                supabase.removeChannel(subscription);
+                console.log("Realtime subscription removed");
+            }
         };
     }, [supabase]);
 

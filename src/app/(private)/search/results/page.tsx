@@ -40,7 +40,7 @@ export default function SearchResultsPage() {
     const [applying, setApplying] = useState(false);
 
     const [page, setPage] = useState(0);
-    const RESULTS_PER_PAGE = 20;
+    const RESULTS_PER_PAGE = 10;
     const [hasMore, setHasMore] = useState(true);
 
     useEffect(() => {
@@ -66,13 +66,13 @@ export default function SearchResultsPage() {
         setLoading(true);
 
         try {
-            // Build the raw (unencoded) search query
+            // Build the raw search query
             let searchQuery = `(ti:"${query}" OR abs:"${query}")`;
 
             const effectiveRange = customRangeValue || appliedYearRange;
             if (year !== "any" || effectiveRange) {
                 let startDate, endDate;
-
+                console.log("inside")
                 if (effectiveRange) {
                     const [startYear, endYear] = effectiveRange.split("-");
                     startDate = `${startYear}01010000`;
@@ -84,23 +84,26 @@ export default function SearchResultsPage() {
                     endDate = `${currentYear}12312359`;
                 }
 
-                // append raw date range (not encoded yet)
+                // append raw date range
                 searchQuery += ` AND submittedDate:[${startDate} TO ${endDate}]`;
             }
-
-            // encode the entire query once at the end
-            const encodedQuery = encodeURIComponent(searchQuery);
 
             // choose sort mode
             const sortBy = sort === "recent" ? "submittedDate" : "relevance";
             const start = reset ? 0 : page * RESULTS_PER_PAGE;
+            const sortOrder = "descending";
 
-            const apiUrl = `https://export.arxiv.org/api/query?search_query=${encodedQuery}&start=${start}&max_results=${RESULTS_PER_PAGE}&sortBy=${sortBy}&sortOrder=descending`;
+            // Pass to API
+            const params = new URLSearchParams({
+                search_query: searchQuery,
+                sortBy: sortBy,
+                sortOrder: sortOrder,
+                start: start.toString(),
+                max_results: RESULTS_PER_PAGE.toString(),
+            });
 
-            console.log("API URL:", apiUrl);
-
-            const res = await fetch(apiUrl);
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            const res = await fetch(`/api/arxiv?${params.toString()}`);
+            if (!res.ok) throw new Error("Failed to fetch arXiv results");
 
             const xmlText = await res.text();
             const parser = new DOMParser();
@@ -120,6 +123,10 @@ export default function SearchResultsPage() {
                     ).getFullYear().toString(),
             }));
 
+            if (sort === "recent") {
+                parsedPapers.sort((a, b) => b.published - a.published);
+            }
+
             setPapers((prev) => (reset ? parsedPapers : [...prev, ...parsedPapers]));
             setHasMore(parsedPapers.length === RESULTS_PER_PAGE);
         } catch (err) {
@@ -130,6 +137,7 @@ export default function SearchResultsPage() {
             setLoading(false);
         }
     };
+
 
     // Refetch when filters or query change
     useEffect(() => {
@@ -266,7 +274,7 @@ export default function SearchResultsPage() {
                                         isNaN(startYear) ||
                                         isNaN(endYear) ||
                                         startYear < 1900 ||
-                                        endYear > currentYear + 1 // allow next year slightly
+                                        endYear > currentYear + 1
                                     ) {
                                         toast.error(`Please enter valid years between 1900 and ${currentYear}.`);
                                         return;

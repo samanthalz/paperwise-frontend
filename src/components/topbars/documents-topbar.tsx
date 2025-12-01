@@ -88,7 +88,6 @@ export default function DocumentsTopbar({
         }
     };
 
-    // ✅ renamed this to avoid conflict with prop
     const handleCreateFolder = async (folderName: string) => {
         try {
             const {
@@ -109,12 +108,11 @@ export default function DocumentsTopbar({
 
             if (insertError) throw insertError;
 
-            // ✅ Update UI via parent callback
             onCreateFolder({id: data.id, name: data.name});
 
             toast.success(`Folder "${folderName}" created`);
         } catch (err) {
-            console.error("❌ Failed to create folder:", err);
+            console.error("Failed to create folder:", err);
             toast.error("Failed to create folder");
         }
     };

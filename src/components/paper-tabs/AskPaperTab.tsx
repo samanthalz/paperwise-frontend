@@ -132,7 +132,7 @@ export default function AskPaperTab({
             }
 
             const backendUrl =
-                process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+                process.env.NEXT_PUBLIC_BACKEND_URL;
 
             const res = await fetch(`${backendUrl}/ask_stream/`, {
                 method: "POST",
@@ -186,8 +186,9 @@ export default function AskPaperTab({
     };
 
     return (
-        <div className="flex flex-col flex-1 min-h-0 gap-2">
-            <ScrollArea className="flex-1">
+        <div className="flex flex-col h-full gap-2">
+            {/* Scrollable content */}
+            <ScrollArea className="flex-1 overflow-auto">
                 <div className="flex flex-col gap-3 p-2 min-h-[150px]">
                     {processing && (
                         <div className="flex items-center justify-center">
@@ -197,27 +198,30 @@ export default function AskPaperTab({
                         </div>
                     )}
 
-                    {messages.length > 0 &&
-                        messages.map((m, i) => (
-                            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                                <div
-                                    className={`rounded-lg px-3 py-2 text-sm max-w-[75%] break-words whitespace-pre-line ${
-                                        m.role === "user" ? "bg-blue-600 text-white text-right" : "bg-gray-200 text-gray-900 text-left"
-                                    }`}
-                                >
-                                    {m.text}
-                                </div>
+                    {messages.map((m, i) => (
+                        <div
+                            key={i}
+                            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                        >
+                            <div
+                                className={`rounded-lg px-3 py-2 text-sm max-w-[75%] break-words whitespace-pre-line ${
+                                    m.role === "user"
+                                        ? "bg-blue-600 text-white text-right"
+                                        : "bg-gray-200 text-gray-900 text-left"
+                                }`}
+                            >
+                                {m.text}
                             </div>
-                        ))
-                    }
+                        </div>
+                    ))}
 
                     {loading && <p className="text-sm text-gray-500">Thinking...</p>}
                     <div ref={scrollRef}/>
                 </div>
             </ScrollArea>
 
-            {/* Input box always visible, disabled while processing */}
-            <div className="flex-shrink-0 flex items-center gap-2 border rounded-lg p-2">
+            {/* Input box fixed at bottom */}
+            <div className="flex-shrink-0 flex items-center gap-2 border rounded-lg p-2 bg-white">
                 <Textarea
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
@@ -240,6 +244,13 @@ export default function AskPaperTab({
                     <Send className="h-4 w-4"/>
                 </Button>
             </div>
+
+            {/* Info disclaimer */}
+            <p className="text-center text-xs text-gray-500 italic px-2">
+                ℹ️ AI-generated responses may contain inaccuracies. All input and output will be used to
+                improve Google services.
+            </p>
         </div>
+
     );
 }

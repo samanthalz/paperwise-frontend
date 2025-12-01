@@ -23,14 +23,13 @@ export default function PrivateLayout({children}: { children: React.ReactNode })
     }, [supabase]);
 
     if (hasSession === null) {
-        // Optional: loading skeleton or spinner while checking
         return <div className="flex h-screen items-center justify-center">Loading...</div>;
     }
 
     return (
         <SidebarProvider>
             <div className="flex w-full h-screen">
-                {hasSession && <AppSidebar/>} {/* 👈 Only show sidebar if logged in */}
+                {hasSession && <AppSidebar/>}
                 <main className="flex-1 flex flex-col">{children}</main>
             </div>
         </SidebarProvider>

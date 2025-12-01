@@ -3,6 +3,7 @@
 import {useEffect, useState} from "react";
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
 import {createClientComponentClient} from "@supabase/auth-helpers-nextjs";
+import {Info} from "lucide-react";
 
 type KeypointsTabProps = {
     pdfId: string;
@@ -108,6 +109,15 @@ export default function KeypointsTab({pdfId}: KeypointsTabProps) {
 
     return (
         <div className="pb-2">
+            {/* AI Info note */}
+            <div
+                className="mb-3 flex items-start gap-2 text-xs text-gray-500 bg-blue-50 border border-blue-100 p-2 rounded-md">
+                <Info className="w-4 h-4 text-blue-600 mt-0.5"/>
+                <span>
+                    The content below was generated via AI-assisted extraction.
+                </span>
+            </div>
+
             <Accordion
                 type="multiple"
                 value={openItems}
